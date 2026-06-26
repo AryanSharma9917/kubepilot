@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 
 from kubepilot_api.config import get_settings
+from kubepilot_api.routes.chat import router as chat_router
 from kubepilot_api.schemas import HealthResponse, ServiceInfo
 
 
@@ -15,6 +16,7 @@ def create_app() -> FastAPI:
         version=settings.version,
         description="API entry point for the KubePilot platform.",
     )
+    app.include_router(chat_router)
 
     @app.get("/", response_model=ServiceInfo, tags=["service"])
     async def service_info() -> ServiceInfo:
@@ -40,4 +42,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-

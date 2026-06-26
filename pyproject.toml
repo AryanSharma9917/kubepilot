@@ -21,10 +21,11 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["services/api/kubepilot_api"]
+packages = ["services/api/kubepilot_api", "agent"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
+pythonpath = [".", "services/api"]
 testpaths = ["tests"]
 
 [tool.ruff]

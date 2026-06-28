@@ -14,10 +14,10 @@ async def test_chat_returns_placeholder_response(client: httpx.AsyncClient) -> N
     assert response.status_code == 200
     body = response.json()
     assert UUID(body["request_id"])
-    assert body["answer"] == (
-        'KubePilot received your question: "Why is my deployment failing?". '
-        "Agent integration is not configured yet."
+    assert body["answer"].startswith(
+        'KubePilot received your question: "Why is my deployment failing?".'
     )
+    assert body["sources"]
 
 
 @pytest.mark.anyio
@@ -29,6 +29,7 @@ async def test_chat_trims_message_whitespace(client: httpx.AsyncClient) -> None:
 
     assert response.status_code == 200
     assert '"Show unhealthy workloads"' in response.json()["answer"]
+    assert "Unhealthy workloads" in response.json()["sources"]
 
 
 @pytest.mark.anyio

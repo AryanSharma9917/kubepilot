@@ -38,4 +38,4 @@ class ChatResponse(BaseModel):
 
     request_id: UUID
     answer: str
-
+    sources: list[str] = Field(default_factory=list)

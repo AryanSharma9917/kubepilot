@@ -1,8 +1,8 @@
 """Simple keyword-based retriever for local runbook search."""
 
+import re
 from collections import Counter
 from pathlib import Path
-import re
 
 from rag.chunking import chunk_markdown
 from rag.loaders import load_markdown_documents
@@ -47,7 +47,10 @@ def create_default_retriever(runbooks_dir: Path | None = None) -> KeywordRetriev
 def _score_document(query_terms: Counter[str], document: Document) -> int:
     document_text = f"{document.title}\n{document.content}"
     document_terms = _token_counts(document_text)
-    return sum(query_count * document_terms.get(term, 0) for term, query_count in query_terms.items())
+    return sum(
+        query_count * document_terms.get(term, 0)
+        for term, query_count in query_terms.items()
+    )
 
 
 def _token_counts(text: str) -> Counter[str]:

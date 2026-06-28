@@ -15,3 +15,4 @@ class AgentOutput:
     """Output returned by the agent to the API layer."""
 
     answer: str
+    sources: tuple[str, ...] = ()

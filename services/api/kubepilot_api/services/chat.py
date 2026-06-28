@@ -20,6 +20,7 @@ class ChatService:
         return ChatResponse(
             request_id=uuid4(),
             answer=agent_output.answer,
+            sources=list(agent_output.sources),
         )
 
 

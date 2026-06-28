@@ -21,7 +21,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["services/api/kubepilot_api", "agent"]
+packages = ["services/api/kubepilot_api", "agent", "rag"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

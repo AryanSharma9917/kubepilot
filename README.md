@@ -3,17 +3,37 @@
 An AI-powered Kubernetes and DevOps copilot with RAG, tool-calling, GitOps
 workflows, and observability.
 
-The project is being built in small, runnable slices. The first slice provides
-the FastAPI service foundation that future agent, RAG, and Kubernetes tools
-will connect to.
+The project is being built in small, runnable slices. The current version
+provides a FastAPI service, an initial agent boundary, and local runbook
+retrieval that future LangGraph, vector search, and Kubernetes tools will
+replace or extend.
 
 ## Current functionality
 
 - Service metadata at `GET /`
 - Liveness probe at `GET /healthz`
 - Readiness probe at `GET /readyz`
+- Chat endpoint at `POST /api/v1/chat`
+- Initial agent boundary for chat-style requests
+- Local markdown runbook loading, chunking, and keyword retrieval
 - Environment-based service configuration
 - API contract tests
+
+## Local knowledge flow
+
+KubePilot currently retrieves context from markdown runbooks in
+`docs/runbooks/`.
+
+When a user sends a chat message:
+
+1. FastAPI validates the request.
+2. The chat service passes the message into the agent boundary.
+3. The agent searches local runbook chunks with the keyword retriever.
+4. The API returns a deterministic answer and matching runbook source titles.
+
+This keeps the project runnable without external AI or vector database
+dependencies while preserving the architecture seam for FAISS, sentence
+transformers, and LangGraph later.
 
 ## Local development
 

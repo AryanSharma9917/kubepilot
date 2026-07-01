@@ -39,3 +39,23 @@ class ChatResponse(BaseModel):
     request_id: UUID
     answer: str
     sources: list[str] = Field(default_factory=list)
+
+
+class WorkloadHealthResponse(BaseModel):
+    """Health response for one Kubernetes workload."""
+
+    namespace: str
+    name: str
+    kind: str
+    desired_replicas: int
+    ready_replicas: int
+    status: str
+    reason: str
+
+
+class ClusterHealthResponse(BaseModel):
+    """Cluster health response returned by the API."""
+
+    status: Literal["healthy", "degraded"]
+    unhealthy_count: int
+    workloads: list[WorkloadHealthResponse] = Field(default_factory=list)

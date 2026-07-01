@@ -28,8 +28,10 @@ async def test_chat_trims_message_whitespace(client: httpx.AsyncClient) -> None:
     )
 
     assert response.status_code == 200
-    assert '"Show unhealthy workloads"' in response.json()["answer"]
-    assert "Unhealthy workloads" in response.json()["sources"]
+    body = response.json()
+    assert '"Show unhealthy workloads"' in body["answer"]
+    assert "payments/deployment/checkout" in body["answer"]
+    assert "Unhealthy workloads" in body["sources"]
 
 
 @pytest.mark.anyio

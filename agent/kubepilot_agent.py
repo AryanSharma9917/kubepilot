@@ -3,6 +3,11 @@
 from typing import Protocol
 
 from agent.state.chat import AgentInput, AgentOutput
+from agent.tools.kubernetes import (
+    ClusterHealth,
+    ClusterHealthInspector,
+    create_cluster_health_inspector,
+)
 from rag import KeywordRetriever, RetrievedDocument, create_default_retriever
 
 
@@ -14,16 +19,28 @@ class Agent(Protocol):
 
 
 class KubePilotAgent:
-    """Deterministic agent shell that can retrieve local runbook context."""
+    """Deterministic agent shell with simple retrieval and tool routing."""
 
-    def __init__(self, retriever: KeywordRetriever | None = None) -> None:
+    def __init__(
+        self,
+        retriever: KeywordRetriever | None = None,
+        cluster_inspector: ClusterHealthInspector | None = None,
+    ) -> None:
         self._retriever = retriever or create_default_retriever()
+        self._cluster_inspector = cluster_inspector or create_cluster_health_inspector()
 
     async def run(self, agent_input: AgentInput) -> AgentOutput:
-        """Return a stable response grounded in matching runbooks when possible."""
+        """Return a stable response grounded in runbooks or tool output."""
 
         matches = self._retriever.search(agent_input.message)
         sources = _source_titles(matches)
+
+        if _should_inspect_cluster(agent_input.message):
+            cluster_health = await self._cluster_inspector.inspect()
+            return AgentOutput(
+                answer=_build_cluster_health_answer(agent_input.message, cluster_health),
+                sources=sources,
+            )
 
         return AgentOutput(
             answer=_build_answer(agent_input.message, sources),
@@ -54,3 +71,29 @@ def _build_answer(message: str, sources: tuple[str, ...]) -> str:
 
     source_list = ", ".join(sources)
     return f"{base_answer} Relevant runbooks: {source_list}."
+
+
+def _should_inspect_cluster(message: str) -> bool:
+    normalized = message.lower()
+    return (
+        "unhealthy workload" in normalized
+        or "cluster health" in normalized
+        or "unhealthy pod" in normalized
+    )
+
+
+def _build_cluster_health_answer(message: str, cluster_health: ClusterHealth) -> str:
+    base_answer = f'KubePilot received your question: "{message}".'
+    unhealthy = cluster_health.unhealthy_workloads
+
+    if not unhealthy:
+        return f"{base_answer} No unhealthy workloads were found."
+
+    findings = "; ".join(
+        (
+            f"{workload.display_name} has {workload.ready_replicas}/"
+            f"{workload.desired_replicas} replicas ready ({workload.reason})"
+        )
+        for workload in unhealthy
+    )
+    return f"{base_answer} Unhealthy workloads: {findings}."

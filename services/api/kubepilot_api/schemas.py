@@ -91,3 +91,22 @@ class DeploymentDiagnosisResponse(BaseModel):
     pods: list[PodStatusResponse] = Field(default_factory=list)
     events: list[KubernetesEventResponse] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
+
+
+class EvidenceItemResponse(BaseModel):
+    """One evidence item in an incident report."""
+
+    source: str
+    message: str
+
+
+class IncidentReportResponse(BaseModel):
+    """Structured incident report returned by the API."""
+
+    title: str
+    severity: Literal["info", "warning", "critical"]
+    summary: str
+    impacted_resource: str
+    evidence: list[EvidenceItemResponse] = Field(default_factory=list)
+    next_actions: list[str] = Field(default_factory=list)
+    sources: list[str] = Field(default_factory=list)

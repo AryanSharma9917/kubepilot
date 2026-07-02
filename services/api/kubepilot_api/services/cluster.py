@@ -1,5 +1,6 @@
 """Cluster application service."""
 
+from agent.incidents import build_deployment_incident_report
 from agent.tools.kubernetes import (
     ClusterHealthInspector,
     DeploymentDiagnoser,
@@ -10,6 +11,8 @@ from kubepilot_api.config import get_settings
 from kubepilot_api.schemas import (
     ClusterHealthResponse,
     DeploymentDiagnosisResponse,
+    EvidenceItemResponse,
+    IncidentReportResponse,
     KubernetesEventResponse,
     PodStatusResponse,
     WorkloadHealthResponse,
@@ -102,6 +105,31 @@ class ClusterService:
                 for event in diagnosis.events
             ],
             recommendations=list(diagnosis.recommendations),
+        )
+
+    async def deployment_incident_report(
+        self,
+        namespace: str,
+        name: str,
+    ) -> IncidentReportResponse | None:
+        """Return a structured incident report for one deployment."""
+
+        diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
+        if diagnosis is None:
+            return None
+
+        report = build_deployment_incident_report(diagnosis)
+        return IncidentReportResponse(
+            title=report.title,
+            severity=report.severity,
+            summary=report.summary,
+            impacted_resource=report.impacted_resource,
+            evidence=[
+                EvidenceItemResponse(source=item.source, message=item.message)
+                for item in report.evidence
+            ],
+            next_actions=list(report.next_actions),
+            sources=list(report.sources),
         )
 
 

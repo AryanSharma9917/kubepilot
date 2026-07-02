@@ -59,3 +59,35 @@ class ClusterHealthResponse(BaseModel):
     status: Literal["healthy", "degraded"]
     unhealthy_count: int
     workloads: list[WorkloadHealthResponse] = Field(default_factory=list)
+
+
+class PodStatusResponse(BaseModel):
+    """Status response for one pod."""
+
+    namespace: str
+    name: str
+    phase: str
+    ready: bool
+    restart_count: int
+    reason: str | None = None
+
+
+class KubernetesEventResponse(BaseModel):
+    """Kubernetes event returned by diagnosis APIs."""
+
+    namespace: str
+    involved_object: str
+    reason: str
+    message: str
+    event_type: str
+
+
+class DeploymentDiagnosisResponse(BaseModel):
+    """Deployment diagnosis response returned by the API."""
+
+    namespace: str
+    name: str
+    health: WorkloadHealthResponse
+    pods: list[PodStatusResponse] = Field(default_factory=list)
+    events: list[KubernetesEventResponse] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)

@@ -15,10 +15,16 @@ and real cluster clients will replace or extend.
 - Readiness probe at `GET /readyz`
 - Chat endpoint at `POST /api/v1/chat`
 - Cluster health endpoint at `GET /api/v1/cluster/health`
+- Deployment diagnosis endpoint at
+  `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/diagnose`
 - Initial agent boundary for chat-style requests
 - Local markdown runbook loading, chunking, and keyword retrieval
-- In-memory Kubernetes workload health inspector
+- Optional vector retrieval with FAISS when installed
+- LangGraph-compatible agent orchestration boundary
+- Fixture-mode and real-client Kubernetes tool boundary
 - Environment-based service configuration
+- Prometheus-style metrics at `GET /metrics`
+- Docker, Compose, Helm, monitoring, and GitOps starter manifests
 - API contract tests
 
 ## Local knowledge flow
@@ -49,10 +55,17 @@ Cluster health can be queried directly:
 curl http://127.0.0.1:8000/api/v1/cluster/health
 ```
 
+Deployment diagnosis can also be queried directly:
+
+```bash
+curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose
+```
+
 It can also be reached through chat prompts such as:
 
 ```text
 Show unhealthy workloads
+Diagnose deployment checkout
 ```
 
 The agent detects the cluster-health intent, calls the inspector, and includes
@@ -78,6 +91,18 @@ pytest
 ruff check .
 ```
 
+Run the API with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Deploy to a local Kubernetes cluster after building/loading the image:
+
+```bash
+helm upgrade --install kubepilot ./helm/kubepilot --namespace kubepilot --create-namespace
+```
+
 ## Configuration
 
 | Variable | Default | Purpose |
@@ -85,6 +110,18 @@ ruff check .
 | `KUBEPILOT_APP_NAME` | `KubePilot API` | Display name |
 | `KUBEPILOT_ENVIRONMENT` | `development` | Runtime environment |
 | `KUBEPILOT_VERSION` | `0.1.0` | Reported service version |
+| `KUBEPILOT_K8S_MODE` | `fixture` | Kubernetes mode: `fixture`, `kubeconfig`, or `in_cluster` |
+| `KUBEPILOT_KUBECONFIG` | unset | Optional kubeconfig path for `kubeconfig` mode |
+| `KUBEPILOT_RAG_MODE` | `keyword` | Retrieval mode: `keyword`, `vector`, or `faiss` |
+| `KUBEPILOT_AGENT_MODE` | `deterministic` | Agent mode: `deterministic` or `langgraph` |
+
+Optional integration dependencies are grouped as extras:
+
+```bash
+python -m pip install -e ".[kubernetes]"
+python -m pip install -e ".[rag]"
+python -m pip install -e ".[agent]"
+```
 
 See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for the target
 architecture and MVP definition.

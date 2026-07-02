@@ -1,7 +1,13 @@
 import pytest
 
 from agent import AgentInput, KubePilotAgent
-from agent.tools.kubernetes import ClusterHealth, WorkloadHealth
+from agent.tools.kubernetes import (
+    ClusterHealth,
+    DeploymentDiagnosis,
+    KubernetesEvent,
+    PodStatus,
+    WorkloadHealth,
+)
 from rag.models import Document
 from rag.retrieval import KeywordRetriever
 
@@ -21,6 +27,45 @@ class FakeClusterInspector:
                     reason="Two replicas are unavailable",
                 ),
             ),
+        )
+
+
+class FakeDeploymentDiagnoser:
+    async def diagnose(self, namespace: str, name: str) -> DeploymentDiagnosis | None:
+        assert namespace == "payments"
+        assert name == "checkout"
+        return DeploymentDiagnosis(
+            namespace="payments",
+            name="checkout",
+            health=WorkloadHealth(
+                namespace="payments",
+                name="checkout",
+                kind="Deployment",
+                desired_replicas=3,
+                ready_replicas=1,
+                status="Degraded",
+                reason="Two replicas are unavailable",
+            ),
+            pods=(
+                PodStatus(
+                    namespace="payments",
+                    name="checkout-abc",
+                    phase="Running",
+                    ready=False,
+                    restart_count=3,
+                    reason="CrashLoopBackOff",
+                ),
+            ),
+            events=(
+                KubernetesEvent(
+                    namespace="payments",
+                    involved_object="checkout-abc",
+                    reason="BackOff",
+                    message="Back-off restarting failed container",
+                    event_type="Warning",
+                ),
+            ),
+            recommendations=("Inspect previous container logs.",),
         )
 
 
@@ -87,3 +132,26 @@ async def test_agent_uses_cluster_tool_for_unhealthy_workload_questions() -> Non
         "ready (Two replicas are unavailable)."
     )
     assert output.sources == ("Unhealthy workloads",)
+
+
+@pytest.mark.anyio
+async def test_agent_uses_deployment_diagnosis_for_named_deployment() -> None:
+    agent = KubePilotAgent(
+        retriever=KeywordRetriever(
+            [
+                Document(
+                    source="deployment.md",
+                    title="Deployment rollout failures",
+                    content="Use pod events and previous logs to diagnose rollout failures.",
+                )
+            ],
+        ),
+        cluster_inspector=FakeClusterInspector(),
+        deployment_diagnoser=FakeDeploymentDiagnoser(),
+    )
+
+    output = await agent.run(AgentInput(message="Diagnose deployment checkout"))
+
+    assert "Deployment payments/deployment/checkout is degraded" in output.answer
+    assert "1 unhealthy pod(s)" in output.answer
+    assert "Inspect previous container logs." in output.answer

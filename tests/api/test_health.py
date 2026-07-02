@@ -28,3 +28,14 @@ async def test_readiness_endpoint(client: httpx.AsyncClient) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"status": "ready"}
+
+
+@pytest.mark.anyio
+async def test_metrics_endpoint_exposes_request_metrics(client: httpx.AsyncClient) -> None:
+    await client.get("/healthz")
+
+    response = await client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "kubepilot_http_requests_total" in response.text
+    assert 'path="/healthz"' in response.text

@@ -17,6 +17,8 @@ and real cluster clients will replace or extend.
 - Cluster health endpoint at `GET /api/v1/cluster/health`
 - Deployment diagnosis endpoint at
   `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/diagnose`
+- Deployment incident report endpoint at
+  `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report`
 - Initial agent boundary for chat-style requests
 - Local markdown runbook loading, chunking, and keyword retrieval
 - Optional vector retrieval with FAISS when installed
@@ -61,15 +63,23 @@ Deployment diagnosis can also be queried directly:
 curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose
 ```
 
+KubePilot can also return a structured incident report:
+
+```bash
+curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report
+```
+
 It can also be reached through chat prompts such as:
 
 ```text
 Show unhealthy workloads
 Diagnose deployment checkout
+Create an incident report for deployment checkout
 ```
 
-The agent detects the cluster-health intent, calls the inspector, and includes
-unhealthy workload details in the response.
+The agent detects the cluster-health, diagnosis, or incident-report intent,
+calls the relevant tool boundary, and includes workload details or next actions
+in the response.
 
 ## Local development
 

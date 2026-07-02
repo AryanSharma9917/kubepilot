@@ -19,6 +19,22 @@ dev = [
     "pytest>=8.0,<9.0",
     "ruff>=0.8,<1.0",
 ]
+kubernetes = [
+    "kubernetes>=30.0,<31.0",
+]
+rag = [
+    "faiss-cpu>=1.8,<2.0",
+    "numpy>=1.26,<3.0",
+]
+agent = [
+    "langgraph>=0.2,<1.0",
+]
+all = [
+    "kubernetes>=30.0,<31.0",
+    "faiss-cpu>=1.8,<2.0",
+    "numpy>=1.26,<3.0",
+    "langgraph>=0.2,<1.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["services/api/kubepilot_api", "agent", "rag"]

@@ -18,4 +18,4 @@ class RetrievedDocument:
     """A document selected as relevant for a query."""
 
     document: Document
-    score: int
+    score: float

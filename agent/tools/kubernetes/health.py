@@ -2,6 +2,7 @@
 
 from typing import Protocol
 
+from agent.tools.kubernetes.client import KubernetesClient, create_kubernetes_client
 from agent.tools.kubernetes.models import ClusterHealth, WorkloadHealth
 
 
@@ -12,29 +13,39 @@ class ClusterHealthInspector(Protocol):
         """Return health information for known workloads."""
 
 
-class InMemoryClusterHealthInspector:
-    """Deterministic inspector used until a real Kubernetes client is wired in."""
+class KubernetesClusterHealthInspector:
+    """Cluster health inspector backed by a Kubernetes client boundary."""
 
-    def __init__(self, workloads: tuple[WorkloadHealth, ...] | None = None) -> None:
-        self._workloads = workloads or default_workloads()
+    def __init__(self, client: KubernetesClient | None = None) -> None:
+        self._client = client or create_kubernetes_client()
 
     async def inspect(self, namespace: str | None = None) -> ClusterHealth:
-        """Return all fixture workloads or workloads from one namespace."""
+        """Return deployment health for all namespaces or one namespace."""
 
-        if namespace is None:
-            return ClusterHealth(workloads=self._workloads)
+        return ClusterHealth(workloads=await self._client.list_deployments(namespace=namespace))
 
-        return ClusterHealth(
-            workloads=tuple(
-                workload for workload in self._workloads if workload.namespace == namespace
-            ),
+
+class InMemoryClusterHealthInspector(KubernetesClusterHealthInspector):
+    """Deterministic inspector used by local development and tests."""
+
+    def __init__(self, workloads: tuple[WorkloadHealth, ...] | None = None) -> None:
+        from agent.tools.kubernetes.client import InMemoryKubernetesClient
+
+        super().__init__(
+            InMemoryKubernetesClient(deployments=workloads or default_workloads())
         )
 
 
-def create_cluster_health_inspector() -> ClusterHealthInspector:
+def create_cluster_health_inspector(
+    *,
+    mode: str = "fixture",
+    kubeconfig_path: str | None = None,
+) -> ClusterHealthInspector:
     """Create the default cluster health inspector."""
 
-    return InMemoryClusterHealthInspector()
+    return KubernetesClusterHealthInspector(
+        create_kubernetes_client(mode=mode, kubeconfig_path=kubeconfig_path)
+    )
 
 
 def default_workloads() -> tuple[WorkloadHealth, ...]:

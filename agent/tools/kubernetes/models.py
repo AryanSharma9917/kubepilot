@@ -45,3 +45,44 @@ class ClusterHealth:
         """Return whether all known workloads are healthy."""
 
         return not self.unhealthy_workloads
+
+
+@dataclass(frozen=True)
+class PodStatus:
+    """Status summary for a pod owned by or related to a workload."""
+
+    namespace: str
+    name: str
+    phase: str
+    ready: bool
+    restart_count: int
+    reason: str | None = None
+
+
+@dataclass(frozen=True)
+class KubernetesEvent:
+    """Relevant Kubernetes event captured during diagnosis."""
+
+    namespace: str
+    involved_object: str
+    reason: str
+    message: str
+    event_type: str = "Normal"
+
+
+@dataclass(frozen=True)
+class DeploymentDiagnosis:
+    """Diagnostic summary for a Kubernetes deployment."""
+
+    namespace: str
+    name: str
+    health: WorkloadHealth
+    pods: tuple[PodStatus, ...] = field(default_factory=tuple)
+    events: tuple[KubernetesEvent, ...] = field(default_factory=tuple)
+    recommendations: tuple[str, ...] = field(default_factory=tuple)
+
+    @property
+    def display_name(self) -> str:
+        """Return a compact deployment identifier."""
+
+        return f"{self.namespace}/deployment/{self.name}"

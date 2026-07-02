@@ -26,3 +26,28 @@ async def test_cluster_health_filters_by_namespace(client: httpx.AsyncClient) ->
     assert body["unhealthy_count"] == 1
     assert body["workloads"][0]["namespace"] == "payments"
     assert body["workloads"][0]["name"] == "checkout"
+
+
+@pytest.mark.anyio
+async def test_deployment_diagnosis_returns_pods_events_and_recommendations(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["namespace"] == "payments"
+    assert body["name"] == "checkout"
+    assert body["health"]["status"] == "Degraded"
+    assert [pod["reason"] for pod in body["pods"]] == ["CrashLoopBackOff", "ImagePullBackOff"]
+    assert body["events"][0]["event_type"] == "Warning"
+    assert body["recommendations"]
+
+
+@pytest.mark.anyio
+async def test_deployment_diagnosis_returns_404_for_missing_deployment(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/cluster/namespaces/default/deployments/missing/diagnose")
+
+    assert response.status_code == 404

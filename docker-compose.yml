@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    environment:
+      KUBEPILOT_ENVIRONMENT: local
+      KUBEPILOT_K8S_MODE: fixture
+      KUBEPILOT_RAG_MODE: keyword
+      KUBEPILOT_AGENT_MODE: deterministic
+    ports:
+      - "8000:8000"

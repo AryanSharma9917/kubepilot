@@ -1,0 +1,18 @@
+replicaCount: 1
+
+image:
+  repository: kubepilot-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+env:
+  KUBEPILOT_ENVIRONMENT: local
+  KUBEPILOT_K8S_MODE: fixture
+  KUBEPILOT_RAG_MODE: keyword
+  KUBEPILOT_AGENT_MODE: deterministic
+
+resources: {}

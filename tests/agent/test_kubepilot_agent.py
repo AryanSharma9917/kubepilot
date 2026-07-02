@@ -135,6 +135,32 @@ async def test_agent_uses_cluster_tool_for_unhealthy_workload_questions() -> Non
 
 
 @pytest.mark.anyio
+async def test_agent_builds_incident_report_for_deployment_questions() -> None:
+    agent = KubePilotAgent(
+        retriever=KeywordRetriever(
+            [
+                Document(
+                    source="deployment-rollout-failures.md",
+                    title="Deployment rollout failures",
+                    content="Use this when a deployment rollout is failing.",
+                )
+            ],
+        ),
+        cluster_inspector=FakeClusterInspector(),
+        deployment_diagnoser=FakeDeploymentDiagnoser(),
+    )
+
+    output = await agent.run(
+        AgentInput(message="Create an incident report for deployment checkout")
+    )
+
+    assert "Deployment incident: payments/deployment/checkout" in output.answer
+    assert "Severity: warning" in output.answer
+    assert "payments/deployment/checkout has 1/3 replicas ready" in output.answer
+    assert output.sources == ("Deployment rollout failures",)
+
+
+@pytest.mark.anyio
 async def test_agent_uses_deployment_diagnosis_for_named_deployment() -> None:
     agent = KubePilotAgent(
         retriever=KeywordRetriever(

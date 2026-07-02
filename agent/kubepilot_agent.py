@@ -4,6 +4,7 @@ import os
 import re
 from typing import Protocol
 
+from agent.incidents import IncidentReport, build_deployment_incident_report
 from agent.state.chat import AgentInput, AgentOutput
 from agent.tools.kubernetes import (
     ClusterHealth,
@@ -60,6 +61,12 @@ class KubePilotAgent:
         if deployment_ref is not None:
             namespace, name = deployment_ref
             diagnosis = await self._deployment_diagnoser.diagnose(namespace=namespace, name=name)
+            if _should_build_incident_report(agent_input.message) and diagnosis is not None:
+                report = build_deployment_incident_report(diagnosis, sources=sources)
+                return AgentOutput(
+                    answer=_build_incident_report_answer(agent_input.message, report),
+                    sources=sources,
+                )
             return AgentOutput(
                 answer=_build_deployment_diagnosis_answer(agent_input.message, diagnosis),
                 sources=sources,
@@ -120,7 +127,10 @@ def _deployment_reference(message: str) -> tuple[str, str] | None:
     normalized = message.lower()
     if "deployment" not in normalized and "rollout" not in normalized:
         return None
-    if not any(term in normalized for term in ("fail", "failing", "diagnose", "why", "status")):
+    if not any(
+        term in normalized
+        for term in ("fail", "failing", "diagnose", "why", "status", "incident")
+    ):
         return None
 
     namespace_match = re.search(r"(?:namespace|ns)\s+([a-z0-9-]+)", normalized)
@@ -133,6 +143,11 @@ def _deployment_reference(message: str) -> tuple[str, str] | None:
     namespace = namespace_match.group(1) if namespace_match else "payments"
     name = candidate if candidate else "checkout"
     return namespace, name
+
+
+def _should_build_incident_report(message: str) -> bool:
+    normalized = message.lower()
+    return "incident report" in normalized or "incident summary" in normalized
 
 
 def _build_cluster_health_answer(message: str, cluster_health: ClusterHealth) -> str:
@@ -177,4 +192,15 @@ def _build_deployment_diagnosis_answer(
         f"{diagnosis.health.status.lower()}: {diagnosis.health.reason}. "
         f"Found {pod_summary} and {event_summary}. Recommended next step: "
         f"{recommendations}"
+    )
+
+
+def _build_incident_report_answer(message: str, report: IncidentReport) -> str:
+    base_answer = f'KubePilot received your question: "{message}".'
+    evidence_summary = "; ".join(item.message for item in report.evidence[:3])
+    next_actions = " ".join(report.next_actions)
+    return (
+        f"{base_answer} {report.title}. Severity: {report.severity}. "
+        f"Summary: {report.summary} Evidence: {evidence_summary}. "
+        f"Next actions: {next_actions}"
     )

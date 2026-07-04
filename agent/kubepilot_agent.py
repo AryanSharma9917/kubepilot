@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Protocol
 
 from agent.answers import AnswerSynthesizer, GroundedAnswerSynthesizer
+from agent.graph.intents import classify_intent
 from agent.incidents import IncidentReport, build_deployment_incident_report
 from agent.state.chat import AgentInput, AgentOutput
 from agent.tools.kubernetes import (
@@ -58,8 +59,9 @@ class KubePilotAgent:
 
         matches = self._retriever.search(agent_input.message)
         sources = _source_titles(matches)
+        intent = classify_intent(agent_input.message)
 
-        if _should_inspect_cluster(agent_input.message):
+        if intent.name == "cluster_health":
             cluster_health = await self._cluster_inspector.inspect()
             return AgentOutput(
                 answer=_build_cluster_health_answer(agent_input.message, cluster_health),
@@ -67,10 +69,14 @@ class KubePilotAgent:
             )
 
         deployment_ref = _deployment_reference(agent_input.message)
-        if deployment_ref is not None:
+        should_use_deployment_tool = intent.name in {
+            "deployment_diagnosis",
+            "incident_report",
+        }
+        if should_use_deployment_tool and deployment_ref is not None:
             namespace, name = deployment_ref
             diagnosis = await self._deployment_diagnoser.diagnose(namespace=namespace, name=name)
-            if _should_build_incident_report(agent_input.message) and diagnosis is not None:
+            if intent.name == "incident_report" and diagnosis is not None:
                 report = build_deployment_incident_report(diagnosis, sources=sources)
                 return AgentOutput(
                     answer=_build_incident_report_answer(agent_input.message, report),
@@ -95,7 +101,7 @@ def create_agent() -> Agent:
     """Create the default KubePilot agent runtime."""
 
     if os.getenv("KUBEPILOT_AGENT_MODE", "deterministic") == "langgraph":
-        from agent.graph import create_graph_agent
+        from agent.graph.workflow import create_graph_agent
 
         return create_graph_agent()
 
@@ -120,15 +126,6 @@ def _source_titles(matches: list[RetrievedDocument]) -> tuple[str, ...]:
     return tuple(unique_titles)
 
 
-def _should_inspect_cluster(message: str) -> bool:
-    normalized = message.lower()
-    return (
-        "unhealthy workload" in normalized
-        or "cluster health" in normalized
-        or "unhealthy pod" in normalized
-    )
-
-
 def _deployment_reference(message: str) -> tuple[str, str] | None:
     normalized = message.lower()
     if "deployment" not in normalized and "rollout" not in normalized:
@@ -149,11 +146,6 @@ def _deployment_reference(message: str) -> tuple[str, str] | None:
     namespace = namespace_match.group(1) if namespace_match else "payments"
     name = candidate if candidate else "checkout"
     return namespace, name
-
-
-def _should_build_incident_report(message: str) -> bool:
-    normalized = message.lower()
-    return "incident report" in normalized or "incident summary" in normalized
 
 
 def _build_cluster_health_answer(message: str, cluster_health: ClusterHealth) -> str:

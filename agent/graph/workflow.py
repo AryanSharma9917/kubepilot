@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from agent.graph.intents import Intent, classify_intent
 from agent.kubepilot_agent import KubePilotAgent
 from agent.state.chat import AgentInput, AgentOutput
 
@@ -12,6 +13,8 @@ class GraphState:
     """State passed through graph execution."""
 
     message: str
+    intent: Intent | None = None
+    route: str | None = None
     output: AgentOutput | None = None
 
 
@@ -28,7 +31,14 @@ class GraphAgent:
         if self._graph is None:
             return await self._fallback_agent.run(agent_input)
 
-        result = await self._graph.ainvoke({"message": agent_input.message, "output": None})
+        result = await self._graph.ainvoke(
+            {
+                "message": agent_input.message,
+                "intent": None,
+                "route": None,
+                "output": None,
+            }
+        )
         output = result.get("output")
         if isinstance(output, AgentOutput):
             return output
@@ -40,14 +50,24 @@ class GraphAgent:
         except ImportError:
             return None
 
-        async def run_agent(state: dict[str, Any]) -> dict[str, Any]:
+        def classify(state: dict[str, Any]) -> dict[str, Any]:
+            intent = classify_intent(state["message"])
+            return {
+                **state,
+                "intent": intent,
+                "route": intent.name,
+            }
+
+        async def execute(state: dict[str, Any]) -> dict[str, Any]:
             output = await self._fallback_agent.run(AgentInput(message=state["message"]))
-            return {"message": state["message"], "output": output}
+            return {**state, "output": output}
 
         graph = StateGraph(dict)
-        graph.add_node("agent", run_agent)
-        graph.set_entry_point("agent")
-        graph.add_edge("agent", END)
+        graph.add_node("classify_intent", classify)
+        graph.add_node("execute_tools_and_synthesize", execute)
+        graph.set_entry_point("classify_intent")
+        graph.add_edge("classify_intent", "execute_tools_and_synthesize")
+        graph.add_edge("execute_tools_and_synthesize", END)
         return graph.compile()
 
 

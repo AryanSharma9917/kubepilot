@@ -1,5 +1,5 @@
 """Agent graph orchestration package."""
 
-from agent.graph.workflow import GraphAgent, create_graph_agent
+from agent.graph.intents import Intent, classify_intent
 
-__all__ = ["GraphAgent", "create_graph_agent"]
+__all__ = ["Intent", "classify_intent"]

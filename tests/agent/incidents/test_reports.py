@@ -1,5 +1,6 @@
 from agent.incidents import build_deployment_incident_report
 from agent.tools.kubernetes import (
+    ContainerLog,
     DeploymentDiagnosis,
     KubernetesEvent,
     PodStatus,
@@ -39,6 +40,15 @@ def test_build_deployment_incident_report_marks_zero_ready_as_critical() -> None
                 event_type="Warning",
             ),
         ),
+        logs=(
+            ContainerLog(
+                namespace="payments",
+                pod_name="checkout-abc",
+                container_name="checkout",
+                text="panic: missing PAYMENT_GATEWAY_URL environment variable",
+                previous=True,
+            ),
+        ),
         recommendations=("Verify image tag and registry credentials.",),
     )
 
@@ -52,7 +62,12 @@ def test_build_deployment_incident_report_marks_zero_ready_as_critical() -> None
     assert "0/3 replicas ready" in report.summary
     assert report.next_actions == ("Verify image tag and registry credentials.",)
     assert report.sources == ("Deployment rollout failures",)
-    assert [item.source for item in report.evidence] == ["deployment", "pod", "event"]
+    assert [item.source for item in report.evidence] == [
+        "deployment",
+        "pod",
+        "event",
+        "log",
+    ]
 
 
 def test_build_deployment_incident_report_marks_healthy_deployment_as_info() -> None:

@@ -184,11 +184,16 @@ def _build_deployment_diagnosis_answer(
         if diagnosis.events
         else "no relevant events found"
     )
+    log_summary = (
+        f"{len(diagnosis.logs)} log excerpt(s)"
+        if diagnosis.logs
+        else "no log excerpts captured"
+    )
     recommendations = " ".join(diagnosis.recommendations)
     return (
         f"{base_answer} Deployment {diagnosis.display_name} is "
         f"{diagnosis.health.status.lower()}: {diagnosis.health.reason}. "
-        f"Found {pod_summary} and {event_summary}. Recommended next step: "
+        f"Found {pod_summary}, {event_summary}, and {log_summary}. Recommended next step: "
         f"{recommendations}"
     )
 

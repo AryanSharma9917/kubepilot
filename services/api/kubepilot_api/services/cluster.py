@@ -10,6 +10,7 @@ from agent.tools.kubernetes import (
 from kubepilot_api.config import get_settings
 from kubepilot_api.schemas import (
     ClusterHealthResponse,
+    ContainerLogResponse,
     DeploymentDiagnosisResponse,
     EvidenceItemResponse,
     IncidentReportResponse,
@@ -103,6 +104,16 @@ class ClusterService:
                     event_type=event.event_type,
                 )
                 for event in diagnosis.events
+            ],
+            logs=[
+                ContainerLogResponse(
+                    namespace=log.namespace,
+                    pod_name=log.pod_name,
+                    container_name=log.container_name,
+                    text=log.text,
+                    previous=log.previous,
+                )
+                for log in diagnosis.logs
             ],
             recommendations=list(diagnosis.recommendations),
         )

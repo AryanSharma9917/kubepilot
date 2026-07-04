@@ -71,6 +71,17 @@ class KubernetesEvent:
 
 
 @dataclass(frozen=True)
+class ContainerLog:
+    """Small log excerpt captured for a pod container."""
+
+    namespace: str
+    pod_name: str
+    container_name: str
+    text: str
+    previous: bool = False
+
+
+@dataclass(frozen=True)
 class DeploymentDiagnosis:
     """Diagnostic summary for a Kubernetes deployment."""
 
@@ -79,6 +90,7 @@ class DeploymentDiagnosis:
     health: WorkloadHealth
     pods: tuple[PodStatus, ...] = field(default_factory=tuple)
     events: tuple[KubernetesEvent, ...] = field(default_factory=tuple)
+    logs: tuple[ContainerLog, ...] = field(default_factory=tuple)
     recommendations: tuple[str, ...] = field(default_factory=tuple)
 
     @property

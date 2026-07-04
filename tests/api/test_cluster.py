@@ -41,6 +41,8 @@ async def test_deployment_diagnosis_returns_pods_events_and_recommendations(
     assert body["health"]["status"] == "Degraded"
     assert [pod["reason"] for pod in body["pods"]] == ["CrashLoopBackOff", "ImagePullBackOff"]
     assert body["events"][0]["event_type"] == "Warning"
+    assert body["logs"][0]["previous"] is True
+    assert "PAYMENT_GATEWAY_URL" in body["logs"][0]["text"]
     assert body["recommendations"]
 
 

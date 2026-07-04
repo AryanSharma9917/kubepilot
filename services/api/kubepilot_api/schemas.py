@@ -82,6 +82,16 @@ class KubernetesEventResponse(BaseModel):
     event_type: str
 
 
+class ContainerLogResponse(BaseModel):
+    """Container log excerpt returned by diagnosis APIs."""
+
+    namespace: str
+    pod_name: str
+    container_name: str
+    text: str
+    previous: bool = False
+
+
 class DeploymentDiagnosisResponse(BaseModel):
     """Deployment diagnosis response returned by the API."""
 
@@ -90,6 +100,7 @@ class DeploymentDiagnosisResponse(BaseModel):
     health: WorkloadHealthResponse
     pods: list[PodStatusResponse] = Field(default_factory=list)
     events: list[KubernetesEventResponse] = Field(default_factory=list)
+    logs: list[ContainerLogResponse] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
 
 

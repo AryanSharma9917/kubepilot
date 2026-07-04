@@ -3,6 +3,7 @@ import pytest
 from agent import AgentInput, KubePilotAgent
 from agent.tools.kubernetes import (
     ClusterHealth,
+    ContainerLog,
     DeploymentDiagnosis,
     KubernetesEvent,
     PodStatus,
@@ -63,6 +64,15 @@ class FakeDeploymentDiagnoser:
                     reason="BackOff",
                     message="Back-off restarting failed container",
                     event_type="Warning",
+                ),
+            ),
+            logs=(
+                ContainerLog(
+                    namespace="payments",
+                    pod_name="checkout-abc",
+                    container_name="checkout",
+                    text="panic: missing PAYMENT_GATEWAY_URL environment variable",
+                    previous=True,
                 ),
             ),
             recommendations=("Inspect previous container logs.",),
@@ -182,4 +192,5 @@ async def test_agent_uses_deployment_diagnosis_for_named_deployment() -> None:
 
     assert "Deployment payments/deployment/checkout is degraded" in output.answer
     assert "1 unhealthy pod(s)" in output.answer
+    assert "1 log excerpt(s)" in output.answer
     assert "Inspect previous container logs." in output.answer

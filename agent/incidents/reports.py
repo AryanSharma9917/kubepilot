@@ -107,4 +107,14 @@ def _evidence(
         for event in diagnosis.events
         if event.event_type == "Warning"
     )
+    evidence.extend(
+        EvidenceItem(
+            source="log",
+            message=(
+                f"{log.pod_name}/{log.container_name}"
+                f"{' previous' if log.previous else ''} log: {log.text}"
+            ),
+        )
+        for log in diagnosis.logs[:3]
+    )
     return tuple(evidence)

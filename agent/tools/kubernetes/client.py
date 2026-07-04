@@ -3,6 +3,7 @@
 from typing import Any, Protocol
 
 from agent.tools.kubernetes.models import (
+    ContainerLog,
     KubernetesEvent,
     PodStatus,
     WorkloadHealth,
@@ -28,6 +29,15 @@ class KubernetesClient(Protocol):
     ) -> tuple[KubernetesEvent, ...]:
         """Return events relevant to a deployment."""
 
+    async def list_logs_for_deployment(
+        self,
+        namespace: str,
+        name: str,
+        *,
+        tail_lines: int = 50,
+    ) -> tuple[ContainerLog, ...]:
+        """Return recent logs for pods related to a deployment."""
+
 
 class InMemoryKubernetesClient:
     """Deterministic Kubernetes client used for local development and tests."""
@@ -37,10 +47,12 @@ class InMemoryKubernetesClient:
         deployments: tuple[WorkloadHealth, ...],
         pods: dict[tuple[str, str], tuple[PodStatus, ...]] | None = None,
         events: dict[tuple[str, str], tuple[KubernetesEvent, ...]] | None = None,
+        logs: dict[tuple[str, str], tuple[ContainerLog, ...]] | None = None,
     ) -> None:
         self._deployments = deployments
         self._pods = pods or {}
         self._events = events or {}
+        self._logs = logs or {}
 
     async def list_deployments(self, namespace: str | None = None) -> tuple[WorkloadHealth, ...]:
         """Return all fixture deployments or deployments from one namespace."""
@@ -75,6 +87,17 @@ class InMemoryKubernetesClient:
         """Return fixture events for a deployment."""
 
         return self._events.get((namespace, name), ())
+
+    async def list_logs_for_deployment(
+        self,
+        namespace: str,
+        name: str,
+        *,
+        tail_lines: int = 50,
+    ) -> tuple[ContainerLog, ...]:
+        """Return fixture logs for a deployment."""
+
+        return self._logs.get((namespace, name), ())
 
 
 class KubernetesPythonClient:
@@ -154,6 +177,57 @@ class KubernetesPythonClient:
                 )
         return tuple(events)
 
+    async def list_logs_for_deployment(
+        self,
+        namespace: str,
+        name: str,
+        *,
+        tail_lines: int = 50,
+    ) -> tuple[ContainerLog, ...]:
+        """Return recent and previous logs for pods matching the deployment selector."""
+
+        pods = await self.list_pods_for_deployment(namespace=namespace, name=name)
+        logs: list[ContainerLog] = []
+        for pod in pods:
+            try:
+                text = self._core.read_namespaced_pod_log(
+                    name=pod.name,
+                    namespace=namespace,
+                    tail_lines=tail_lines,
+                )
+            except Exception:
+                text = ""
+            if text:
+                logs.append(
+                    ContainerLog(
+                        namespace=namespace,
+                        pod_name=pod.name,
+                        container_name="default",
+                        text=text,
+                    )
+                )
+            if pod.restart_count > 0:
+                try:
+                    previous_text = self._core.read_namespaced_pod_log(
+                        name=pod.name,
+                        namespace=namespace,
+                        previous=True,
+                        tail_lines=tail_lines,
+                    )
+                except Exception:
+                    previous_text = ""
+                if previous_text:
+                    logs.append(
+                        ContainerLog(
+                            namespace=namespace,
+                            pod_name=pod.name,
+                            container_name="default",
+                            text=previous_text,
+                            previous=True,
+                        )
+                    )
+        return tuple(logs)
+
 
 def create_kubernetes_client(
     *,
@@ -232,6 +306,17 @@ def create_fixture_kubernetes_client() -> KubernetesClient:
                     reason="Failed",
                     message="Failed to pull image registry.example.com/checkout:bad-tag",
                     event_type="Warning",
+                ),
+            )
+        },
+        logs={
+            ("payments", "checkout"): (
+                ContainerLog(
+                    namespace="payments",
+                    pod_name="checkout-7d8f5b9c6c-abc12",
+                    container_name="checkout",
+                    text="panic: missing PAYMENT_GATEWAY_URL environment variable",
+                    previous=True,
                 ),
             )
         },

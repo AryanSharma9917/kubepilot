@@ -18,6 +18,7 @@ from agent.tools.kubernetes.health import (
 )
 from agent.tools.kubernetes.models import (
     ClusterHealth,
+    ContainerLog,
     DeploymentDiagnosis,
     KubernetesEvent,
     PodStatus,
@@ -27,6 +28,7 @@ from agent.tools.kubernetes.models import (
 __all__ = [
     "ClusterHealth",
     "ClusterHealthInspector",
+    "ContainerLog",
     "DeploymentDiagnoser",
     "DeploymentDiagnosis",
     "InMemoryClusterHealthInspector",

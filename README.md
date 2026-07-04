@@ -26,7 +26,7 @@ and real cluster clients will replace or extend.
 - Fixture-mode and real-client Kubernetes tool boundary
 - Environment-based service configuration
 - Prometheus-style metrics at `GET /metrics`
-- Docker, Compose, Helm, monitoring, and GitOps starter manifests
+- Docker, Compose, Helm, Prometheus, Grafana, and GitOps starter manifests
 - API contract tests
 
 ## Local knowledge flow
@@ -128,6 +128,11 @@ For an end-to-end local cluster smoke test, run:
 
 See [docs/local-cluster.md](docs/local-cluster.md) for the manual workflow and
 real-cluster mode notes.
+
+Prometheus scrape configuration lives at
+[monitoring/prometheus.yml](monitoring/prometheus.yml), and a starter Grafana
+dashboard lives at
+[monitoring/grafana-dashboard.json](monitoring/grafana-dashboard.json).
 
 ## Configuration
 

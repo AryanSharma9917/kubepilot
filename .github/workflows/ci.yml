@@ -30,6 +30,9 @@ jobs:
       - name: Build runbook index
         run: kubepilot-index --output /tmp/kubepilot-runbooks.json
 
+      - name: Validate Grafana dashboard JSON
+        run: python -m json.tool monitoring/grafana-dashboard.json >/dev/null
+
   docker:
     runs-on: ubuntu-latest
     steps:

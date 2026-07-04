@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Protocol
 
+from agent.answers import AnswerSynthesizer, GroundedAnswerSynthesizer
 from agent.incidents import IncidentReport, build_deployment_incident_report
 from agent.state.chat import AgentInput, AgentOutput
 from agent.tools.kubernetes import (
@@ -45,10 +46,12 @@ class KubePilotAgent:
         retriever: Retriever | None = None,
         cluster_inspector: ClusterHealthInspector | None = None,
         deployment_diagnoser: DeploymentDiagnoser | None = None,
+        answer_synthesizer: AnswerSynthesizer | None = None,
     ) -> None:
         self._retriever = retriever or create_default_retriever()
         self._cluster_inspector = cluster_inspector or create_cluster_health_inspector()
         self._deployment_diagnoser = deployment_diagnoser or create_deployment_diagnoser()
+        self._answer_synthesizer = answer_synthesizer or GroundedAnswerSynthesizer()
 
     async def run(self, agent_input: AgentInput) -> AgentOutput:
         """Return a stable response grounded in runbooks or tool output."""
@@ -78,9 +81,13 @@ class KubePilotAgent:
                 sources=sources,
             )
 
+        grounded_answer = await self._answer_synthesizer.synthesize(
+            message=agent_input.message,
+            matches=matches,
+        )
         return AgentOutput(
-            answer=_build_answer(agent_input.message, sources),
-            sources=sources,
+            answer=grounded_answer.answer,
+            sources=grounded_answer.sources,
         )
 
 
@@ -111,16 +118,6 @@ def _source_titles(matches: list[RetrievedDocument]) -> tuple[str, ...]:
         if title not in unique_titles:
             unique_titles.append(title)
     return tuple(unique_titles)
-
-
-def _build_answer(message: str, sources: tuple[str, ...]) -> str:
-    base_answer = f'KubePilot received your question: "{message}".'
-
-    if not sources:
-        return f"{base_answer} No matching runbook was found yet."
-
-    source_list = ", ".join(sources)
-    return f"{base_answer} Relevant runbooks: {source_list}."
 
 
 def _should_inspect_cluster(message: str) -> bool:

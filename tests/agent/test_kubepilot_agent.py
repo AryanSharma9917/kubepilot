@@ -88,7 +88,9 @@ async def test_agent_returns_runbook_sources_when_available() -> None:
 
     assert output.answer == (
         'KubePilot received your question: "Why is my deployment failing?". '
-        "Relevant runbooks: Deployment rollout failures."
+        "Based on Deployment rollout failures: "
+        "ImagePullBackOff and rollout failures. "
+        "Sources: Deployment rollout failures."
     )
     assert output.sources == ("Deployment rollout failures",)
 

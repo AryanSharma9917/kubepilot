@@ -27,6 +27,9 @@ jobs:
       - name: Run tests
         run: pytest
 
+      - name: Build runbook index
+        run: kubepilot-index --output /tmp/kubepilot-runbooks.json
+
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -35,3 +38,15 @@ jobs:
 
       - name: Build image
         run: docker build -t kubepilot-api:ci .
+
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Render chart
+        run: helm template kubepilot ./helm/kubepilot --namespace kubepilot

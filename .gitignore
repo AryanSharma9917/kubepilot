@@ -5,7 +5,7 @@ __pycache__/
 .ruff_cache/
 .venv/
 .env
+.kubepilot/
 dist/
 build/
 .codex
-

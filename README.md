@@ -101,6 +101,13 @@ pytest
 ruff check .
 ```
 
+Build a persisted runbook index:
+
+```bash
+kubepilot-index --output .kubepilot/index/runbooks.json
+KUBEPILOT_RAG_INDEX_PATH=.kubepilot/index/runbooks.json uvicorn kubepilot_api.main:app --reload
+```
+
 Run the API with Docker Compose:
 
 ```bash
@@ -113,6 +120,15 @@ Deploy to a local Kubernetes cluster after building/loading the image:
 helm upgrade --install kubepilot ./helm/kubepilot --namespace kubepilot --create-namespace
 ```
 
+For an end-to-end local cluster smoke test, run:
+
+```bash
+./scripts/local-cluster-smoke.sh
+```
+
+See [docs/local-cluster.md](docs/local-cluster.md) for the manual workflow and
+real-cluster mode notes.
+
 ## Configuration
 
 | Variable | Default | Purpose |
@@ -123,6 +139,7 @@ helm upgrade --install kubepilot ./helm/kubepilot --namespace kubepilot --create
 | `KUBEPILOT_K8S_MODE` | `fixture` | Kubernetes mode: `fixture`, `kubeconfig`, or `in_cluster` |
 | `KUBEPILOT_KUBECONFIG` | unset | Optional kubeconfig path for `kubeconfig` mode |
 | `KUBEPILOT_RAG_MODE` | `keyword` | Retrieval mode: `keyword`, `vector`, or `faiss` |
+| `KUBEPILOT_RAG_INDEX_PATH` | unset | Optional path to a persisted runbook index |
 | `KUBEPILOT_AGENT_MODE` | `deterministic` | Agent mode: `deterministic` or `langgraph` |
 
 Optional integration dependencies are grouped as extras:

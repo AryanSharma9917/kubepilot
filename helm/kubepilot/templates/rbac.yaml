@@ -4,7 +4,7 @@ metadata:
   name: {{ include "kubepilot.fullname" . }}
 rules:
   - apiGroups: [""]
-    resources: ["pods", "events"]
+    resources: ["pods", "pods/log", "events"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments"]

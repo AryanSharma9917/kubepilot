@@ -15,6 +15,7 @@ class Settings:
     kubernetes_mode: str = "fixture"
     kubeconfig_path: str | None = None
     rag_mode: str = "keyword"
+    rag_index_path: str | None = None
     agent_mode: str = "deterministic"
 
 
@@ -29,5 +30,6 @@ def get_settings() -> Settings:
         kubernetes_mode=os.getenv("KUBEPILOT_K8S_MODE", "fixture"),
         kubeconfig_path=os.getenv("KUBEPILOT_KUBECONFIG"),
         rag_mode=os.getenv("KUBEPILOT_RAG_MODE", "keyword"),
+        rag_index_path=os.getenv("KUBEPILOT_RAG_INDEX_PATH"),
         agent_mode=os.getenv("KUBEPILOT_AGENT_MODE", "deterministic"),
     )

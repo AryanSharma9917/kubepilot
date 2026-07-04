@@ -17,10 +17,11 @@ class VectorRetriever:
         embedding_model: EmbeddingModel | None = None,
         *,
         prefer_faiss: bool = True,
+        vectors: list[list[float]] | None = None,
     ) -> None:
         self._documents = documents
         self._embedding_model = embedding_model or HashingEmbeddingModel()
-        self._vectors = [
+        self._vectors = vectors or [
             self._embedding_model.embed(_document_text(document))
             for document in documents
         ]

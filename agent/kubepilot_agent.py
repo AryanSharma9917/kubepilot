@@ -2,6 +2,7 @@
 
 import os
 import re
+from pathlib import Path
 from typing import Protocol
 
 from agent.incidents import IncidentReport, build_deployment_incident_report
@@ -14,7 +15,12 @@ from agent.tools.kubernetes import (
     create_cluster_health_inspector,
     create_deployment_diagnoser,
 )
-from rag import RetrievedDocument, create_default_retriever, create_vector_retriever
+from rag import (
+    RetrievedDocument,
+    create_default_retriever,
+    create_persisted_vector_retriever,
+    create_vector_retriever,
+)
 
 
 class Agent(Protocol):
@@ -90,6 +96,9 @@ def create_agent() -> Agent:
 
 
 def _create_retriever() -> Retriever:
+    index_path = os.getenv("KUBEPILOT_RAG_INDEX_PATH")
+    if index_path:
+        return create_persisted_vector_retriever(Path(index_path))
     if os.getenv("KUBEPILOT_RAG_MODE", "keyword") in {"faiss", "vector"}:
         return create_vector_retriever()
     return create_default_retriever()

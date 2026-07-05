@@ -16,6 +16,7 @@ require_command() {
 require_command docker
 require_command helm
 require_command kubectl
+require_command python
 
 docker build -t "${IMAGE}" .
 
@@ -45,9 +46,9 @@ kubectl port-forward "service/${RELEASE}-kubepilot" 18000:8000 \
 PORT_FORWARD_PID="$!"
 trap 'kill "${PORT_FORWARD_PID}" >/dev/null 2>&1 || true' EXIT
 
-sleep 2
-curl --fail --silent http://127.0.0.1:18000/healthz >/dev/null
-curl --fail --silent http://127.0.0.1:18000/readyz >/dev/null
-curl --fail --silent http://127.0.0.1:18000/metrics >/dev/null
+PYTHONPATH="services/api${PYTHONPATH:+:${PYTHONPATH}}" python -m kubepilot_api.local_cluster \
+  --base-url http://127.0.0.1:18000 \
+  --timeout 120 \
+  --poll-interval 1
 
 echo "KubePilot local cluster smoke test passed."

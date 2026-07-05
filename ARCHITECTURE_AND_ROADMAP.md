@@ -257,19 +257,37 @@ kubepilot/
 
 ---
 
+# Implementation Snapshot
+
+## Already Implemented
+
+- [x] FastAPI service with chat, health, readiness, and metrics endpoints
+- [x] Local markdown runbook loading, chunking, and retrieval
+- [x] Optional FAISS-backed vector retrieval
+- [x] Deterministic Kubernetes health, diagnosis, and incident-report tools
+- [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
+- [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
+
+## Still To Build
+
+- [ ] Go-based Kubernetes tooling/services
+- [ ] Full local-cluster deployment validation path (in progress)
+
+---
+
 # MVP Definition
 
 The first release of KubePilot is considered successful when:
 
-* Runbooks can be indexed into FAISS
-* Questions can be answered through RAG
-* LangGraph agent can use tools
-* Kubernetes status can be queried through Go services
-* FastAPI exposes a chat endpoint
-* Services run locally using Docker
-* Deployment works on a local Kubernetes cluster
-* Basic metrics are exposed
-* GitHub Actions validates builds and tests
+- [x] Runbooks can be indexed into FAISS
+- [x] Questions can be answered through RAG
+- [x] LangGraph agent can use tools
+- [ ] Kubernetes status can be queried through Go services
+- [x] FastAPI exposes a chat endpoint
+- [x] Services run locally using Docker
+- [ ] Deployment works on a local Kubernetes cluster (in progress)
+- [x] Basic metrics are exposed
+- [x] GitHub Actions validates builds and tests
 
 ---
 

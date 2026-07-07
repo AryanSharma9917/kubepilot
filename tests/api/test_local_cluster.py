@@ -24,7 +24,8 @@ def _transport(request: httpx.Request) -> httpx.Response:
                 "sources": ["Unhealthy workloads"],
             },
         )
-    if request.url.path == "/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose":
+    diagnosis_path = "/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose"
+    if request.url.path == diagnosis_path:
         return httpx.Response(
             200,
             json={
@@ -45,7 +46,10 @@ def _transport(request: httpx.Request) -> httpx.Response:
                 "recommendations": ["Inspect the latest events."],
             },
         )
-    if request.url.path == "/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report":
+    incident_report_path = (
+        "/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report"
+    )
+    if request.url.path == incident_report_path:
         return httpx.Response(
             200,
             json={

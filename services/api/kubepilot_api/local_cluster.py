@@ -47,6 +47,31 @@ def validate_local_cluster_client(
             if "kubepilot_http_requests_total" not in metrics_response.text:
                 raise RuntimeError("Metrics endpoint did not expose request counters.")
 
+            chat_response = client.post(
+                "/api/v1/chat",
+                json={"message": "Show unhealthy workloads"},
+            )
+            chat_response.raise_for_status()
+            chat_payload = chat_response.json()
+            if "payments/deployment/checkout" not in chat_payload.get("answer", ""):
+                raise RuntimeError("Chat endpoint did not return the expected workload context.")
+
+            diagnosis_response = client.get(
+                "/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose"
+            )
+            diagnosis_response.raise_for_status()
+            diagnosis_payload = diagnosis_response.json()
+            if diagnosis_payload.get("name") != "checkout":
+                raise RuntimeError("Deployment diagnosis did not return the expected deployment.")
+
+            incident_response = client.get(
+                "/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report"
+            )
+            incident_response.raise_for_status()
+            incident_payload = incident_response.json()
+            if not incident_payload.get("title", "").startswith("Deployment incident: "):
+                raise RuntimeError("Incident report did not return the expected summary.")
+
             cluster_response = client.get("/api/v1/cluster/health")
             cluster_response.raise_for_status()
             cluster_payload = cluster_response.json()

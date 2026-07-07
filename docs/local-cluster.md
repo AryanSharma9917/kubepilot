@@ -25,7 +25,7 @@ The script:
 4. Installs or upgrades the chart into the `kubepilot` namespace.
 5. Waits for rollout completion.
 6. Port-forwards the service.
-7. Runs the API-side local-cluster validator against `/healthz`, `/readyz`, `/metrics`, and `/api/v1/cluster/health`.
+7. Runs the API-side local-cluster validator against `/healthz`, `/readyz`, `/metrics`, `/api/v1/chat`, `/api/v1/cluster/health`, `/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose`, and `/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report`.
 
 ## Manual Flow
 

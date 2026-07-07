@@ -40,11 +40,16 @@ def create_cluster_health_inspector(
     *,
     mode: str = "fixture",
     kubeconfig_path: str | None = None,
+    service_url: str = "http://k8s-tool:8081",
 ) -> ClusterHealthInspector:
     """Create the default cluster health inspector."""
 
     return KubernetesClusterHealthInspector(
-        create_kubernetes_client(mode=mode, kubeconfig_path=kubeconfig_path)
+        create_kubernetes_client(
+            mode=mode,
+            kubeconfig_path=kubeconfig_path,
+            service_url=service_url,
+        )
     )
 
 

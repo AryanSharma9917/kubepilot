@@ -14,6 +14,7 @@ class Settings:
     version: str = "0.1.0"
     kubernetes_mode: str = "fixture"
     kubeconfig_path: str | None = None
+    kubernetes_service_url: str = "http://k8s-tool:8081"
     rag_mode: str = "keyword"
     rag_index_path: str | None = None
     agent_mode: str = "deterministic"
@@ -29,6 +30,10 @@ def get_settings() -> Settings:
         version=os.getenv("KUBEPILOT_VERSION", "0.1.0"),
         kubernetes_mode=os.getenv("KUBEPILOT_K8S_MODE", "fixture"),
         kubeconfig_path=os.getenv("KUBEPILOT_KUBECONFIG"),
+        kubernetes_service_url=os.getenv(
+            "KUBEPILOT_K8S_SERVICE_URL",
+            "http://k8s-tool:8081",
+        ),
         rag_mode=os.getenv("KUBEPILOT_RAG_MODE", "keyword"),
         rag_index_path=os.getenv("KUBEPILOT_RAG_INDEX_PATH"),
         agent_mode=os.getenv("KUBEPILOT_AGENT_MODE", "deterministic"),

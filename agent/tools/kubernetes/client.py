@@ -1,6 +1,12 @@
 """Kubernetes client boundary used by operational tools."""
 
+import asyncio
+import json
+from collections.abc import Callable
 from typing import Any, Protocol
+from urllib.error import HTTPError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from agent.tools.kubernetes.models import (
     ContainerLog,
@@ -229,15 +235,95 @@ class KubernetesPythonClient:
         return tuple(logs)
 
 
+class KubernetesServiceClient:
+    """HTTP client for the Go-based Kubernetes tool service."""
+
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        fetch_json: Callable[[str], dict[str, Any] | None] | None = None,
+    ) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._fetch_json = fetch_json or _fetch_json
+        self._fetch_in_thread = fetch_json is None
+
+    async def list_deployments(self, namespace: str | None = None) -> tuple[WorkloadHealth, ...]:
+        """Return deployment health from the k8s-tool service."""
+
+        query = f"?{urlencode({'namespace': namespace})}" if namespace else ""
+        payload = await self._get(f"/api/v1/cluster/health{query}")
+        if payload is None:
+            return ()
+        return tuple(
+            _workload_from_payload(item)
+            for item in payload.get("workloads", [])
+        )
+
+    async def get_deployment(self, namespace: str, name: str) -> WorkloadHealth | None:
+        """Return one deployment health summary from the k8s-tool service."""
+
+        payload = await self._deployment_payload(namespace=namespace, name=name)
+        if payload is None:
+            return None
+        return _workload_from_payload(payload["health"])
+
+    async def list_pods_for_deployment(self, namespace: str, name: str) -> tuple[PodStatus, ...]:
+        """Return pod status from the k8s-tool service."""
+
+        payload = await self._deployment_payload(namespace=namespace, name=name)
+        if payload is None:
+            return ()
+        return tuple(_pod_from_payload(item) for item in payload.get("pods", []))
+
+    async def list_events_for_deployment(
+        self,
+        namespace: str,
+        name: str,
+    ) -> tuple[KubernetesEvent, ...]:
+        """Return deployment events from the k8s-tool service."""
+
+        payload = await self._deployment_payload(namespace=namespace, name=name)
+        if payload is None:
+            return ()
+        return tuple(_event_from_payload(item) for item in payload.get("events", []))
+
+    async def list_logs_for_deployment(
+        self,
+        namespace: str,
+        name: str,
+        *,
+        tail_lines: int = 50,
+    ) -> tuple[ContainerLog, ...]:
+        """Return deployment logs from the k8s-tool service."""
+
+        payload = await self._deployment_payload(namespace=namespace, name=name)
+        if payload is None:
+            return ()
+        return tuple(_log_from_payload(item) for item in payload.get("logs", []))
+
+    async def _deployment_payload(self, namespace: str, name: str) -> dict[str, Any] | None:
+        return await self._get(f"/api/v1/namespaces/{namespace}/deployments/{name}")
+
+    async def _get(self, path: str) -> dict[str, Any] | None:
+        url = f"{self._base_url}{path}"
+        if self._fetch_in_thread:
+            return await asyncio.to_thread(self._fetch_json, url)
+        return self._fetch_json(url)
+
+
 def create_kubernetes_client(
     *,
     mode: str = "fixture",
     kubeconfig_path: str | None = None,
+    service_url: str = "http://k8s-tool:8081",
 ) -> KubernetesClient:
     """Create a Kubernetes client for the requested runtime mode."""
 
     if mode == "fixture":
         return create_fixture_kubernetes_client()
+    if mode == "service":
+        return KubernetesServiceClient(service_url)
     if mode in {"kubeconfig", "in_cluster"}:
         return KubernetesPythonClient(mode=mode, kubeconfig_path=kubeconfig_path)
     raise ValueError(f"Unsupported Kubernetes mode: {mode}")
@@ -365,4 +451,58 @@ def _pod_to_status(pod: Any) -> PodStatus:
         ready=ready,
         restart_count=restart_count,
         reason=reason,
+    )
+
+
+def _fetch_json(url: str) -> dict[str, Any] | None:
+    request = Request(url, headers={"Accept": "application/json"})
+    try:
+        with urlopen(request, timeout=5.0) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        if exc.code == 404:
+            return None
+        raise
+
+
+def _workload_from_payload(payload: dict[str, Any]) -> WorkloadHealth:
+    return WorkloadHealth(
+        namespace=str(payload["namespace"]),
+        name=str(payload["name"]),
+        kind=str(payload["kind"]),
+        desired_replicas=int(payload["desired_replicas"]),
+        ready_replicas=int(payload["ready_replicas"]),
+        status=str(payload["status"]),
+        reason=str(payload["reason"]),
+    )
+
+
+def _pod_from_payload(payload: dict[str, Any]) -> PodStatus:
+    return PodStatus(
+        namespace=str(payload["namespace"]),
+        name=str(payload["name"]),
+        phase=str(payload["phase"]),
+        ready=bool(payload["ready"]),
+        restart_count=int(payload["restart_count"]),
+        reason=payload.get("reason"),
+    )
+
+
+def _event_from_payload(payload: dict[str, Any]) -> KubernetesEvent:
+    return KubernetesEvent(
+        namespace=str(payload["namespace"]),
+        involved_object=str(payload["involved_object"]),
+        reason=str(payload["reason"]),
+        message=str(payload["message"]),
+        event_type=str(payload.get("event_type", "Normal")),
+    )
+
+
+def _log_from_payload(payload: dict[str, Any]) -> ContainerLog:
+    return ContainerLog(
+        namespace=str(payload["namespace"]),
+        pod_name=str(payload["pod_name"]),
+        container_name=str(payload["container_name"]),
+        text=str(payload["text"]),
+        previous=bool(payload.get("previous", False)),
     )

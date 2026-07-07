@@ -32,10 +32,12 @@ class ClusterService:
         self._inspector = inspector or create_cluster_health_inspector(
             mode=settings.kubernetes_mode,
             kubeconfig_path=settings.kubeconfig_path,
+            service_url=settings.kubernetes_service_url,
         )
         self._diagnoser = diagnoser or create_deployment_diagnoser(
             mode=settings.kubernetes_mode,
             kubeconfig_path=settings.kubeconfig_path,
+            service_url=settings.kubernetes_service_url,
         )
 
     async def health(self, namespace: str | None = None) -> ClusterHealthResponse:

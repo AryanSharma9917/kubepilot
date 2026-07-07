@@ -44,11 +44,16 @@ def create_deployment_diagnoser(
     *,
     mode: str = "fixture",
     kubeconfig_path: str | None = None,
+    service_url: str = "http://k8s-tool:8081",
 ) -> DeploymentDiagnoser:
     """Create a deployment diagnoser for the requested Kubernetes mode."""
 
     return KubernetesDeploymentDiagnoser(
-        create_kubernetes_client(mode=mode, kubeconfig_path=kubeconfig_path)
+        create_kubernetes_client(
+            mode=mode,
+            kubeconfig_path=kubeconfig_path,
+            service_url=service_url,
+        )
     )
 
 

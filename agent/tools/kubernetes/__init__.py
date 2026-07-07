@@ -3,6 +3,7 @@
 from agent.tools.kubernetes.client import (
     InMemoryKubernetesClient,
     KubernetesClient,
+    KubernetesServiceClient,
     create_kubernetes_client,
 )
 from agent.tools.kubernetes.diagnosis import (
@@ -36,6 +37,7 @@ __all__ = [
     "KubernetesClient",
     "KubernetesClusterHealthInspector",
     "KubernetesDeploymentDiagnoser",
+    "KubernetesServiceClient",
     "KubernetesEvent",
     "PodStatus",
     "WorkloadHealth",

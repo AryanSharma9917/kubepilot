@@ -33,12 +33,50 @@ class ChatRequest(BaseModel):
         return value.strip() if isinstance(value, str) else value
 
 
+class CitationResponse(BaseModel):
+    """Citation supporting an answer."""
+
+    title: str
+    source: str
+    snippet: str
+
+
 class ChatResponse(BaseModel):
     """KubePilot's response to a chat request."""
 
     request_id: UUID
     answer: str
     sources: list[str] = Field(default_factory=list)
+    citations: list[CitationResponse] = Field(default_factory=list)
+
+
+class KnowledgeSearchRequest(BaseModel):
+    """Knowledge search query submitted to KubePilot."""
+
+    query: str = Field(min_length=1, max_length=1000)
+    limit: int = Field(default=3, ge=1, le=10)
+
+    @field_validator("query", mode="before")
+    @classmethod
+    def normalize_query(cls, value: object) -> object:
+        """Trim surrounding whitespace before validating query length."""
+
+        return value.strip() if isinstance(value, str) else value
+
+
+class KnowledgeSearchResult(BaseModel):
+    """One retrieved knowledge result."""
+
+    title: str
+    source: str
+    snippet: str
+    score: float
+
+
+class KnowledgeSearchResponse(BaseModel):
+    """Knowledge search response."""
+
+    results: list[KnowledgeSearchResult] = Field(default_factory=list)
 
 
 class WorkloadHealthResponse(BaseModel):

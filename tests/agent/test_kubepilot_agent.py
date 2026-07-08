@@ -98,11 +98,12 @@ async def test_agent_returns_runbook_sources_when_available() -> None:
 
     assert output.answer == (
         'KubePilot received your question: "Why is my deployment failing?". '
-        "Based on Deployment rollout failures: "
-        "ImagePullBackOff and rollout failures. "
+        "Based on the retrieved runbooks, "
+        "[1] Deployment rollout failures: ImagePullBackOff and rollout failures. "
         "Sources: Deployment rollout failures."
     )
     assert output.sources == ("Deployment rollout failures",)
+    assert output.citations[0].source == "deployment.md"
 
 
 @pytest.mark.anyio

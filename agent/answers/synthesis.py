@@ -1,8 +1,12 @@
 """Grounded answer synthesis for retrieved runbook context."""
 
+import os
 from dataclasses import dataclass
 from typing import Protocol
 
+from agent.answers.prompts import build_grounded_answer_prompt, citations_from_matches
+from agent.llm import DeterministicLLMClient, LLMClient
+from agent.state.chat import Citation
 from rag import RetrievedDocument
 
 
@@ -12,6 +16,7 @@ class GroundedAnswer:
 
     answer: str
     sources: tuple[str, ...]
+    citations: tuple[Citation, ...] = ()
 
 
 class AnswerSynthesizer(Protocol):
@@ -29,6 +34,9 @@ class AnswerSynthesizer(Protocol):
 class GroundedAnswerSynthesizer:
     """Deterministic answer synthesizer grounded in retrieved runbook chunks."""
 
+    def __init__(self, llm_client: LLMClient | None = None) -> None:
+        self._llm_client = llm_client or DeterministicLLMClient()
+
     async def synthesize(
         self,
         *,
@@ -45,15 +53,26 @@ class GroundedAnswerSynthesizer:
                 sources=(),
             )
 
-        evidence = " ".join(_context_sentence(match) for match in matches[:2])
+        prompt = build_grounded_answer_prompt(message=message, matches=matches)
+        model_answer = await self._llm_client.complete(prompt)
+        citations = citations_from_matches(matches)
         source_list = ", ".join(sources)
         return GroundedAnswer(
             answer=(
-                f"{base_answer} Based on {source_list}: "
-                f"{evidence} Sources: {source_list}."
+                f"{base_answer} {model_answer} Sources: {source_list}."
             ),
             sources=sources,
+            citations=citations,
         )
+
+
+def create_answer_synthesizer() -> AnswerSynthesizer:
+    """Create the configured answer synthesizer."""
+
+    provider = os.getenv("KUBEPILOT_LLM_PROVIDER", "deterministic")
+    if provider == "deterministic":
+        return GroundedAnswerSynthesizer()
+    raise ValueError(f"Unsupported LLM provider: {provider}")
 
 
 def _source_titles(matches: list[RetrievedDocument]) -> tuple[str, ...]:
@@ -63,11 +82,3 @@ def _source_titles(matches: list[RetrievedDocument]) -> tuple[str, ...]:
         if title not in unique_titles:
             unique_titles.append(title)
     return tuple(unique_titles)
-
-
-def _context_sentence(match: RetrievedDocument) -> str:
-    content = " ".join(match.document.content.split())
-    first_sentence = content.split(". ", maxsplit=1)[0].strip()
-    if first_sentence and not first_sentence.endswith("."):
-        first_sentence = f"{first_sentence}."
-    return first_sentence or match.document.title

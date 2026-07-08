@@ -18,6 +18,8 @@ async def test_chat_returns_placeholder_response(client: httpx.AsyncClient) -> N
         'KubePilot received your question: "Why is my deployment failing?".'
     )
     assert body["sources"]
+    assert body["citations"]
+    assert {"title", "source", "snippet"} <= set(body["citations"][0])
 
 
 @pytest.mark.anyio
@@ -53,3 +55,18 @@ async def test_chat_rejects_message_over_limit(client: httpx.AsyncClient) -> Non
     response = await client.post("/api/v1/chat", json={"message": "x" * 4001})
 
     assert response.status_code == 422
+
+
+@pytest.mark.anyio
+async def test_stream_chat_returns_server_sent_events(client: httpx.AsyncClient) -> None:
+    response = await client.post(
+        "/api/v1/chat/stream",
+        json={"message": "Why is my deployment failing?"},
+    )
+
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers["content-type"]
+    assert "event: answer_delta" in response.text
+    assert "event: sources" in response.text
+    assert "event: citations" in response.text
+    assert "event: done" in response.text

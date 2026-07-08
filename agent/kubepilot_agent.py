@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Protocol
 
-from agent.answers import AnswerSynthesizer, GroundedAnswerSynthesizer
+from agent.answers import AnswerSynthesizer, create_answer_synthesizer
 from agent.graph.intents import classify_intent
 from agent.incidents import IncidentReport, build_deployment_incident_report
 from agent.state.chat import AgentInput, AgentOutput
@@ -52,7 +52,7 @@ class KubePilotAgent:
         self._retriever = retriever or create_default_retriever()
         self._cluster_inspector = cluster_inspector or create_cluster_health_inspector()
         self._deployment_diagnoser = deployment_diagnoser or create_deployment_diagnoser()
-        self._answer_synthesizer = answer_synthesizer or GroundedAnswerSynthesizer()
+        self._answer_synthesizer = answer_synthesizer or create_answer_synthesizer()
 
     async def run(self, agent_input: AgentInput) -> AgentOutput:
         """Return a stable response grounded in runbooks or tool output."""
@@ -94,6 +94,7 @@ class KubePilotAgent:
         return AgentOutput(
             answer=grounded_answer.answer,
             sources=grounded_answer.sources,
+            citations=grounded_answer.citations,
         )
 
 
@@ -105,10 +106,12 @@ def create_agent() -> Agent:
 
         return create_graph_agent()
 
-    return KubePilotAgent(retriever=_create_retriever())
+    return KubePilotAgent(retriever=create_configured_retriever())
 
 
-def _create_retriever() -> Retriever:
+def create_configured_retriever() -> Retriever:
+    """Create a retriever from runtime environment settings."""
+
     index_path = os.getenv("KUBEPILOT_RAG_INDEX_PATH")
     if index_path:
         return create_persisted_vector_retriever(Path(index_path))

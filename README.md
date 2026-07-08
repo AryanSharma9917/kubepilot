@@ -14,6 +14,8 @@ and real cluster clients will replace or extend.
 - Liveness probe at `GET /healthz`
 - Readiness probe at `GET /readyz`
 - Chat endpoint at `POST /api/v1/chat`
+- Streaming chat endpoint at `POST /api/v1/chat/stream`
+- Knowledge search endpoint at `POST /api/v1/knowledge/search`
 - Cluster health endpoint at `GET /api/v1/cluster/health`
 - Deployment diagnosis endpoint at
   `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/diagnose`
@@ -22,6 +24,9 @@ and real cluster clients will replace or extend.
 - Initial agent boundary for chat-style requests
 - Local markdown runbook loading, chunking, and keyword retrieval
 - Optional vector retrieval with FAISS when installed
+- Provider-shaped answer synthesis with an offline deterministic LLM client
+- Structured answer citations in chat responses
+- Retrieval evaluation CLI for JSONL benchmark cases
 - LangGraph-compatible agent orchestration boundary
 - Fixture-mode and real-client Kubernetes tool boundary
 - Environment-based service configuration
@@ -39,11 +44,13 @@ When a user sends a chat message:
 1. FastAPI validates the request.
 2. The chat service passes the message into the agent boundary.
 3. The agent searches local runbook chunks with the keyword retriever.
-4. The API returns a deterministic answer and matching runbook source titles.
+4. The answer synthesizer builds a grounded prompt from retrieved context.
+5. The configured LLM provider returns an answer.
+6. The API returns the answer, source titles, and structured citations.
 
 This keeps the project runnable without external AI or vector database
-dependencies while preserving the architecture seam for FAISS, sentence
-transformers, and LangGraph later.
+dependencies while preserving the architecture seam for hosted LLMs, FAISS,
+sentence transformers, and LangGraph later.
 
 ## Local cluster tool flow
 
@@ -108,6 +115,12 @@ kubepilot-index --output .kubepilot/index/runbooks.json
 KUBEPILOT_RAG_INDEX_PATH=.kubepilot/index/runbooks.json uvicorn kubepilot_api.main:app --reload
 ```
 
+Run retrieval evaluation:
+
+```bash
+kubepilot-evaluate-retrieval --cases tests/fixtures/retrieval-evaluation.jsonl
+```
+
 Run the API with Docker Compose:
 
 ```bash
@@ -143,8 +156,10 @@ dashboard lives at
 | `KUBEPILOT_VERSION` | `0.1.0` | Reported service version |
 | `KUBEPILOT_K8S_MODE` | `fixture` | Kubernetes mode: `fixture`, `kubeconfig`, or `in_cluster` |
 | `KUBEPILOT_KUBECONFIG` | unset | Optional kubeconfig path for `kubeconfig` mode |
+| `KUBEPILOT_ALLOWED_NAMESPACES` | unset | Optional comma-separated namespace allowlist for cluster APIs |
 | `KUBEPILOT_RAG_MODE` | `keyword` | Retrieval mode: `keyword`, `vector`, or `faiss` |
 | `KUBEPILOT_RAG_INDEX_PATH` | unset | Optional path to a persisted runbook index |
+| `KUBEPILOT_LLM_PROVIDER` | `deterministic` | Answer provider mode; currently `deterministic` |
 | `KUBEPILOT_AGENT_MODE` | `deterministic` | Agent mode: `deterministic` or `langgraph` |
 
 Optional integration dependencies are grouped as extras:

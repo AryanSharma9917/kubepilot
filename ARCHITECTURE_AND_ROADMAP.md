@@ -264,14 +264,28 @@ kubepilot/
 - [x] FastAPI service with chat, health, readiness, and metrics endpoints
 - [x] Local markdown runbook loading, chunking, and retrieval
 - [x] Optional FAISS-backed vector retrieval
+- [x] Persisted runbook index generation and loading
+- [x] Provider-shaped answer synthesis with structured citations
+- [x] Knowledge search API for retrieval inspection
+- [x] Retrieval evaluation CLI and JSONL benchmark cases
+- [x] LangGraph-compatible workflow boundary with intent classification
 - [x] Deterministic Kubernetes health, diagnosis, and incident-report tools
+- [x] Deployment diagnostics using pod status, events, and log excerpts
+- [x] Streaming chat endpoint using server-sent events
+- [x] Namespace allowlist policy for cluster APIs
 - [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
+- [x] Local cluster smoke-test script and validation guide
 
 ## Still To Build
 
+- [ ] Hosted or self-hosted LLM provider implementation
+- [ ] Native FAISS index persistence when the optional dependency is installed
+- [ ] Deeper LangGraph workflow with separate retrieval, tool, synthesis, and review nodes
 - [ ] Go-based Kubernetes tooling/services
-- [ ] Full local-cluster deployment validation path (in progress)
+- [ ] Auth, RBAC-aware tool execution, and audit logging
+- [ ] OpenTelemetry tracing and richer tool metrics
+- [ ] Integration tests against kind or minikube in CI
 
 ---
 
@@ -285,7 +299,7 @@ The first release of KubePilot is considered successful when:
 - [ ] Kubernetes status can be queried through Go services
 - [x] FastAPI exposes a chat endpoint
 - [x] Services run locally using Docker
-- [ ] Deployment works on a local Kubernetes cluster (in progress)
+- [x] Deployment works on a local Kubernetes cluster
 - [x] Basic metrics are exposed
 - [x] GitHub Actions validates builds and tests
 

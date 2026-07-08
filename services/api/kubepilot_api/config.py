@@ -15,8 +15,10 @@ class Settings:
     kubernetes_mode: str = "fixture"
     kubeconfig_path: str | None = None
     kubernetes_service_url: str = "http://k8s-tool:8081"
+    allowed_namespaces: tuple[str, ...] = ()
     rag_mode: str = "keyword"
     rag_index_path: str | None = None
+    llm_provider: str = "deterministic"
     agent_mode: str = "deterministic"
 
 
@@ -34,7 +36,13 @@ def get_settings() -> Settings:
             "KUBEPILOT_K8S_SERVICE_URL",
             "http://k8s-tool:8081",
         ),
+        allowed_namespaces=_split_csv(os.getenv("KUBEPILOT_ALLOWED_NAMESPACES", "")),
         rag_mode=os.getenv("KUBEPILOT_RAG_MODE", "keyword"),
         rag_index_path=os.getenv("KUBEPILOT_RAG_INDEX_PATH"),
+        llm_provider=os.getenv("KUBEPILOT_LLM_PROVIDER", "deterministic"),
         agent_mode=os.getenv("KUBEPILOT_AGENT_MODE", "deterministic"),
     )
+
+
+def _split_csv(value: str) -> tuple[str, ...]:
+    return tuple(item.strip() for item in value.split(",") if item.strip())

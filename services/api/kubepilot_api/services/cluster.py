@@ -8,6 +8,7 @@ from agent.tools.kubernetes import (
     create_deployment_diagnoser,
 )
 from kubepilot_api.config import get_settings
+from kubepilot_api.policy import NamespaceAccessPolicy
 from kubepilot_api.schemas import (
     ClusterHealthResponse,
     ContainerLogResponse,
@@ -39,10 +40,12 @@ class ClusterService:
             kubeconfig_path=settings.kubeconfig_path,
             service_url=settings.kubernetes_service_url,
         )
+        self._namespace_policy = NamespaceAccessPolicy(settings.allowed_namespaces)
 
     async def health(self, namespace: str | None = None) -> ClusterHealthResponse:
         """Return workload health from the configured inspector."""
 
+        self._namespace_policy.ensure_allowed(namespace)
         health = await self._inspector.inspect(namespace=namespace)
         unhealthy = health.unhealthy_workloads
         return ClusterHealthResponse(
@@ -69,6 +72,7 @@ class ClusterService:
     ) -> DeploymentDiagnosisResponse | None:
         """Return a diagnosis for one Kubernetes deployment."""
 
+        self._namespace_policy.ensure_allowed(namespace)
         diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
         if diagnosis is None:
             return None
@@ -127,6 +131,7 @@ class ClusterService:
     ) -> IncidentReportResponse | None:
         """Return a structured incident report for one deployment."""
 
+        self._namespace_policy.ensure_allowed(namespace)
         diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
         if diagnosis is None:
             return None

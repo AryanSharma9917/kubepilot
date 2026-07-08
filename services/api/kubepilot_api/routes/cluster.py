@@ -19,7 +19,10 @@ async def cluster_health(
 ) -> ClusterHealthResponse:
     """Return a Kubernetes workload health summary."""
 
-    return await service.health(namespace=namespace)
+    try:
+        return await service.health(namespace=namespace)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
 
 
 @router.get(
@@ -33,7 +36,10 @@ async def diagnose_deployment(
 ) -> DeploymentDiagnosisResponse:
     """Return a deployment diagnosis for a Kubernetes workload."""
 
-    diagnosis = await service.diagnose_deployment(namespace=namespace, name=name)
+    try:
+        diagnosis = await service.diagnose_deployment(namespace=namespace, name=name)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     if diagnosis is None:
         raise HTTPException(status_code=404, detail="Deployment not found")
     return diagnosis
@@ -50,7 +56,10 @@ async def deployment_incident_report(
 ) -> IncidentReportResponse:
     """Return a structured incident report for a Kubernetes deployment."""
 
-    report = await service.deployment_incident_report(namespace=namespace, name=name)
+    try:
+        report = await service.deployment_incident_report(namespace=namespace, name=name)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     if report is None:
         raise HTTPException(status_code=404, detail="Deployment not found")
     return report

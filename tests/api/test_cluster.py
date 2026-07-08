@@ -1,5 +1,6 @@
 import httpx
 import pytest
+from kubepilot_api.config import get_settings
 
 
 @pytest.mark.anyio
@@ -53,3 +54,23 @@ async def test_deployment_diagnosis_returns_404_for_missing_deployment(
     response = await client.get("/api/v1/cluster/namespaces/default/deployments/missing/diagnose")
 
     assert response.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_cluster_routes_reject_disallowed_namespace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KUBEPILOT_ALLOWED_NAMESPACES", "payments")
+    get_settings.cache_clear()
+
+    from kubepilot_api.main import create_app
+
+    transport = httpx.ASGITransport(app=create_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get(
+            "/api/v1/cluster/namespaces/platform/deployments/metrics-scraper/diagnose"
+        )
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 403

@@ -1,5 +1,6 @@
 """KubePilot retrieval package."""
 
+from rag.evaluation import EvaluationCase, EvaluationResult, evaluate_retriever
 from rag.indexing import (
     PersistedIndex,
     build_runbook_index,
@@ -13,6 +14,8 @@ from rag.retrieval.vector import VectorRetriever, create_vector_retriever
 
 __all__ = [
     "Document",
+    "EvaluationCase",
+    "EvaluationResult",
     "KeywordRetriever",
     "PersistedIndex",
     "RetrievedDocument",
@@ -21,6 +24,7 @@ __all__ = [
     "create_default_retriever",
     "create_persisted_vector_retriever",
     "create_vector_retriever",
+    "evaluate_retriever",
     "read_runbook_index",
     "write_runbook_index",
 ]

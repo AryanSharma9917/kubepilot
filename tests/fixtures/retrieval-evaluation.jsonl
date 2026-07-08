@@ -1,0 +1,2 @@
+{"query": "deployment image pull failing", "expected_sources": ["docs/runbooks/deployment-rollout-failures.md"]}
+{"query": "rolling restart a deployment", "expected_sources": ["docs/runbooks/rolling-restart.md"]}

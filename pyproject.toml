@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 kubepilot-index = "rag.cli:main"
+kubepilot-evaluate-retrieval = "rag.cli:evaluate"
 
 [project.optional-dependencies]
 dev = [

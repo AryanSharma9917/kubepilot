@@ -1,7 +1,7 @@
 import pytest
 
 from agent.graph import classify_intent
-from agent.graph.workflow import GraphAgent
+from agent.graph.workflow import GraphAgent, build_workflow_steps
 from agent.state.chat import AgentInput, AgentOutput
 
 
@@ -27,6 +27,19 @@ def test_classify_intent_defaults_to_runbook_answer() -> None:
     intent = classify_intent("How do we perform a rolling restart?")
 
     assert intent.name == "runbook_answer"
+
+
+def test_build_workflow_steps_for_deployment_diagnosis() -> None:
+    intent = classify_intent("Diagnose deployment checkout")
+
+    steps = build_workflow_steps(intent)
+
+    assert [step.name for step in steps] == [
+        "classify_intent",
+        "retrieve_context",
+        "diagnose_deployment",
+        "synthesize_diagnosis",
+    ]
 
 
 @pytest.mark.anyio

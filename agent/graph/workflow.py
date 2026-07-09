@@ -9,12 +9,21 @@ from agent.state.chat import AgentInput, AgentOutput
 
 
 @dataclass
+class WorkflowStep:
+    """One logical step in an agent workflow."""
+
+    name: str
+    description: str
+
+
+@dataclass
 class GraphState:
     """State passed through graph execution."""
 
     message: str
     intent: Intent | None = None
     route: str | None = None
+    steps: tuple[WorkflowStep, ...] = ()
     output: AgentOutput | None = None
 
 
@@ -36,6 +45,7 @@ class GraphAgent:
                 "message": agent_input.message,
                 "intent": None,
                 "route": None,
+                "steps": (),
                 "output": None,
             }
         )
@@ -56,6 +66,7 @@ class GraphAgent:
                 **state,
                 "intent": intent,
                 "route": intent.name,
+                "steps": build_workflow_steps(intent),
             }
 
         async def execute(state: dict[str, Any]) -> dict[str, Any]:
@@ -75,3 +86,30 @@ def create_graph_agent() -> GraphAgent:
     """Create the graph-backed agent runtime."""
 
     return GraphAgent()
+
+
+def build_workflow_steps(intent: Intent) -> tuple[WorkflowStep, ...]:
+    """Return the logical workflow steps for an intent."""
+
+    common = (
+        WorkflowStep("classify_intent", "Classify the user request."),
+        WorkflowStep("retrieve_context", "Retrieve relevant runbook context."),
+    )
+    if intent.name == "cluster_health":
+        return common + (
+            WorkflowStep("inspect_cluster", "Collect workload health signals."),
+            WorkflowStep("summarize_health", "Summarize unhealthy workloads."),
+        )
+    if intent.name == "deployment_diagnosis":
+        return common + (
+            WorkflowStep("diagnose_deployment", "Collect deployment, pod, event, and log signals."),
+            WorkflowStep("synthesize_diagnosis", "Produce operator-focused next steps."),
+        )
+    if intent.name == "incident_report":
+        return common + (
+            WorkflowStep("diagnose_deployment", "Collect deployment incident evidence."),
+            WorkflowStep("build_incident_report", "Create a structured incident report."),
+        )
+    return common + (
+        WorkflowStep("synthesize_answer", "Generate a grounded runbook answer."),
+    )

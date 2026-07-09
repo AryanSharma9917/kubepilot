@@ -28,9 +28,11 @@ and real cluster clients will replace or extend.
 - Structured answer citations in chat responses
 - Retrieval evaluation CLI for JSONL benchmark cases
 - LangGraph-compatible agent orchestration boundary
+- Explicit graph workflow step plans for agent intents
 - Fixture-mode and real-client Kubernetes tool boundary
 - Environment-based service configuration
 - Prometheus-style metrics at `GET /metrics`
+- Local audit events at `GET /api/v1/audit/events`
 - Docker, Compose, Helm, Prometheus, Grafana, and GitOps starter manifests
 - API contract tests
 
@@ -119,6 +121,15 @@ Run retrieval evaluation:
 
 ```bash
 kubepilot-evaluate-retrieval --cases tests/fixtures/retrieval-evaluation.jsonl
+```
+
+Build a native FAISS sidecar index when optional FAISS dependencies are
+installed:
+
+```bash
+kubepilot-index \
+  --output .kubepilot/index/runbooks.json \
+  --faiss-output .kubepilot/index/runbooks.faiss
 ```
 
 Run the API with Docker Compose:

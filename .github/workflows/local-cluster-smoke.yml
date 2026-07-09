@@ -1,0 +1,22 @@
+name: Local Cluster Smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  kind-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: kind
+
+      - name: Run local cluster smoke test
+        run: ./scripts/local-cluster-smoke.sh

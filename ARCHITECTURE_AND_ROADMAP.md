@@ -265,27 +265,31 @@ kubepilot/
 - [x] Local markdown runbook loading, chunking, and retrieval
 - [x] Optional FAISS-backed vector retrieval
 - [x] Persisted runbook index generation and loading
+- [x] Optional native FAISS sidecar index generation
 - [x] Provider-shaped answer synthesis with structured citations
 - [x] Knowledge search API for retrieval inspection
 - [x] Retrieval evaluation CLI and JSONL benchmark cases
 - [x] LangGraph-compatible workflow boundary with intent classification
+- [x] Explicit workflow step plans for graph execution
 - [x] Deterministic Kubernetes health, diagnosis, and incident-report tools
 - [x] Deployment diagnostics using pod status, events, and log excerpts
 - [x] Streaming chat endpoint using server-sent events
 - [x] Namespace allowlist policy for cluster APIs
+- [x] Local audit event trail for API requests
+- [x] Chat response/source/citation metrics
 - [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
+- [x] Manual GitHub Actions kind smoke workflow
 - [x] Local cluster smoke-test script and validation guide
 
 ## Still To Build
 
 - [ ] Hosted or self-hosted LLM provider implementation
-- [ ] Native FAISS index persistence when the optional dependency is installed
-- [ ] Deeper LangGraph workflow with separate retrieval, tool, synthesis, and review nodes
+- [ ] Deeper LangGraph workflow with branch-specific retrieval, tool, synthesis, and review nodes
 - [ ] Go-based Kubernetes tooling/services
 - [ ] Auth, RBAC-aware tool execution, and audit logging
 - [ ] OpenTelemetry tracing and richer tool metrics
-- [ ] Integration tests against kind or minikube in CI
+- [ ] Scheduled integration tests against kind or minikube in CI
 
 ---
 

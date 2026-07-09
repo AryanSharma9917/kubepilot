@@ -6,6 +6,7 @@ from rag.indexing import (
     build_runbook_index,
     create_persisted_vector_retriever,
     read_runbook_index,
+    write_native_faiss_index,
     write_runbook_index,
 )
 from rag.models import Document, RetrievedDocument
@@ -26,5 +27,6 @@ __all__ = [
     "create_vector_retriever",
     "evaluate_retriever",
     "read_runbook_index",
+    "write_native_faiss_index",
     "write_runbook_index",
 ]

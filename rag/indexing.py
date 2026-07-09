@@ -58,6 +58,25 @@ def write_runbook_index(index: PersistedIndex, path: Path) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def write_native_faiss_index(index: PersistedIndex, path: Path) -> bool:
+    """Write a native FAISS index when optional FAISS dependencies are installed."""
+
+    if not index.vectors:
+        return False
+    try:
+        import faiss
+        import numpy
+    except ImportError:
+        return False
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    matrix = numpy.array(index.vectors, dtype="float32")
+    faiss_index = faiss.IndexFlatIP(len(index.vectors[0]))
+    faiss_index.add(matrix)
+    faiss.write_index(faiss_index, str(path))
+    return True
+
+
 def read_runbook_index(path: Path) -> PersistedIndex:
     """Read a persisted runbook index from JSON."""
 

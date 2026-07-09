@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from rag.evaluation import evaluate_retriever, load_evaluation_cases
-from rag.indexing import build_runbook_index, write_runbook_index
+from rag.indexing import build_runbook_index, write_native_faiss_index, write_runbook_index
 from rag.retrieval.keyword import create_default_retriever
 
 
@@ -24,11 +24,22 @@ def main() -> None:
         default=Path(".kubepilot/index/runbooks.json"),
         help="Path for the persisted index JSON.",
     )
+    parser.add_argument(
+        "--faiss-output",
+        type=Path,
+        default=None,
+        help="Optional path for a native FAISS sidecar index.",
+    )
     args = parser.parse_args()
 
     index = build_runbook_index(runbooks_dir=args.runbooks_dir)
     write_runbook_index(index, args.output)
     print(f"Indexed {len(index.documents)} chunks into {args.output}")
+    if args.faiss_output is not None:
+        if write_native_faiss_index(index, args.faiss_output):
+            print(f"Wrote FAISS sidecar index to {args.faiss_output}")
+        else:
+            print("Skipped FAISS sidecar index because faiss/numpy are not installed")
 
 
 def evaluate() -> None:

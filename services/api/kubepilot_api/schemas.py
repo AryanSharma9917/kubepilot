@@ -159,3 +159,18 @@ class IncidentReportResponse(BaseModel):
     evidence: list[EvidenceItemResponse] = Field(default_factory=list)
     next_actions: list[str] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
+
+
+class AuditEventResponse(BaseModel):
+    """One audit event returned by the API."""
+
+    timestamp: float
+    method: str
+    path: str
+    status_code: int
+
+
+class AuditEventsResponse(BaseModel):
+    """Recent API audit events."""
+
+    events: list[AuditEventResponse] = Field(default_factory=list)

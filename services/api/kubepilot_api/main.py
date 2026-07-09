@@ -2,8 +2,10 @@
 
 from fastapi import FastAPI, Response
 
+from kubepilot_api.audit import audit_middleware
 from kubepilot_api.config import get_settings
 from kubepilot_api.metrics import metrics_middleware, render_metrics
+from kubepilot_api.routes.audit import router as audit_router
 from kubepilot_api.routes.chat import router as chat_router
 from kubepilot_api.routes.cluster import router as cluster_router
 from kubepilot_api.routes.knowledge import router as knowledge_router
@@ -19,7 +21,9 @@ def create_app() -> FastAPI:
         version=settings.version,
         description="API entry point for the KubePilot platform.",
     )
+    app.middleware("http")(audit_middleware)
     app.middleware("http")(metrics_middleware)
+    app.include_router(audit_router)
     app.include_router(chat_router)
     app.include_router(cluster_router)
     app.include_router(knowledge_router)

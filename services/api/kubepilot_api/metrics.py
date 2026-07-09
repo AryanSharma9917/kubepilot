@@ -7,6 +7,9 @@ from fastapi import Request, Response
 
 REQUESTS: Counter[tuple[str, str, int]] = Counter()
 REQUEST_SECONDS: Counter[tuple[str, str]] = Counter()
+CHAT_RESPONSES: Counter[str] = Counter()
+CHAT_SOURCES: Counter[str] = Counter()
+CHAT_CITATIONS: Counter[str] = Counter()
 
 
 async def metrics_middleware(request: Request, call_next: object) -> Response:
@@ -49,4 +52,25 @@ def render_metrics() -> str:
             f'method="{method}",path="{path}"'
             f"}} {total_seconds:.6f}"
         )
+    lines.extend(
+        [
+            "# HELP kubepilot_chat_responses_total Total chat responses.",
+            "# TYPE kubepilot_chat_responses_total counter",
+            f"kubepilot_chat_responses_total {CHAT_RESPONSES['total']}",
+            "# HELP kubepilot_chat_sources_total Total cited source titles in chat responses.",
+            "# TYPE kubepilot_chat_sources_total counter",
+            f"kubepilot_chat_sources_total {CHAT_SOURCES['total']}",
+            "# HELP kubepilot_chat_citations_total Total structured citations in chat responses.",
+            "# TYPE kubepilot_chat_citations_total counter",
+            f"kubepilot_chat_citations_total {CHAT_CITATIONS['total']}",
+        ]
+    )
     return "\n".join(lines) + "\n"
+
+
+def record_chat_response(*, source_count: int, citation_count: int) -> None:
+    """Record chat response-level metrics."""
+
+    CHAT_RESPONSES["total"] += 1
+    CHAT_SOURCES["total"] += source_count
+    CHAT_CITATIONS["total"] += citation_count

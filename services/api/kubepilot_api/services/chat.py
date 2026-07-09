@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from uuid import uuid4
 
 from agent import Agent, AgentInput, create_agent
+from kubepilot_api.metrics import record_chat_response
 from kubepilot_api.schemas import ChatRequest, ChatResponse, CitationResponse
 
 
@@ -19,7 +20,7 @@ class ChatService:
 
         agent_output = await self._agent.run(AgentInput(message=request.message))
 
-        return ChatResponse(
+        response = ChatResponse(
             request_id=uuid4(),
             answer=agent_output.answer,
             sources=list(agent_output.sources),
@@ -32,6 +33,11 @@ class ChatService:
                 for citation in agent_output.citations
             ],
         )
+        record_chat_response(
+            source_count=len(response.sources),
+            citation_count=len(response.citations),
+        )
+        return response
 
     async def stream(self, request: ChatRequest) -> AsyncIterator[str]:
         """Stream an agent response as server-sent events."""

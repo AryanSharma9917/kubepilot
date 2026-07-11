@@ -1,7 +1,7 @@
 import pytest
 
 from agent.graph import classify_intent
-from agent.graph.workflow import GraphAgent, build_workflow_steps
+from agent.graph.workflow import GraphAgent, build_workflow_steps, review_agent_output
 from agent.state.chat import AgentInput, AgentOutput
 
 
@@ -39,7 +39,14 @@ def test_build_workflow_steps_for_deployment_diagnosis() -> None:
         "retrieve_context",
         "diagnose_deployment",
         "synthesize_diagnosis",
+        "review_output",
     ]
+
+
+def test_review_agent_output_rejects_blank_answers() -> None:
+    assert review_agent_output(AgentOutput(answer="ok")) is True
+    assert review_agent_output(AgentOutput(answer="   ")) is False
+    assert review_agent_output(None) is False
 
 
 @pytest.mark.anyio

@@ -25,6 +25,7 @@ class GraphState:
     route: str | None = None
     steps: tuple[WorkflowStep, ...] = ()
     output: AgentOutput | None = None
+    reviewed: bool = False
 
 
 class GraphAgent:
@@ -47,6 +48,7 @@ class GraphAgent:
                 "route": None,
                 "steps": (),
                 "output": None,
+                "reviewed": False,
             }
         )
         output = result.get("output")
@@ -73,12 +75,20 @@ class GraphAgent:
             output = await self._fallback_agent.run(AgentInput(message=state["message"]))
             return {**state, "output": output}
 
+        def review(state: dict[str, Any]) -> dict[str, Any]:
+            output = state.get("output")
+            if not review_agent_output(output):
+                return {**state, "output": None, "reviewed": False}
+            return {**state, "reviewed": True}
+
         graph = StateGraph(dict)
         graph.add_node("classify_intent", classify)
         graph.add_node("execute_tools_and_synthesize", execute)
+        graph.add_node("review_output", review)
         graph.set_entry_point("classify_intent")
         graph.add_edge("classify_intent", "execute_tools_and_synthesize")
-        graph.add_edge("execute_tools_and_synthesize", END)
+        graph.add_edge("execute_tools_and_synthesize", "review_output")
+        graph.add_edge("review_output", END)
         return graph.compile()
 
 
@@ -99,17 +109,27 @@ def build_workflow_steps(intent: Intent) -> tuple[WorkflowStep, ...]:
         return common + (
             WorkflowStep("inspect_cluster", "Collect workload health signals."),
             WorkflowStep("summarize_health", "Summarize unhealthy workloads."),
+            WorkflowStep("review_output", "Verify the final response is usable."),
         )
     if intent.name == "deployment_diagnosis":
         return common + (
             WorkflowStep("diagnose_deployment", "Collect deployment, pod, event, and log signals."),
             WorkflowStep("synthesize_diagnosis", "Produce operator-focused next steps."),
+            WorkflowStep("review_output", "Verify the final response is usable."),
         )
     if intent.name == "incident_report":
         return common + (
             WorkflowStep("diagnose_deployment", "Collect deployment incident evidence."),
             WorkflowStep("build_incident_report", "Create a structured incident report."),
+            WorkflowStep("review_output", "Verify the final response is usable."),
         )
     return common + (
         WorkflowStep("synthesize_answer", "Generate a grounded runbook answer."),
+        WorkflowStep("review_output", "Verify the final response is usable."),
     )
+
+
+def review_agent_output(output: AgentOutput | None) -> bool:
+    """Return whether an agent output is suitable to return to users."""
+
+    return isinstance(output, AgentOutput) and bool(output.answer.strip())

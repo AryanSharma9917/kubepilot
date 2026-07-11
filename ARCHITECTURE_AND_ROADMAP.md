@@ -267,15 +267,19 @@ kubepilot/
 - [x] Persisted runbook index generation and loading
 - [x] Optional native FAISS sidecar index generation
 - [x] Provider-shaped answer synthesis with structured citations
+- [x] Self-hosted HTTP JSON LLM provider support
 - [x] Knowledge search API for retrieval inspection
 - [x] Retrieval evaluation CLI and JSONL benchmark cases
 - [x] LangGraph-compatible workflow boundary with intent classification
 - [x] Explicit workflow step plans for graph execution
+- [x] Graph output review step before returning responses
 - [x] Deterministic Kubernetes health, diagnosis, and incident-report tools
 - [x] Deployment diagnostics using pod status, events, and log excerpts
+- [x] Incident timeline generation for deployment reports
 - [x] Streaming chat endpoint using server-sent events
 - [x] Namespace allowlist policy for cluster APIs
 - [x] Local audit event trail for API requests
+- [x] Request ID propagation through audit events and response headers
 - [x] Chat response/source/citation metrics
 - [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
@@ -284,7 +288,7 @@ kubepilot/
 
 ## Still To Build
 
-- [ ] Hosted or self-hosted LLM provider implementation
+- [x] Hosted or self-hosted LLM provider implementation
 - [ ] Deeper LangGraph workflow with branch-specific retrieval, tool, synthesis, and review nodes
 - [ ] Go-based Kubernetes tooling/services
 - [ ] Auth, RBAC-aware tool execution, and audit logging
@@ -313,7 +317,6 @@ The first release of KubePilot is considered successful when:
 
 * Multi-cluster support
 * Cloud provider integrations
-* Incident timeline generation
 * Automated remediation workflows
 * Slack integration
 * RBAC-aware agent actions

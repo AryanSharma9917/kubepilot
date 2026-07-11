@@ -25,14 +25,17 @@ and real cluster clients will replace or extend.
 - Local markdown runbook loading, chunking, and keyword retrieval
 - Optional vector retrieval with FAISS when installed
 - Provider-shaped answer synthesis with an offline deterministic LLM client
+- Self-hosted HTTP JSON LLM provider support
 - Structured answer citations in chat responses
 - Retrieval evaluation CLI for JSONL benchmark cases
 - LangGraph-compatible agent orchestration boundary
 - Explicit graph workflow step plans for agent intents
+- Graph output review before returning responses
 - Fixture-mode and real-client Kubernetes tool boundary
 - Environment-based service configuration
 - Prometheus-style metrics at `GET /metrics`
 - Local audit events at `GET /api/v1/audit/events`
+- Request ID propagation through `X-Request-ID` and audit events
 - Docker, Compose, Helm, Prometheus, Grafana, and GitOps starter manifests
 - API contract tests
 
@@ -171,6 +174,7 @@ dashboard lives at
 | `KUBEPILOT_RAG_MODE` | `keyword` | Retrieval mode: `keyword`, `vector`, or `faiss` |
 | `KUBEPILOT_RAG_INDEX_PATH` | unset | Optional path to a persisted runbook index |
 | `KUBEPILOT_LLM_PROVIDER` | `deterministic` | Answer provider mode; currently `deterministic` |
+| `KUBEPILOT_LLM_ENDPOINT` | unset | HTTP JSON LLM endpoint when `KUBEPILOT_LLM_PROVIDER=http` |
 | `KUBEPILOT_AGENT_MODE` | `deterministic` | Agent mode: `deterministic` or `langgraph` |
 
 Optional integration dependencies are grouped as extras:

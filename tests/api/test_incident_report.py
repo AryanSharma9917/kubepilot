@@ -16,6 +16,8 @@ async def test_deployment_incident_report_returns_structured_report(
     assert body["severity"] in {"warning", "critical"}
     assert body["impacted_resource"] == "payments/deployment/checkout"
     assert body["evidence"]
+    assert body["timeline"]
+    assert body["timeline"][0]["source"] == "deployment"
     assert body["next_actions"]
 
 

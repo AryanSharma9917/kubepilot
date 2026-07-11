@@ -157,6 +157,7 @@ class IncidentReportResponse(BaseModel):
     summary: str
     impacted_resource: str
     evidence: list[EvidenceItemResponse] = Field(default_factory=list)
+    timeline: list[EvidenceItemResponse] = Field(default_factory=list)
     next_actions: list[str] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
 

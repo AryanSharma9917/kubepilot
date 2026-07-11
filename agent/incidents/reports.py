@@ -25,6 +25,7 @@ class IncidentReport:
     summary: str
     impacted_resource: str
     evidence: tuple[EvidenceItem, ...] = field(default_factory=tuple)
+    timeline: tuple[EvidenceItem, ...] = field(default_factory=tuple)
     next_actions: tuple[str, ...] = field(default_factory=tuple)
     sources: tuple[str, ...] = field(default_factory=tuple)
 
@@ -47,6 +48,7 @@ def build_deployment_incident_report(
         summary=summary,
         impacted_resource=diagnosis.display_name,
         evidence=evidence,
+        timeline=_timeline(evidence),
         next_actions=diagnosis.recommendations,
         sources=sources,
     )
@@ -118,3 +120,13 @@ def _evidence(
         for log in diagnosis.logs[:3]
     )
     return tuple(evidence)
+
+
+def _timeline(evidence: tuple[EvidenceItem, ...]) -> tuple[EvidenceItem, ...]:
+    ordered_sources = ("deployment", "pod", "event", "log")
+    return tuple(
+        item
+        for source in ordered_sources
+        for item in evidence
+        if item.source == source
+    )

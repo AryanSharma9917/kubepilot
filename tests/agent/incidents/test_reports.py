@@ -68,6 +68,12 @@ def test_build_deployment_incident_report_marks_zero_ready_as_critical() -> None
         "event",
         "log",
     ]
+    assert [item.source for item in report.timeline] == [
+        "deployment",
+        "pod",
+        "event",
+        "log",
+    ]
 
 
 def test_build_deployment_incident_report_marks_healthy_deployment_as_info() -> None:

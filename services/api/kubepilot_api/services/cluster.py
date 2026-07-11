@@ -146,6 +146,10 @@ class ClusterService:
                 EvidenceItemResponse(source=item.source, message=item.message)
                 for item in report.evidence
             ],
+            timeline=[
+                EvidenceItemResponse(source=item.source, message=item.message)
+                for item in report.timeline
+            ],
             next_actions=list(report.next_actions),
             sources=list(report.sources),
         )

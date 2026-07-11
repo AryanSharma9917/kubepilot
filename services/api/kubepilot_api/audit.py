@@ -3,6 +3,7 @@
 from collections import deque
 from dataclasses import dataclass
 from time import time
+from uuid import uuid4
 
 from fastapi import Request, Response
 
@@ -15,6 +16,7 @@ class AuditEvent:
     """One API request audit event."""
 
     timestamp: float
+    request_id: str
     method: str
     path: str
     status_code: int
@@ -23,12 +25,15 @@ class AuditEvent:
 async def audit_middleware(request: Request, call_next: object) -> Response:
     """Record an audit event for each API request."""
 
+    request_id = request.headers.get("x-request-id") or str(uuid4())
     response = await call_next(request)
+    response.headers["x-request-id"] = request_id
     route = request.scope.get("route")
     path = getattr(route, "path", request.url.path)
     AUDIT_EVENTS.append(
         AuditEvent(
             timestamp=time(),
+            request_id=request_id,
             method=request.method,
             path=path,
             status_code=response.status_code,

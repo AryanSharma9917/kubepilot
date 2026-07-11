@@ -165,6 +165,7 @@ class AuditEventResponse(BaseModel):
     """One audit event returned by the API."""
 
     timestamp: float
+    request_id: str
     method: str
     path: str
     status_code: int

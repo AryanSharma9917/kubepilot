@@ -18,6 +18,7 @@ async def audit_events(
         events=[
             AuditEventResponse(
                 timestamp=event.timestamp,
+                request_id=event.request_id,
                 method=event.method,
                 path=event.path,
                 status_code=event.status_code,

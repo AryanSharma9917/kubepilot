@@ -1,5 +1,5 @@
 """LLM provider boundary."""
 
-from agent.llm.providers import DeterministicLLMClient, LLMClient
+from agent.llm.providers import DeterministicLLMClient, HTTPJSONLLMClient, LLMClient
 
-__all__ = ["DeterministicLLMClient", "LLMClient"]
+__all__ = ["DeterministicLLMClient", "HTTPJSONLLMClient", "LLMClient"]

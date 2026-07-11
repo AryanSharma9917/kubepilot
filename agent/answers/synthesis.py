@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from agent.answers.prompts import build_grounded_answer_prompt, citations_from_matches
-from agent.llm import DeterministicLLMClient, LLMClient
+from agent.llm import DeterministicLLMClient, HTTPJSONLLMClient, LLMClient
 from agent.state.chat import Citation
 from rag import RetrievedDocument
 
@@ -72,6 +72,11 @@ def create_answer_synthesizer() -> AnswerSynthesizer:
     provider = os.getenv("KUBEPILOT_LLM_PROVIDER", "deterministic")
     if provider == "deterministic":
         return GroundedAnswerSynthesizer()
+    if provider == "http":
+        endpoint = os.getenv("KUBEPILOT_LLM_ENDPOINT")
+        if not endpoint:
+            raise ValueError("KUBEPILOT_LLM_ENDPOINT is required when KUBEPILOT_LLM_PROVIDER=http")
+        return GroundedAnswerSynthesizer(HTTPJSONLLMClient(endpoint))
     raise ValueError(f"Unsupported LLM provider: {provider}")
 
 

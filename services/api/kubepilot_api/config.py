@@ -19,6 +19,7 @@ class Settings:
     rag_mode: str = "keyword"
     rag_index_path: str | None = None
     llm_provider: str = "deterministic"
+    llm_endpoint: str | None = None
     agent_mode: str = "deterministic"
 
 
@@ -40,6 +41,7 @@ def get_settings() -> Settings:
         rag_mode=os.getenv("KUBEPILOT_RAG_MODE", "keyword"),
         rag_index_path=os.getenv("KUBEPILOT_RAG_INDEX_PATH"),
         llm_provider=os.getenv("KUBEPILOT_LLM_PROVIDER", "deterministic"),
+        llm_endpoint=os.getenv("KUBEPILOT_LLM_ENDPOINT"),
         agent_mode=os.getenv("KUBEPILOT_AGENT_MODE", "deterministic"),
     )
 

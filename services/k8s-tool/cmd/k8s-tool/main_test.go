@@ -5,6 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestHealthz(t *testing.T) {
@@ -58,9 +62,60 @@ func TestDeploymentDiagnosisNotFound(t *testing.T) {
 	}
 }
 
+func TestDeploymentHealthMapsUnavailableReplicas(t *testing.T) {
+	desired := int32(3)
+	health := deploymentHealth(appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "payments",
+			Name:      "checkout",
+		},
+		Spec: appsv1.DeploymentSpec{Replicas: &desired},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas: 1,
+		},
+	})
+
+	if health.Status != "Degraded" {
+		t.Fatalf("expected degraded deployment, got %s", health.Status)
+	}
+	if health.DesiredReplicas != 3 || health.ReadyReplicas != 1 {
+		t.Fatalf("unexpected replica summary: %#v", health)
+	}
+}
+
+func TestPodStatusListCapturesWaitingReason(t *testing.T) {
+	pods := podStatusList([]corev1.Pod{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "payments",
+				Name:      "checkout-abc",
+			},
+			Status: corev1.PodStatus{
+				Phase: corev1.PodRunning,
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						Ready:        false,
+						RestartCount: 3,
+						State: corev1.ContainerState{
+							Waiting: &corev1.ContainerStateWaiting{Reason: "CrashLoopBackOff"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	if len(pods) != 1 {
+		t.Fatalf("expected 1 pod status, got %d", len(pods))
+	}
+	if pods[0].Reason == nil || *pods[0].Reason != "CrashLoopBackOff" {
+		t.Fatalf("expected CrashLoopBackOff reason, got %#v", pods[0].Reason)
+	}
+}
+
 func serveRequest(method string, path string) *httptest.ResponseRecorder {
 	request := httptest.NewRequest(method, path, nil)
 	response := httptest.NewRecorder()
-	newRouter().ServeHTTP(response, request)
+	newRouter(fixtureInspector{}).ServeHTTP(response, request)
 	return response
 }

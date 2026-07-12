@@ -274,6 +274,7 @@ kubepilot/
 - [x] Explicit workflow step plans for graph execution
 - [x] Graph output review step before returning responses
 - [x] Deterministic Kubernetes health, diagnosis, and incident-report tools
+- [x] Go Kubernetes tool service with fixture and real cluster modes
 - [x] Deployment diagnostics using pod status, events, and log excerpts
 - [x] Incident timeline generation for deployment reports
 - [x] Streaming chat endpoint using server-sent events
@@ -290,7 +291,7 @@ kubepilot/
 
 - [x] Hosted or self-hosted LLM provider implementation
 - [ ] Deeper LangGraph workflow with branch-specific retrieval, tool, synthesis, and review nodes
-- [ ] Go-based Kubernetes tooling/services
+- [x] Go-based Kubernetes tooling/services
 - [ ] Auth, RBAC-aware tool execution, and audit logging
 - [ ] OpenTelemetry tracing and richer tool metrics
 - [ ] Scheduled integration tests against kind or minikube in CI
@@ -304,7 +305,7 @@ The first release of KubePilot is considered successful when:
 - [x] Runbooks can be indexed into FAISS
 - [x] Questions can be answered through RAG
 - [x] LangGraph agent can use tools
-- [ ] Kubernetes status can be queried through Go services
+- [x] Kubernetes status can be queried through Go services
 - [x] FastAPI exposes a chat endpoint
 - [x] Services run locally using Docker
 - [x] Deployment works on a local Kubernetes cluster

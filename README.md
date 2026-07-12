@@ -169,6 +169,7 @@ dashboard lives at
 | `KUBEPILOT_ENVIRONMENT` | `development` | Runtime environment |
 | `KUBEPILOT_VERSION` | `0.1.0` | Reported service version |
 | `KUBEPILOT_K8S_MODE` | `fixture` | Kubernetes mode: `fixture`, `kubeconfig`, or `in_cluster` |
+| `KUBEPILOT_K8S_TOOL_MODE` | `fixture` | Go `k8s-tool` mode: `fixture` or `cluster` |
 | `KUBEPILOT_KUBECONFIG` | unset | Optional kubeconfig path for `kubeconfig` mode |
 | `KUBEPILOT_ALLOWED_NAMESPACES` | unset | Optional comma-separated namespace allowlist for cluster APIs |
 | `KUBEPILOT_RAG_MODE` | `keyword` | Retrieval mode: `keyword`, `vector`, or `faiss` |

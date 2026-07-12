@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -57,6 +58,11 @@ type deploymentDiagnosisResponse struct {
 	Recommendations []string          `json:"recommendations"`
 }
 
+type kubernetesInspector interface {
+	ClusterHealth(ctx context.Context, namespace string) ([]workloadHealth, error)
+	DeploymentDiagnosis(ctx context.Context, namespace string, name string) (deploymentDiagnosisResponse, bool, error)
+}
+
 func main() {
 	addr := os.Getenv("KUBEPILOT_K8S_TOOL_ADDR")
 	if addr == "" {
@@ -64,16 +70,16 @@ func main() {
 	}
 
 	log.Printf("starting kubepilot k8s-tool on %s", addr)
-	if err := http.ListenAndServe(addr, newRouter()); err != nil {
+	if err := http.ListenAndServe(addr, newRouter(newInspectorFromEnv())); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func newRouter() http.Handler {
+func newRouter(inspector kubernetesInspector) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthz)
-	mux.HandleFunc("/api/v1/cluster/health", clusterHealth)
-	mux.HandleFunc("/api/v1/namespaces/", deploymentDiagnosis)
+	mux.HandleFunc("/api/v1/cluster/health", clusterHealth(inspector))
+	mux.HandleFunc("/api/v1/namespaces/", deploymentDiagnosis(inspector))
 	return mux
 }
 
@@ -85,46 +91,49 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-func clusterHealth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	namespace := r.URL.Query().Get("namespace")
-	workloads := fixtureWorkloads()
-	if namespace != "" {
-		filtered := make([]workloadHealth, 0)
-		for _, workload := range workloads {
-			if workload.Namespace == namespace {
-				filtered = append(filtered, workload)
-			}
+func clusterHealth(inspector kubernetesInspector) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
 		}
-		workloads = filtered
-	}
 
-	writeJSON(w, http.StatusOK, clusterHealthResponse{Workloads: workloads})
+		namespace := r.URL.Query().Get("namespace")
+		workloads, err := inspector.ClusterHealth(r.Context(), namespace)
+		if err != nil {
+			http.Error(w, "cluster inspection failed", http.StatusInternalServerError)
+			return
+		}
+
+		writeJSON(w, http.StatusOK, clusterHealthResponse{Workloads: workloads})
+	}
 }
 
-func deploymentDiagnosis(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+func deploymentDiagnosis(inspector kubernetesInspector) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 
-	namespace, name, ok := parseDeploymentPath(r.URL.Path)
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
+		namespace, name, ok := parseDeploymentPath(r.URL.Path)
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
 
-	diagnosis, found := fixtureDiagnosis(namespace, name)
-	if !found {
-		http.NotFound(w, r)
-		return
-	}
+		diagnosis, found, err := inspector.DeploymentDiagnosis(r.Context(), namespace, name)
+		if err != nil {
+			http.Error(w, "deployment diagnosis failed", http.StatusInternalServerError)
+			return
+		}
+		if !found {
+			http.NotFound(w, r)
+			return
+		}
 
-	writeJSON(w, http.StatusOK, diagnosis)
+		writeJSON(w, http.StatusOK, diagnosis)
+	}
 }
 
 func parseDeploymentPath(path string) (string, string, bool) {
@@ -147,6 +156,48 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
 		log.Printf("failed to encode response: %v", err)
 	}
+}
+
+func newInspectorFromEnv() kubernetesInspector {
+	mode := os.Getenv("KUBEPILOT_K8S_TOOL_MODE")
+	if mode == "" || mode == "fixture" {
+		return fixtureInspector{}
+	}
+	if mode == "cluster" {
+		inspector, err := newClusterInspector()
+		if err != nil {
+			log.Printf("falling back to fixture inspector: %v", err)
+			return fixtureInspector{}
+		}
+		return inspector
+	}
+	log.Printf("unknown KUBEPILOT_K8S_TOOL_MODE=%q, using fixture inspector", mode)
+	return fixtureInspector{}
+}
+
+type fixtureInspector struct{}
+
+func (fixtureInspector) ClusterHealth(ctx context.Context, namespace string) ([]workloadHealth, error) {
+	workloads := fixtureWorkloads()
+	if namespace == "" {
+		return workloads, nil
+	}
+	filtered := make([]workloadHealth, 0)
+	for _, workload := range workloads {
+		if workload.Namespace == namespace {
+			filtered = append(filtered, workload)
+		}
+	}
+	return filtered, nil
+}
+
+func (fixtureInspector) DeploymentDiagnosis(
+	ctx context.Context,
+	namespace string,
+	name string,
+) (deploymentDiagnosisResponse, bool, error) {
+	diagnosis, found := fixtureDiagnosis(namespace, name)
+	return diagnosis, found, nil
 }
 
 func fixtureWorkloads() []workloadHealth {

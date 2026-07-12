@@ -3,8 +3,21 @@ services:
     build: .
     environment:
       KUBEPILOT_ENVIRONMENT: local
-      KUBEPILOT_K8S_MODE: fixture
+      KUBEPILOT_K8S_MODE: service
+      KUBEPILOT_K8S_SERVICE_URL: http://k8s-tool:8081
       KUBEPILOT_RAG_MODE: keyword
       KUBEPILOT_AGENT_MODE: deterministic
     ports:
       - "8000:8000"
+    depends_on:
+      - k8s-tool
+
+  k8s-tool:
+    build:
+      context: .
+      dockerfile: services/k8s-tool/Dockerfile
+    environment:
+      KUBEPILOT_K8S_TOOL_ADDR: :8081
+      KUBEPILOT_K8S_TOOL_MODE: fixture
+    ports:
+      - "8081:8081"

@@ -176,3 +176,19 @@ class AuditEventsResponse(BaseModel):
     """Recent API audit events."""
 
     events: list[AuditEventResponse] = Field(default_factory=list)
+
+
+class TraceSpanResponse(BaseModel):
+    """One local trace span returned by the API."""
+
+    trace_id: str
+    name: str
+    started_at: float
+    duration_ms: float
+    attributes: dict[str, str] = Field(default_factory=dict)
+
+
+class TraceSpansResponse(BaseModel):
+    """Recent local trace spans."""
+
+    spans: list[TraceSpanResponse] = Field(default_factory=list)

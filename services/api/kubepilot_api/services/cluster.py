@@ -40,12 +40,18 @@ class ClusterService:
             kubeconfig_path=settings.kubeconfig_path,
             service_url=settings.kubernetes_service_url,
         )
-        self._namespace_policy = NamespaceAccessPolicy(settings.allowed_namespaces)
+        self._namespace_policy = NamespaceAccessPolicy(
+            allowed_namespaces=settings.allowed_namespaces,
+            allowed_actions=settings.allowed_actions,
+        )
 
     async def health(self, namespace: str | None = None) -> ClusterHealthResponse:
         """Return workload health from the configured inspector."""
 
-        self._namespace_policy.ensure_allowed(namespace)
+        self._namespace_policy.ensure_operation_allowed(
+            namespace=namespace,
+            action="cluster:health",
+        )
         health = await self._inspector.inspect(namespace=namespace)
         unhealthy = health.unhealthy_workloads
         return ClusterHealthResponse(
@@ -72,7 +78,10 @@ class ClusterService:
     ) -> DeploymentDiagnosisResponse | None:
         """Return a diagnosis for one Kubernetes deployment."""
 
-        self._namespace_policy.ensure_allowed(namespace)
+        self._namespace_policy.ensure_operation_allowed(
+            namespace=namespace,
+            action="deployment:diagnose",
+        )
         diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
         if diagnosis is None:
             return None
@@ -131,7 +140,10 @@ class ClusterService:
     ) -> IncidentReportResponse | None:
         """Return a structured incident report for one deployment."""
 
-        self._namespace_policy.ensure_allowed(namespace)
+        self._namespace_policy.ensure_operation_allowed(
+            namespace=namespace,
+            action="deployment:incident-report",
+        )
         diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
         if diagnosis is None:
             return None

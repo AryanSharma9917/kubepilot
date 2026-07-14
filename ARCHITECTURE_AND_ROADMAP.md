@@ -279,12 +279,15 @@ kubepilot/
 - [x] Incident timeline generation for deployment reports
 - [x] Streaming chat endpoint using server-sent events
 - [x] Namespace allowlist policy for cluster APIs
+- [x] Action allowlist policy for cluster APIs
+- [x] Optional API key authentication for API routes
 - [x] Local audit event trail for API requests
 - [x] Request ID propagation through audit events and response headers
+- [x] Local trace spans for HTTP, agent, and retrieval operations
 - [x] Chat response/source/citation metrics
 - [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
-- [x] Manual GitHub Actions kind smoke workflow
+- [x] Manual and scheduled GitHub Actions kind smoke workflow
 - [x] Local cluster smoke-test script and validation guide
 
 ## Still To Build
@@ -292,9 +295,9 @@ kubepilot/
 - [x] Hosted or self-hosted LLM provider implementation
 - [ ] Deeper LangGraph workflow with branch-specific retrieval, tool, synthesis, and review nodes
 - [x] Go-based Kubernetes tooling/services
-- [ ] Auth, RBAC-aware tool execution, and audit logging
-- [ ] OpenTelemetry tracing and richer tool metrics
-- [ ] Scheduled integration tests against kind or minikube in CI
+- [x] Auth, RBAC-aware tool execution, and audit logging
+- [ ] OpenTelemetry exporter integration and richer tool metrics
+- [x] Scheduled integration tests against kind or minikube in CI
 
 ---
 

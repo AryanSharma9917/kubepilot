@@ -35,7 +35,10 @@ and real cluster clients will replace or extend.
 - Environment-based service configuration
 - Prometheus-style metrics at `GET /metrics`
 - Local audit events at `GET /api/v1/audit/events`
+- Local trace spans at `GET /api/v1/traces`
 - Request ID propagation through `X-Request-ID` and audit events
+- Optional API key authentication for `/api/*` routes
+- Namespace and action allowlists for cluster tool APIs
 - Docker, Compose, Helm, Prometheus, Grafana, and GitOps starter manifests
 - API contract tests
 
@@ -59,9 +62,10 @@ sentence transformers, and LangGraph later.
 
 ## Local cluster tool flow
 
-KubePilot also has a deterministic Kubernetes health inspector for local
-development. It does not connect to a real cluster yet; instead, it returns
-fixture workload health so the API and agent tool-calling path can be tested.
+KubePilot also has a Kubernetes health inspector for local development. It
+defaults to fixture workload health so the API and agent tool-calling path can
+be tested without a live cluster, and can switch to kubeconfig, in-cluster, or
+Go tool service modes for real cluster inspection.
 
 Cluster health can be queried directly:
 
@@ -159,7 +163,8 @@ For an end-to-end local cluster smoke test, run:
 ```
 
 See [docs/local-cluster.md](docs/local-cluster.md) for the manual workflow and
-real-cluster mode notes.
+real-cluster mode notes. The local cluster smoke workflow can be run manually in
+GitHub Actions and also runs on a weekly schedule.
 
 Prometheus scrape configuration lives at
 [monitoring/prometheus.yml](monitoring/prometheus.yml), and a starter Grafana
@@ -175,8 +180,11 @@ dashboard lives at
 | `KUBEPILOT_VERSION` | `0.1.0` | Reported service version |
 | `KUBEPILOT_K8S_MODE` | `fixture` | Kubernetes mode: `fixture`, `kubeconfig`, or `in_cluster` |
 | `KUBEPILOT_K8S_TOOL_MODE` | `fixture` | Go `k8s-tool` mode: `fixture` or `cluster` |
+| `KUBEPILOT_K8S_SERVICE_URL` | `http://k8s-tool:8081` | Go Kubernetes tool service URL when using service mode |
 | `KUBEPILOT_KUBECONFIG` | unset | Optional kubeconfig path for `kubeconfig` mode |
 | `KUBEPILOT_ALLOWED_NAMESPACES` | unset | Optional comma-separated namespace allowlist for cluster APIs |
+| `KUBEPILOT_ALLOWED_ACTIONS` | unset | Optional comma-separated action allowlist for cluster APIs |
+| `KUBEPILOT_API_KEYS` | unset | Optional comma-separated API keys for `/api/*` routes |
 | `KUBEPILOT_RAG_MODE` | `keyword` | Retrieval mode: `keyword`, `vector`, or `faiss` |
 | `KUBEPILOT_RAG_INDEX_PATH` | unset | Optional path to a persisted runbook index |
 | `KUBEPILOT_LLM_PROVIDER` | `deterministic` | Answer provider mode; currently `deterministic` |

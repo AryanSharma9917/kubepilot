@@ -4,6 +4,10 @@ KubePilot can run against a local Kubernetes cluster in fixture mode. This
 validates the container image, Helm chart, readiness probes, and metrics endpoint
 without requiring a live application cluster.
 
+The same smoke path is available as a GitHub Actions workflow. It can be run
+manually from the Actions tab and is scheduled weekly to catch chart, image, and
+startup regressions.
+
 ## Prerequisites
 
 - Docker

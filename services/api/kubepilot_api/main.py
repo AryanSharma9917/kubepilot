@@ -3,6 +3,7 @@
 from fastapi import FastAPI, Response
 
 from kubepilot_api.audit import audit_middleware
+from kubepilot_api.auth import api_key_auth_middleware
 from kubepilot_api.config import get_settings
 from kubepilot_api.metrics import metrics_middleware, render_metrics
 from kubepilot_api.routes.audit import router as audit_router
@@ -23,6 +24,7 @@ def create_app() -> FastAPI:
     )
     app.middleware("http")(audit_middleware)
     app.middleware("http")(metrics_middleware)
+    app.middleware("http")(api_key_auth_middleware)
     app.include_router(audit_router)
     app.include_router(chat_router)
     app.include_router(cluster_router)

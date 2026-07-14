@@ -16,6 +16,7 @@ class Settings:
     kubeconfig_path: str | None = None
     kubernetes_service_url: str = "http://k8s-tool:8081"
     allowed_namespaces: tuple[str, ...] = ()
+    api_keys: tuple[str, ...] = ()
     rag_mode: str = "keyword"
     rag_index_path: str | None = None
     llm_provider: str = "deterministic"
@@ -38,6 +39,7 @@ def get_settings() -> Settings:
             "http://k8s-tool:8081",
         ),
         allowed_namespaces=_split_csv(os.getenv("KUBEPILOT_ALLOWED_NAMESPACES", "")),
+        api_keys=_split_csv(os.getenv("KUBEPILOT_API_KEYS", "")),
         rag_mode=os.getenv("KUBEPILOT_RAG_MODE", "keyword"),
         rag_index_path=os.getenv("KUBEPILOT_RAG_INDEX_PATH"),
         llm_provider=os.getenv("KUBEPILOT_LLM_PROVIDER", "deterministic"),

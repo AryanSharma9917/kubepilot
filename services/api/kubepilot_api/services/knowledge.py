@@ -6,6 +6,7 @@ from kubepilot_api.schemas import (
     KnowledgeSearchResponse,
     KnowledgeSearchResult,
 )
+from kubepilot_api.tracing import trace_span
 
 
 class KnowledgeService:
@@ -17,7 +18,12 @@ class KnowledgeService:
     async def search(self, request: KnowledgeSearchRequest) -> KnowledgeSearchResponse:
         """Return ranked knowledge chunks for a query."""
 
-        matches = self._retriever.search(request.query, limit=request.limit)
+        with trace_span(
+            "knowledge.search",
+            query_length=str(len(request.query)),
+            limit=str(request.limit),
+        ):
+            matches = self._retriever.search(request.query, limit=request.limit)
         return KnowledgeSearchResponse(
             results=[
                 KnowledgeSearchResult(

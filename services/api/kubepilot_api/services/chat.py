@@ -7,6 +7,7 @@ from uuid import uuid4
 from agent import Agent, AgentInput, create_agent
 from kubepilot_api.metrics import record_chat_response
 from kubepilot_api.schemas import ChatRequest, ChatResponse, CitationResponse
+from kubepilot_api.tracing import trace_span
 
 
 class ChatService:
@@ -18,7 +19,8 @@ class ChatService:
     async def respond(self, request: ChatRequest) -> ChatResponse:
         """Pass the user request through the KubePilot agent boundary."""
 
-        agent_output = await self._agent.run(AgentInput(message=request.message))
+        with trace_span("agent.respond", message_length=str(len(request.message))):
+            agent_output = await self._agent.run(AgentInput(message=request.message))
 
         response = ChatResponse(
             request_id=uuid4(),

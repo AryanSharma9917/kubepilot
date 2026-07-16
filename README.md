@@ -30,10 +30,12 @@ and real cluster clients will replace or extend.
 - Retrieval evaluation CLI for JSONL benchmark cases
 - LangGraph-compatible agent orchestration boundary
 - Explicit graph workflow step plans for agent intents
+- Branch-specific graph nodes for retrieval, tool execution, synthesis, and review
 - Graph output review before returning responses
 - Fixture-mode and real-client Kubernetes tool boundary
 - Environment-based service configuration
 - Prometheus-style metrics at `GET /metrics`
+- Operation metrics for retrieval, cluster tools, chat, and trace buffering
 - Local audit events at `GET /api/v1/audit/events`
 - Local trace spans at `GET /api/v1/traces`
 - Request ID propagation through `X-Request-ID` and audit events

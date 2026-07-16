@@ -272,6 +272,7 @@ kubepilot/
 - [x] Retrieval evaluation CLI and JSONL benchmark cases
 - [x] LangGraph-compatible workflow boundary with intent classification
 - [x] Explicit workflow step plans for graph execution
+- [x] Branch-specific retrieval, tool, synthesis, and review graph nodes
 - [x] Graph output review step before returning responses
 - [x] Deterministic Kubernetes health, diagnosis, and incident-report tools
 - [x] Go Kubernetes tool service with fixture and real cluster modes
@@ -284,7 +285,7 @@ kubepilot/
 - [x] Local audit event trail for API requests
 - [x] Request ID propagation through audit events and response headers
 - [x] Local trace spans for HTTP, agent, and retrieval operations
-- [x] Chat response/source/citation metrics
+- [x] Chat, retrieval, cluster-tool, and trace-buffer metrics
 - [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
 - [x] Manual and scheduled GitHub Actions kind smoke workflow
@@ -293,10 +294,10 @@ kubepilot/
 ## Still To Build
 
 - [x] Hosted or self-hosted LLM provider implementation
-- [ ] Deeper LangGraph workflow with branch-specific retrieval, tool, synthesis, and review nodes
+- [x] Deeper LangGraph workflow with branch-specific retrieval, tool, synthesis, and review nodes
 - [x] Go-based Kubernetes tooling/services
 - [x] Auth, RBAC-aware tool execution, and audit logging
-- [ ] OpenTelemetry exporter integration and richer tool metrics
+- [ ] OpenTelemetry exporter integration
 - [x] Scheduled integration tests against kind or minikube in CI
 
 ---

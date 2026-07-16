@@ -10,6 +10,10 @@ REQUEST_SECONDS: Counter[tuple[str, str]] = Counter()
 CHAT_RESPONSES: Counter[str] = Counter()
 CHAT_SOURCES: Counter[str] = Counter()
 CHAT_CITATIONS: Counter[str] = Counter()
+KNOWLEDGE_SEARCHES: Counter[str] = Counter()
+KNOWLEDGE_RESULTS: Counter[str] = Counter()
+CLUSTER_TOOL_CALLS: Counter[tuple[str, str]] = Counter()
+CLUSTER_TOOL_SECONDS: Counter[str] = Counter()
 
 
 async def metrics_middleware(request: Request, call_next: object) -> Response:
@@ -65,6 +69,44 @@ def render_metrics() -> str:
             f"kubepilot_chat_citations_total {CHAT_CITATIONS['total']}",
         ]
     )
+    lines.extend(
+        [
+            "# HELP kubepilot_knowledge_searches_total Total knowledge searches.",
+            "# TYPE kubepilot_knowledge_searches_total counter",
+            f"kubepilot_knowledge_searches_total {KNOWLEDGE_SEARCHES['total']}",
+            "# HELP kubepilot_knowledge_results_total Total retrieved knowledge results.",
+            "# TYPE kubepilot_knowledge_results_total counter",
+            f"kubepilot_knowledge_results_total {KNOWLEDGE_RESULTS['total']}",
+            "# HELP kubepilot_cluster_tool_calls_total Total Kubernetes tool calls.",
+            "# TYPE kubepilot_cluster_tool_calls_total counter",
+        ]
+    )
+    for (operation, result), count in sorted(CLUSTER_TOOL_CALLS.items()):
+        lines.append(
+            'kubepilot_cluster_tool_calls_total{'
+            f'operation="{operation}",result="{result}"'
+            f"}} {count}"
+        )
+    lines.extend(
+        [
+            "# HELP kubepilot_cluster_tool_duration_seconds_total "
+            "Total Kubernetes tool execution time.",
+            "# TYPE kubepilot_cluster_tool_duration_seconds_total counter",
+        ]
+    )
+    for operation, total_seconds in sorted(CLUSTER_TOOL_SECONDS.items()):
+        lines.append(
+            'kubepilot_cluster_tool_duration_seconds_total{'
+            f'operation="{operation}"'
+            f"}} {total_seconds:.6f}"
+        )
+    lines.extend(
+        [
+            "# HELP kubepilot_trace_spans_buffered Current in-memory trace span count.",
+            "# TYPE kubepilot_trace_spans_buffered gauge",
+            f"kubepilot_trace_spans_buffered {_trace_span_count()}",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -74,3 +116,28 @@ def record_chat_response(*, source_count: int, citation_count: int) -> None:
     CHAT_RESPONSES["total"] += 1
     CHAT_SOURCES["total"] += source_count
     CHAT_CITATIONS["total"] += citation_count
+
+
+def record_knowledge_search(*, result_count: int) -> None:
+    """Record retrieval-level metrics."""
+
+    KNOWLEDGE_SEARCHES["total"] += 1
+    KNOWLEDGE_RESULTS["total"] += result_count
+
+
+def record_cluster_tool_call(
+    *,
+    operation: str,
+    result: str,
+    elapsed_seconds: float,
+) -> None:
+    """Record Kubernetes tool call metrics."""
+
+    CLUSTER_TOOL_CALLS[(operation, result)] += 1
+    CLUSTER_TOOL_SECONDS[operation] += elapsed_seconds
+
+
+def _trace_span_count() -> int:
+    from kubepilot_api.tracing import TRACE_SPANS
+
+    return len(TRACE_SPANS)

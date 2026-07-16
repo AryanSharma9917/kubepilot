@@ -34,6 +34,11 @@ async def test_readiness_endpoint(client: httpx.AsyncClient) -> None:
 async def test_metrics_endpoint_exposes_request_metrics(client: httpx.AsyncClient) -> None:
     await client.get("/healthz")
     await client.post("/api/v1/chat", json={"message": "Why is my deployment failing?"})
+    await client.post(
+        "/api/v1/knowledge/search",
+        json={"query": "deployment rollout failures", "limit": 2},
+    )
+    await client.get("/api/v1/cluster/health")
 
     response = await client.get("/metrics")
 
@@ -43,3 +48,9 @@ async def test_metrics_endpoint_exposes_request_metrics(client: httpx.AsyncClien
     assert "kubepilot_chat_responses_total" in response.text
     assert "kubepilot_chat_sources_total" in response.text
     assert "kubepilot_chat_citations_total" in response.text
+    assert "kubepilot_knowledge_searches_total" in response.text
+    assert "kubepilot_knowledge_results_total" in response.text
+    assert "kubepilot_cluster_tool_calls_total" in response.text
+    assert 'operation="cluster_health",result="degraded"' in response.text
+    assert "kubepilot_cluster_tool_duration_seconds_total" in response.text
+    assert "kubepilot_trace_spans_buffered" in response.text

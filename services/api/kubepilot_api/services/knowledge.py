@@ -1,6 +1,7 @@
 """Knowledge retrieval application service."""
 
 from agent.kubepilot_agent import Retriever, create_configured_retriever
+from kubepilot_api.metrics import record_knowledge_search
 from kubepilot_api.schemas import (
     KnowledgeSearchRequest,
     KnowledgeSearchResponse,
@@ -24,6 +25,7 @@ class KnowledgeService:
             limit=str(request.limit),
         ):
             matches = self._retriever.search(request.query, limit=request.limit)
+        record_knowledge_search(result_count=len(matches))
         return KnowledgeSearchResponse(
             results=[
                 KnowledgeSearchResult(

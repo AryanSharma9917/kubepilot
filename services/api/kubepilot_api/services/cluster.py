@@ -1,5 +1,7 @@
 """Cluster application service."""
 
+from time import perf_counter
+
 from agent.incidents import build_deployment_incident_report
 from agent.tools.kubernetes import (
     ClusterHealthInspector,
@@ -8,6 +10,7 @@ from agent.tools.kubernetes import (
     create_deployment_diagnoser,
 )
 from kubepilot_api.config import get_settings
+from kubepilot_api.metrics import record_cluster_tool_call
 from kubepilot_api.policy import NamespaceAccessPolicy
 from kubepilot_api.schemas import (
     ClusterHealthResponse,
@@ -52,7 +55,21 @@ class ClusterService:
             namespace=namespace,
             action="cluster:health",
         )
-        health = await self._inspector.inspect(namespace=namespace)
+        started = perf_counter()
+        try:
+            health = await self._inspector.inspect(namespace=namespace)
+        except Exception:
+            record_cluster_tool_call(
+                operation="cluster_health",
+                result="error",
+                elapsed_seconds=perf_counter() - started,
+            )
+            raise
+        record_cluster_tool_call(
+            operation="cluster_health",
+            result="healthy" if health.is_healthy else "degraded",
+            elapsed_seconds=perf_counter() - started,
+        )
         unhealthy = health.unhealthy_workloads
         return ClusterHealthResponse(
             status="healthy" if health.is_healthy else "degraded",
@@ -82,7 +99,21 @@ class ClusterService:
             namespace=namespace,
             action="deployment:diagnose",
         )
-        diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
+        started = perf_counter()
+        try:
+            diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
+        except Exception:
+            record_cluster_tool_call(
+                operation="deployment_diagnose",
+                result="error",
+                elapsed_seconds=perf_counter() - started,
+            )
+            raise
+        record_cluster_tool_call(
+            operation="deployment_diagnose",
+            result="found" if diagnosis is not None else "missing",
+            elapsed_seconds=perf_counter() - started,
+        )
         if diagnosis is None:
             return None
 
@@ -144,7 +175,21 @@ class ClusterService:
             namespace=namespace,
             action="deployment:incident-report",
         )
-        diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
+        started = perf_counter()
+        try:
+            diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
+        except Exception:
+            record_cluster_tool_call(
+                operation="deployment_incident_report",
+                result="error",
+                elapsed_seconds=perf_counter() - started,
+            )
+            raise
+        record_cluster_tool_call(
+            operation="deployment_incident_report",
+            result="found" if diagnosis is not None else "missing",
+            elapsed_seconds=perf_counter() - started,
+        )
         if diagnosis is None:
             return None
 

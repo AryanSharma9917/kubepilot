@@ -57,16 +57,11 @@ class KubePilotAgent:
     async def run(self, agent_input: AgentInput) -> AgentOutput:
         """Return a stable response grounded in runbooks or tool output."""
 
-        matches = self._retriever.search(agent_input.message)
-        sources = _source_titles(matches)
+        matches = self.retrieve_context(agent_input.message)
         intent = classify_intent(agent_input.message)
 
         if intent.name == "cluster_health":
-            cluster_health = await self._cluster_inspector.inspect()
-            return AgentOutput(
-                answer=_build_cluster_health_answer(agent_input.message, cluster_health),
-                sources=sources,
-            )
+            return await self.answer_cluster_health(agent_input.message, matches)
 
         deployment_ref = _deployment_reference(agent_input.message)
         should_use_deployment_tool = intent.name in {
@@ -75,20 +70,117 @@ class KubePilotAgent:
         }
         if should_use_deployment_tool and deployment_ref is not None:
             namespace, name = deployment_ref
-            diagnosis = await self._deployment_diagnoser.diagnose(namespace=namespace, name=name)
-            if intent.name == "incident_report" and diagnosis is not None:
-                report = build_deployment_incident_report(diagnosis, sources=sources)
-                return AgentOutput(
-                    answer=_build_incident_report_answer(agent_input.message, report),
-                    sources=sources,
+            if intent.name == "incident_report":
+                return await self.answer_incident_report(
+                    agent_input.message,
+                    matches,
+                    namespace=namespace,
+                    name=name,
                 )
-            return AgentOutput(
-                answer=_build_deployment_diagnosis_answer(agent_input.message, diagnosis),
-                sources=sources,
+            return await self.answer_deployment_diagnosis(
+                agent_input.message,
+                matches,
+                namespace=namespace,
+                name=name,
             )
 
+        return await self.answer_runbook(agent_input.message, matches)
+
+    def retrieve_context(self, message: str) -> list[RetrievedDocument]:
+        """Retrieve runbook context for a user message."""
+
+        return self._retriever.search(message)
+
+    def deployment_reference(self, message: str) -> tuple[str, str] | None:
+        """Extract a deployment reference from a user message."""
+
+        return _deployment_reference(message)
+
+    async def inspect_cluster_health(self) -> ClusterHealth:
+        """Collect cluster health from the configured Kubernetes tool."""
+
+        return await self._cluster_inspector.inspect()
+
+    async def diagnose_deployment(
+        self,
+        *,
+        namespace: str,
+        name: str,
+    ) -> DeploymentDiagnosis | None:
+        """Collect deployment diagnostic evidence."""
+
+        return await self._deployment_diagnoser.diagnose(namespace=namespace, name=name)
+
+    async def answer_cluster_health(
+        self,
+        message: str,
+        matches: list[RetrievedDocument],
+        cluster_health: ClusterHealth | None = None,
+    ) -> AgentOutput:
+        """Build a response for cluster-health requests."""
+
+        health = cluster_health or await self.inspect_cluster_health()
+        return AgentOutput(
+            answer=_build_cluster_health_answer(message, health),
+            sources=source_titles(matches),
+        )
+
+    async def answer_deployment_diagnosis(
+        self,
+        message: str,
+        matches: list[RetrievedDocument],
+        *,
+        namespace: str,
+        name: str,
+        diagnosis: DeploymentDiagnosis | None = None,
+    ) -> AgentOutput:
+        """Build a response for deployment diagnosis requests."""
+
+        current_diagnosis = diagnosis
+        if current_diagnosis is None:
+            current_diagnosis = await self.diagnose_deployment(namespace=namespace, name=name)
+        return AgentOutput(
+            answer=_build_deployment_diagnosis_answer(message, current_diagnosis),
+            sources=source_titles(matches),
+        )
+
+    async def answer_incident_report(
+        self,
+        message: str,
+        matches: list[RetrievedDocument],
+        *,
+        namespace: str,
+        name: str,
+        diagnosis: DeploymentDiagnosis | None = None,
+    ) -> AgentOutput:
+        """Build a response for deployment incident report requests."""
+
+        current_diagnosis = diagnosis
+        if current_diagnosis is None:
+            current_diagnosis = await self.diagnose_deployment(namespace=namespace, name=name)
+        if current_diagnosis is None:
+            return AgentOutput(
+                answer=_build_deployment_diagnosis_answer(message, None),
+                sources=source_titles(matches),
+            )
+        report = build_deployment_incident_report(
+            current_diagnosis,
+            sources=source_titles(matches),
+        )
+        return AgentOutput(
+            answer=_build_incident_report_answer(message, report),
+            sources=source_titles(matches),
+        )
+
+    async def answer_runbook(
+        self,
+        message: str,
+        matches: list[RetrievedDocument],
+    ) -> AgentOutput:
+        """Build a grounded runbook response."""
+
         grounded_answer = await self._answer_synthesizer.synthesize(
-            message=agent_input.message,
+            message=message,
             matches=matches,
         )
         return AgentOutput(
@@ -96,7 +188,6 @@ class KubePilotAgent:
             sources=grounded_answer.sources,
             citations=grounded_answer.citations,
         )
-
 
 def create_agent() -> Agent:
     """Create the default KubePilot agent runtime."""
@@ -120,7 +211,9 @@ def create_configured_retriever() -> Retriever:
     return create_default_retriever()
 
 
-def _source_titles(matches: list[RetrievedDocument]) -> tuple[str, ...]:
+def source_titles(matches: list[RetrievedDocument]) -> tuple[str, ...]:
+    """Return unique source titles from retrieved documents."""
+
     unique_titles: list[str] = []
     for match in matches:
         title = match.document.title

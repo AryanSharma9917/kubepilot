@@ -23,6 +23,9 @@ class Settings:
     llm_provider: str = "deterministic"
     llm_endpoint: str | None = None
     agent_mode: str = "deterministic"
+    otel_exporter_otlp_endpoint: str | None = None
+    otel_service_name: str = "kubepilot-api"
+    otel_headers: tuple[tuple[str, str], ...] = ()
 
 
 @lru_cache
@@ -47,8 +50,24 @@ def get_settings() -> Settings:
         llm_provider=os.getenv("KUBEPILOT_LLM_PROVIDER", "deterministic"),
         llm_endpoint=os.getenv("KUBEPILOT_LLM_ENDPOINT"),
         agent_mode=os.getenv("KUBEPILOT_AGENT_MODE", "deterministic"),
+        otel_exporter_otlp_endpoint=os.getenv("KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT"),
+        otel_service_name=os.getenv("KUBEPILOT_OTEL_SERVICE_NAME", "kubepilot-api"),
+        otel_headers=_split_key_values(os.getenv("KUBEPILOT_OTEL_HEADERS", "")),
     )
 
 
 def _split_csv(value: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in value.split(",") if item.strip())
+
+
+def _split_key_values(value: str) -> tuple[tuple[str, str], ...]:
+    pairs: list[tuple[str, str]] = []
+    for item in value.split(","):
+        if "=" not in item:
+            continue
+        key, item_value = item.split("=", 1)
+        key = key.strip()
+        item_value = item_value.strip()
+        if key and item_value:
+            pairs.append((key, item_value))
+    return tuple(pairs)

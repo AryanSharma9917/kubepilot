@@ -6,6 +6,7 @@ from kubepilot_api.audit import audit_middleware
 from kubepilot_api.auth import api_key_auth_middleware
 from kubepilot_api.config import get_settings
 from kubepilot_api.metrics import metrics_middleware, render_metrics
+from kubepilot_api.otel import configure_opentelemetry
 from kubepilot_api.routes.audit import router as audit_router
 from kubepilot_api.routes.chat import router as chat_router
 from kubepilot_api.routes.cluster import router as cluster_router
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
 
         return Response(render_metrics(), media_type="text/plain; version=0.0.4")
 
+    configure_opentelemetry(app, settings)
     return app
 
 

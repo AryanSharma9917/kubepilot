@@ -33,11 +33,21 @@ rag = [
 agent = [
     "langgraph>=0.2,<1.0",
 ]
+observability = [
+    "opentelemetry-api>=1.25,<2.0",
+    "opentelemetry-sdk>=1.25,<2.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.25,<2.0",
+    "opentelemetry-instrumentation-fastapi>=0.46b0,<1.0",
+]
 all = [
     "kubernetes>=30.0,<31.0",
     "faiss-cpu>=1.8,<2.0",
     "numpy>=1.26,<3.0",
     "langgraph>=0.2,<1.0",
+    "opentelemetry-api>=1.25,<2.0",
+    "opentelemetry-sdk>=1.25,<2.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.25,<2.0",
+    "opentelemetry-instrumentation-fastapi>=0.46b0,<1.0",
 ]
 
 [tool.hatch.build.targets.wheel]

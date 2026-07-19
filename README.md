@@ -172,6 +172,8 @@ Prometheus scrape configuration lives at
 [monitoring/prometheus.yml](monitoring/prometheus.yml), and a starter Grafana
 dashboard lives at
 [monitoring/grafana-dashboard.json](monitoring/grafana-dashboard.json).
+Set `KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT` to export OpenTelemetry traces to an
+OTLP HTTP collector while keeping the local trace endpoint available.
 
 ## Configuration
 
@@ -192,6 +194,9 @@ dashboard lives at
 | `KUBEPILOT_LLM_PROVIDER` | `deterministic` | Answer provider mode; currently `deterministic` |
 | `KUBEPILOT_LLM_ENDPOINT` | unset | HTTP JSON LLM endpoint when `KUBEPILOT_LLM_PROVIDER=http` |
 | `KUBEPILOT_AGENT_MODE` | `deterministic` | Agent mode: `deterministic` or `langgraph` |
+| `KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT` | unset | Optional OTLP HTTP trace export endpoint |
+| `KUBEPILOT_OTEL_SERVICE_NAME` | `kubepilot-api` | OpenTelemetry service name |
+| `KUBEPILOT_OTEL_HEADERS` | unset | Optional comma-separated `key=value` OTLP headers |
 
 Optional integration dependencies are grouped as extras:
 
@@ -199,6 +204,7 @@ Optional integration dependencies are grouped as extras:
 python -m pip install -e ".[kubernetes]"
 python -m pip install -e ".[rag]"
 python -m pip install -e ".[agent]"
+python -m pip install -e ".[observability]"
 ```
 
 See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for the target

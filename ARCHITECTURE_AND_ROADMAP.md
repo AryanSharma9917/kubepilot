@@ -285,6 +285,7 @@ kubepilot/
 - [x] Local audit event trail for API requests
 - [x] Request ID propagation through audit events and response headers
 - [x] Local trace spans for HTTP, agent, and retrieval operations
+- [x] Optional OpenTelemetry OTLP trace exporter integration
 - [x] Chat, retrieval, cluster-tool, and trace-buffer metrics
 - [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
@@ -297,7 +298,7 @@ kubepilot/
 - [x] Deeper LangGraph workflow with branch-specific retrieval, tool, synthesis, and review nodes
 - [x] Go-based Kubernetes tooling/services
 - [x] Auth, RBAC-aware tool execution, and audit logging
-- [ ] OpenTelemetry exporter integration
+- [x] OpenTelemetry exporter integration
 - [x] Scheduled integration tests against kind or minikube in CI
 
 ---

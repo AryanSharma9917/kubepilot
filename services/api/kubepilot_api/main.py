@@ -12,6 +12,7 @@ from kubepilot_api.routes.audit import router as audit_router
 from kubepilot_api.routes.chat import router as chat_router
 from kubepilot_api.routes.cluster import router as cluster_router
 from kubepilot_api.routes.knowledge import router as knowledge_router
+from kubepilot_api.routes.status import router as status_router
 from kubepilot_api.routes.traces import router as traces_router
 from kubepilot_api.schemas import HealthResponse, ServiceInfo
 from kubepilot_api.tracing import trace_middleware
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(chat_router)
     app.include_router(cluster_router)
     app.include_router(knowledge_router)
+    app.include_router(status_router)
     app.include_router(traces_router)
 
     @app.get("/", response_model=ServiceInfo, tags=["service"])

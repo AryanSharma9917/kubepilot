@@ -20,6 +20,21 @@ class HealthResponse(BaseModel):
     status: Literal["ok", "ready"]
 
 
+class RuntimeStatusResponse(BaseModel):
+    """Redacted runtime status for operators."""
+
+    environment: str
+    kubernetes_mode: str
+    rag_mode: str
+    llm_provider: str
+    agent_mode: str
+    auth_enabled: bool
+    namespace_policy_enabled: bool
+    action_policy_enabled: bool
+    rate_limit_per_minute: int
+    otel_export_enabled: bool
+
+
 class ChatRequest(BaseModel):
     """A user message submitted to KubePilot."""
 

@@ -14,4 +14,7 @@ COPY --from=build /out/k8s-tool /k8s-tool
 
 EXPOSE 8081
 
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD ["/k8s-tool", "healthcheck"]
+
 ENTRYPOINT ["/k8s-tool"]

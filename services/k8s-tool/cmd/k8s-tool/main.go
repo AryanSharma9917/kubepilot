@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type workloadHealth struct {
@@ -64,6 +65,13 @@ type kubernetesInspector interface {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
+		if err := runHealthcheck(); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	addr := os.Getenv("KUBEPILOT_K8S_TOOL_ADDR")
 	if addr == "" {
 		addr = ":8081"
@@ -73,6 +81,29 @@ func main() {
 	if err := http.ListenAndServe(addr, newRouter(newInspectorFromEnv())); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func runHealthcheck() error {
+	url := os.Getenv("KUBEPILOT_K8S_TOOL_HEALTHCHECK_URL")
+	if url == "" {
+		url = "http://127.0.0.1:8081/healthz"
+	}
+	client := http.Client{Timeout: 2 * time.Second}
+	response, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return errUnexpectedStatus(response.StatusCode)
+	}
+	return nil
+}
+
+type errUnexpectedStatus int
+
+func (err errUnexpectedStatus) Error() string {
+	return "unexpected healthcheck status: " + http.StatusText(int(err))
 }
 
 func newRouter(inspector kubernetesInspector) http.Handler {

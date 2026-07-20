@@ -10,7 +10,20 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - k8s-tool
+      k8s-tool:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)",
+        ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   k8s-tool:
     build:
@@ -21,3 +34,9 @@ services:
       KUBEPILOT_K8S_TOOL_MODE: fixture
     ports:
       - "8081:8081"
+    healthcheck:
+      test: ["CMD", "/k8s-tool", "healthcheck"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

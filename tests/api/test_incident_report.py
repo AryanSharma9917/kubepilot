@@ -22,6 +22,21 @@ async def test_deployment_incident_report_returns_structured_report(
 
 
 @pytest.mark.anyio
+async def test_deployment_incident_report_markdown_export(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get(
+        "/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md"
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/markdown")
+    assert "# Deployment incident: payments/deployment/checkout" in response.text
+    assert "## Evidence" in response.text
+    assert "## Next Actions" in response.text
+
+
+@pytest.mark.anyio
 async def test_deployment_incident_report_returns_404_for_unknown_deployment(
     client: httpx.AsyncClient,
 ) -> None:

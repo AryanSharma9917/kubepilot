@@ -1,6 +1,6 @@
 """Cluster API routes."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from kubepilot_api.schemas import (
     ClusterHealthResponse,
@@ -63,3 +63,48 @@ async def deployment_incident_report(
     if report is None:
         raise HTTPException(status_code=404, detail="Deployment not found")
     return report
+
+
+@router.get("/namespaces/{namespace}/deployments/{name}/incident-report.md")
+async def deployment_incident_report_markdown(
+    namespace: str,
+    name: str,
+    service: ClusterService = Depends(get_cluster_service),
+) -> Response:
+    """Return a deployment incident report as markdown."""
+
+    try:
+        report = await service.deployment_incident_report(namespace=namespace, name=name)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    if report is None:
+        raise HTTPException(status_code=404, detail="Deployment not found")
+    return Response(
+        _incident_report_markdown(report),
+        media_type="text/markdown; charset=utf-8",
+    )
+
+
+def _incident_report_markdown(report: IncidentReportResponse) -> str:
+    lines = [
+        f"# {report.title}",
+        "",
+        f"- Severity: {report.severity}",
+        f"- Impacted resource: {report.impacted_resource}",
+        "",
+        "## Summary",
+        "",
+        report.summary,
+        "",
+        "## Evidence",
+        "",
+    ]
+    lines.extend(f"- **{item.source}:** {item.message}" for item in report.evidence)
+    lines.extend(["", "## Timeline", ""])
+    lines.extend(f"- **{item.source}:** {item.message}" for item in report.timeline)
+    lines.extend(["", "## Next Actions", ""])
+    lines.extend(f"- {action}" for action in report.next_actions)
+    if report.sources:
+        lines.extend(["", "## Sources", ""])
+        lines.extend(f"- {source}" for source in report.sources)
+    return "\n".join(lines) + "\n"

@@ -18,6 +18,7 @@ class Settings:
     allowed_namespaces: tuple[str, ...] = ()
     allowed_actions: tuple[str, ...] = ()
     api_keys: tuple[str, ...] = ()
+    rate_limit_per_minute: int = 0
     rag_mode: str = "keyword"
     rag_index_path: str | None = None
     llm_provider: str = "deterministic"
@@ -45,6 +46,7 @@ def get_settings() -> Settings:
         allowed_namespaces=_split_csv(os.getenv("KUBEPILOT_ALLOWED_NAMESPACES", "")),
         allowed_actions=_split_csv(os.getenv("KUBEPILOT_ALLOWED_ACTIONS", "")),
         api_keys=_split_csv(os.getenv("KUBEPILOT_API_KEYS", "")),
+        rate_limit_per_minute=_int_env("KUBEPILOT_RATE_LIMIT_PER_MINUTE", default=0),
         rag_mode=os.getenv("KUBEPILOT_RAG_MODE", "keyword"),
         rag_index_path=os.getenv("KUBEPILOT_RAG_INDEX_PATH"),
         llm_provider=os.getenv("KUBEPILOT_LLM_PROVIDER", "deterministic"),
@@ -71,3 +73,13 @@ def _split_key_values(value: str) -> tuple[tuple[str, str], ...]:
         if key and item_value:
             pairs.append((key, item_value))
     return tuple(pairs)
+
+
+def _int_env(name: str, *, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default

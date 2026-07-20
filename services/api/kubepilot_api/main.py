@@ -7,6 +7,7 @@ from kubepilot_api.auth import api_key_auth_middleware
 from kubepilot_api.config import get_settings
 from kubepilot_api.metrics import metrics_middleware, render_metrics
 from kubepilot_api.otel import configure_opentelemetry
+from kubepilot_api.rate_limit import rate_limit_middleware
 from kubepilot_api.routes.audit import router as audit_router
 from kubepilot_api.routes.chat import router as chat_router
 from kubepilot_api.routes.cluster import router as cluster_router
@@ -28,6 +29,7 @@ def create_app() -> FastAPI:
     app.middleware("http")(audit_middleware)
     app.middleware("http")(metrics_middleware)
     app.middleware("http")(trace_middleware)
+    app.middleware("http")(rate_limit_middleware)
     app.middleware("http")(api_key_auth_middleware)
     app.include_router(audit_router)
     app.include_router(chat_router)

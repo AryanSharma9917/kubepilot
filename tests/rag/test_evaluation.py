@@ -1,6 +1,12 @@
 from pathlib import Path
 
-from rag.evaluation import EvaluationCase, evaluate_retriever, load_evaluation_cases
+from rag.evaluation import (
+    EvaluationCase,
+    evaluate_retriever,
+    evaluate_retriever_detailed,
+    load_evaluation_cases,
+    render_markdown_report,
+)
 from rag.models import Document
 from rag.retrieval import KeywordRetriever
 
@@ -47,3 +53,32 @@ def test_evaluate_retriever_reports_recall_at_k() -> None:
     assert result.passed == 1
     assert result.failed == 0
     assert result.recall_at_k == 1.0
+
+
+def test_render_markdown_report_includes_case_results() -> None:
+    retriever = KeywordRetriever(
+        [
+            Document(
+                source="rolling-restart.md",
+                title="Rolling Restart",
+                content="Restart deployment pods safely.",
+            )
+        ]
+    )
+    report = evaluate_retriever_detailed(
+        retriever,
+        [
+            EvaluationCase(
+                query="rolling restart",
+                expected_sources=("rolling-restart.md",),
+            )
+        ],
+        limit=1,
+    )
+
+    markdown = render_markdown_report(report, limit=1)
+
+    assert "# KubePilot Retrieval Evaluation" in markdown
+    assert "Recall@1: 1.000" in markdown
+    assert "rolling-restart.md" in markdown
+    assert "| rolling restart |" in markdown

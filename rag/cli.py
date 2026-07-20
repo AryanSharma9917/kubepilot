@@ -3,7 +3,12 @@
 import argparse
 from pathlib import Path
 
-from rag.evaluation import evaluate_retriever, load_evaluation_cases
+from rag.evaluation import (
+    evaluate_retriever,
+    evaluate_retriever_detailed,
+    load_evaluation_cases,
+    render_markdown_report,
+)
 from rag.indexing import build_runbook_index, write_native_faiss_index, write_runbook_index
 from rag.retrieval.keyword import create_default_retriever
 
@@ -59,11 +64,18 @@ def evaluate() -> None:
         help="Directory containing markdown runbooks.",
     )
     parser.add_argument("--limit", type=int, default=3, help="Top-k retrieval limit.")
+    parser.add_argument(
+        "--report-output",
+        type=Path,
+        default=None,
+        help="Optional markdown report output path.",
+    )
     args = parser.parse_args()
 
     cases = load_evaluation_cases(args.cases)
+    retriever = create_default_retriever(args.runbooks_dir)
     result = evaluate_retriever(
-        create_default_retriever(args.runbooks_dir),
+        retriever,
         cases,
         limit=args.limit,
     )
@@ -71,6 +83,14 @@ def evaluate() -> None:
         f"retrieval_recall_at_{args.limit}={result.recall_at_k:.3f} "
         f"passed={result.passed} failed={result.failed} total={result.total}"
     )
+    if args.report_output is not None:
+        report = evaluate_retriever_detailed(retriever, cases, limit=args.limit)
+        args.report_output.parent.mkdir(parents=True, exist_ok=True)
+        args.report_output.write_text(
+            render_markdown_report(report, limit=args.limit),
+            encoding="utf-8",
+        )
+        print(f"Wrote retrieval evaluation report to {args.report_output}")
 
 
 if __name__ == "__main__":

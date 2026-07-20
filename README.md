@@ -21,6 +21,9 @@ and real cluster clients will replace or extend.
   `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/diagnose`
 - Deployment incident report endpoint at
   `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report`
+- Markdown incident report export at
+  `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report.md`
+- Redacted runtime status endpoint at `GET /api/v1/status`
 - Initial agent boundary for chat-style requests
 - Local markdown runbook loading, chunking, and keyword retrieval
 - Optional vector retrieval with FAISS when installed
@@ -40,6 +43,7 @@ and real cluster clients will replace or extend.
 - Local trace spans at `GET /api/v1/traces`
 - Request ID propagation through `X-Request-ID` and audit events
 - Optional API key authentication for `/api/*` routes
+- Optional in-memory rate limiting for `/api/*` routes
 - Namespace and action allowlists for cluster tool APIs
 - Docker, Compose, Helm, Prometheus, Grafana, and GitOps starter manifests
 - API contract tests
@@ -87,6 +91,12 @@ KubePilot can also return a structured incident report:
 curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report
 ```
 
+Export the same report as markdown:
+
+```bash
+curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md
+```
+
 It can also be reached through chat prompts such as:
 
 ```text
@@ -130,6 +140,7 @@ Run retrieval evaluation:
 
 ```bash
 kubepilot-evaluate-retrieval --cases tests/fixtures/retrieval-evaluation.jsonl
+kubepilot-evaluate-retrieval --report-output /tmp/kubepilot-retrieval-report.md
 ```
 
 Build a native FAISS sidecar index when optional FAISS dependencies are
@@ -189,6 +200,7 @@ OTLP HTTP collector while keeping the local trace endpoint available.
 | `KUBEPILOT_ALLOWED_NAMESPACES` | unset | Optional comma-separated namespace allowlist for cluster APIs |
 | `KUBEPILOT_ALLOWED_ACTIONS` | unset | Optional comma-separated action allowlist for cluster APIs |
 | `KUBEPILOT_API_KEYS` | unset | Optional comma-separated API keys for `/api/*` routes |
+| `KUBEPILOT_RATE_LIMIT_PER_MINUTE` | `0` | Optional per-client `/api/*` request limit; `0` disables it |
 | `KUBEPILOT_RAG_MODE` | `keyword` | Retrieval mode: `keyword`, `vector`, or `faiss` |
 | `KUBEPILOT_RAG_INDEX_PATH` | unset | Optional path to a persisted runbook index |
 | `KUBEPILOT_LLM_PROVIDER` | `deterministic` | Answer provider mode; currently `deterministic` |

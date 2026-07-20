@@ -54,12 +54,21 @@ curl http://127.0.0.1:18000/healthz
 curl http://127.0.0.1:18000/readyz
 curl http://127.0.0.1:18000/metrics
 curl http://127.0.0.1:18000/api/v1/cluster/health
+curl http://127.0.0.1:18000/api/v1/status
 ```
 
 You can also run the reusable validator directly once the service is reachable:
 
 ```bash
 PYTHONPATH=services/api python -m kubepilot_api.local_cluster --base-url http://127.0.0.1:18000
+```
+
+To render the chart with a sample NetworkPolicy:
+
+```bash
+helm template kubepilot ./helm/kubepilot \
+  --namespace kubepilot \
+  --values tests/fixtures/networkpolicy-values.yaml
 ```
 
 ## Real Cluster Mode

@@ -282,12 +282,17 @@ kubepilot/
 - [x] Namespace allowlist policy for cluster APIs
 - [x] Action allowlist policy for cluster APIs
 - [x] Optional API key authentication for API routes
+- [x] Optional API route rate limiting
 - [x] Local audit event trail for API requests
 - [x] Request ID propagation through audit events and response headers
 - [x] Local trace spans for HTTP, agent, and retrieval operations
 - [x] Optional OpenTelemetry OTLP trace exporter integration
 - [x] Chat, retrieval, cluster-tool, and trace-buffer metrics
+- [x] Runtime status endpoint for redacted operator visibility
+- [x] Markdown incident report export
+- [x] Markdown retrieval evaluation reports and CI artifact upload
 - [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
+- [x] Optional Helm NetworkPolicy and container healthchecks
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
 - [x] Manual and scheduled GitHub Actions kind smoke workflow
 - [x] Local cluster smoke-test script and validation guide

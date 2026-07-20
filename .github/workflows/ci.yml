@@ -30,6 +30,17 @@ jobs:
       - name: Build runbook index
         run: kubepilot-index --output /tmp/kubepilot-runbooks.json
 
+      - name: Evaluate retrieval with markdown report
+        run: >
+          kubepilot-evaluate-retrieval
+          --report-output /tmp/kubepilot-retrieval-report.md
+
+      - name: Upload retrieval report
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubepilot-retrieval-report
+          path: /tmp/kubepilot-retrieval-report.md
+
       - name: Validate Grafana dashboard JSON
         run: python -m json.tool monitoring/grafana-dashboard.json >/dev/null
 
@@ -68,3 +79,9 @@ jobs:
 
       - name: Render chart
         run: helm template kubepilot ./helm/kubepilot --namespace kubepilot
+
+      - name: Render chart with NetworkPolicy
+        run: >
+          helm template kubepilot ./helm/kubepilot
+          --namespace kubepilot
+          --values tests/fixtures/networkpolicy-values.yaml

@@ -164,6 +164,12 @@ docs. The Go tool defaults to fixture mode locally; set
 `KUBEPILOT_K8S_TOOL_MODE=cluster` for real cluster access when running it with
 kubeconfig or in-cluster credentials.
 
+Print the demo flow with:
+
+```bash
+./scripts/demo.sh
+```
+
 Deploy to a local Kubernetes cluster after building/loading the image:
 
 ```bash

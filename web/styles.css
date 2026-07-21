@@ -224,6 +224,38 @@ input {
   gap: 0.7rem;
 }
 
+.workload-card,
+.trace-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-soft);
+  padding: 0.85rem;
+}
+
+.workload-card strong,
+.workload-card span {
+  display: block;
+}
+
+.workload-card span,
+.trace-row span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.workload-card b {
+  border-radius: 999px;
+  background: #fef3c7;
+  color: var(--warn);
+  font-size: 0.84rem;
+  padding: 0.35rem 0.55rem;
+  white-space: nowrap;
+}
+
 .empty-state,
 .assistant-message,
 .user-message {

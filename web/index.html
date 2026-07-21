@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KubePilot</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">K</span>
+          <div>
+            <strong>KubePilot</strong>
+            <span>AI Kubernetes Ops</span>
+          </div>
+        </div>
+        <nav class="nav-list" aria-label="Primary">
+          <a href="#overview" class="nav-item active">Overview</a>
+          <a href="#copilot" class="nav-item">Copilot</a>
+          <a href="#diagnosis" class="nav-item">Diagnosis</a>
+          <a href="#incident" class="nav-item">Incident</a>
+          <a href="#observability" class="nav-item">Observability</a>
+        </nav>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Local demo cockpit</p>
+            <h1>Kubernetes operations workspace</h1>
+          </div>
+          <div class="connection-pill" id="connectionStatus">Booting UI</div>
+        </header>
+
+        <section class="dashboard-grid" id="overview">
+          <article class="panel status-panel">
+            <div class="panel-heading">
+              <p class="eyebrow">Runtime</p>
+              <h2>Service Status</h2>
+            </div>
+            <div class="stat-grid" id="statusCards">
+              <div class="stat-card">
+                <span>Environment</span>
+                <strong>local</strong>
+              </div>
+              <div class="stat-card">
+                <span>Kubernetes</span>
+                <strong>fixture</strong>
+              </div>
+              <div class="stat-card">
+                <span>Agent</span>
+                <strong>deterministic</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel health-panel">
+            <div class="panel-heading">
+              <p class="eyebrow">Cluster</p>
+              <h2>Unhealthy Workloads</h2>
+            </div>
+            <div class="workload-list" id="workloadList">
+              <div class="empty-state">Connect the API to load cluster health.</div>
+            </div>
+          </article>
+        </section>
+
+        <section class="two-column">
+          <article class="panel" id="copilot">
+            <div class="panel-heading">
+              <p class="eyebrow">Copilot</p>
+              <h2>Ask KubePilot</h2>
+            </div>
+            <div class="chat-log" id="chatLog">
+              <div class="assistant-message">
+                Ask about unhealthy workloads, rollout failures, or incident reports.
+              </div>
+            </div>
+            <form class="chat-form" id="chatForm">
+              <input
+                id="chatInput"
+                name="message"
+                type="text"
+                value="Create an incident report for deployment checkout"
+                autocomplete="off"
+              />
+              <button type="submit">Send</button>
+            </form>
+          </article>
+
+          <article class="panel" id="diagnosis">
+            <div class="panel-heading">
+              <p class="eyebrow">Deployment</p>
+              <h2>Diagnosis</h2>
+            </div>
+            <form class="inline-form" id="diagnosisForm">
+              <input id="namespaceInput" value="payments" aria-label="Namespace" />
+              <input id="deploymentInput" value="checkout" aria-label="Deployment" />
+              <button type="submit">Diagnose</button>
+            </form>
+            <div class="diagnosis-output" id="diagnosisOutput">
+              <div class="empty-state">Run a diagnosis to inspect pods, events, and logs.</div>
+            </div>
+          </article>
+        </section>
+
+        <section class="two-column">
+          <article class="panel" id="incident">
+            <div class="panel-heading">
+              <p class="eyebrow">Incident</p>
+              <h2>Markdown Report</h2>
+            </div>
+            <pre class="markdown-preview" id="incidentMarkdown">Generate a report from the diagnosis view.</pre>
+          </article>
+
+          <article class="panel" id="observability">
+            <div class="panel-heading">
+              <p class="eyebrow">Signals</p>
+              <h2>Recent Traces</h2>
+            </div>
+            <div class="trace-list" id="traceList">
+              <div class="empty-state">Trace spans will appear after API calls.</div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

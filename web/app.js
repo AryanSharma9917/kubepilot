@@ -4,6 +4,9 @@ const connectionStatus = document.querySelector("#connectionStatus");
 const statusCards = document.querySelector("#statusCards");
 const workloadList = document.querySelector("#workloadList");
 const traceList = document.querySelector("#traceList");
+const chatForm = document.querySelector("#chatForm");
+const chatInput = document.querySelector("#chatInput");
+const chatLog = document.querySelector("#chatLog");
 
 function setConnectionStatus(message, state = "") {
   connectionStatus.textContent = message;
@@ -114,6 +117,70 @@ function renderTraces(spans) {
     .join("");
 }
 
+async function sendChat(message) {
+  appendChatMessage(message, "user");
+  appendChatMessage("Thinking through runbooks and cluster signals...", "assistant", true);
+  try {
+    const response = await apiFetch("/api/v1/chat", {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    });
+    replacePendingAssistant(renderChatAnswer(response));
+    await loadOverview();
+  } catch (error) {
+    replacePendingAssistant(`<div class="error-text">${escapeHtml(error.message)}</div>`);
+  }
+}
+
+function renderChatAnswer(response) {
+  const sources = response.sources?.length
+    ? `<div class="source-list">${response.sources.map((source) => `<span>${escapeHtml(source)}</span>`).join("")}</div>`
+    : "";
+  const citations = response.citations?.length
+    ? `
+      <div class="citation-list">
+        ${response.citations
+          .map(
+            (citation) => `
+              <details>
+                <summary>${escapeHtml(citation.title)}</summary>
+                <p>${escapeHtml(citation.snippet)}</p>
+                <small>${escapeHtml(citation.source)}</small>
+              </details>
+            `,
+          )
+          .join("")}
+      </div>
+    `
+    : "";
+  return `
+    <div>${escapeHtml(response.answer)}</div>
+    ${sources}
+    ${citations}
+  `;
+}
+
+function appendChatMessage(content, role, pending = false) {
+  const message = document.createElement("div");
+  message.className = role === "user" ? "user-message" : "assistant-message";
+  if (pending) {
+    message.dataset.pending = "true";
+  }
+  message.innerHTML = escapeHtml(content);
+  chatLog.append(message);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function replacePendingAssistant(html) {
+  const pending = chatLog.querySelector("[data-pending='true']");
+  if (!pending) {
+    return;
+  }
+  delete pending.dataset.pending;
+  pending.innerHTML = html;
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
 function escapeHtml(value) {
   return value.replace(/[&<>"']/g, (character) => {
     const entities = {
@@ -128,6 +195,15 @@ function escapeHtml(value) {
 }
 
 function boot() {
+  chatForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const message = chatInput.value.trim();
+    if (!message) {
+      return;
+    }
+    chatInput.value = "";
+    sendChat(message);
+  });
   loadOverview();
 }
 

@@ -274,6 +274,50 @@ input {
   color: var(--ink);
 }
 
+.source-list,
+.citation-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.source-list span {
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  background: #ccfbf1;
+  color: #115e59;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.32rem 0.5rem;
+}
+
+.citation-list {
+  display: grid;
+}
+
+.citation-list details {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  padding: 0.65rem;
+}
+
+.citation-list summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.citation-list p {
+  color: var(--muted);
+  margin: 0.45rem 0;
+}
+
+.error-text {
+  color: var(--bad);
+  font-weight: 800;
+}
+
 .chat-log {
   max-height: 360px;
   overflow: auto;

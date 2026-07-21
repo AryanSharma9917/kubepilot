@@ -158,10 +158,11 @@ Run the API with Docker Compose:
 docker compose up --build
 ```
 
-Compose starts both the FastAPI service and the Go `k8s-tool` service. The Go
-tool defaults to fixture mode locally; set `KUBEPILOT_K8S_TOOL_MODE=cluster`
-for real cluster access when running it with kubeconfig or in-cluster
-credentials.
+Compose starts the web UI, FastAPI service, and Go `k8s-tool` service. Open
+<http://127.0.0.1:3000> for the UI or <http://127.0.0.1:8000/docs> for the API
+docs. The Go tool defaults to fixture mode locally; set
+`KUBEPILOT_K8S_TOOL_MODE=cluster` for real cluster access when running it with
+kubeconfig or in-cluster credentials.
 
 Deploy to a local Kubernetes cluster after building/loading the image:
 

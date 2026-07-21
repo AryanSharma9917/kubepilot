@@ -352,6 +352,76 @@ input {
   white-space: pre-wrap;
 }
 
+.diagnosis-summary {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fef3c7;
+  color: #78350f;
+  padding: 0.85rem;
+}
+
+.diagnosis-summary strong,
+.diagnosis-summary span {
+  display: block;
+}
+
+.diagnosis-summary span {
+  margin-top: 0.25rem;
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.65rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.diagnosis-lists {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.diagnosis-lists h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+}
+
+.diagnosis-lists ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.diagnosis-lists li {
+  margin-bottom: 0.35rem;
+}
+
+.diagnosis-lists code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #e2e8f0;
+  margin-top: 0.35rem;
+  padding: 0.55rem;
+}
+
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 1fr;

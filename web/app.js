@@ -7,6 +7,11 @@ const traceList = document.querySelector("#traceList");
 const chatForm = document.querySelector("#chatForm");
 const chatInput = document.querySelector("#chatInput");
 const chatLog = document.querySelector("#chatLog");
+const diagnosisForm = document.querySelector("#diagnosisForm");
+const namespaceInput = document.querySelector("#namespaceInput");
+const deploymentInput = document.querySelector("#deploymentInput");
+const diagnosisOutput = document.querySelector("#diagnosisOutput");
+const incidentMarkdown = document.querySelector("#incidentMarkdown");
 
 function setConnectionStatus(message, state = "") {
   connectionStatus.textContent = message;
@@ -181,6 +186,95 @@ function replacePendingAssistant(html) {
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
+async function diagnoseDeployment(namespace, deployment) {
+  diagnosisOutput.innerHTML = `<div class="empty-state">Collecting pods, events, and logs...</div>`;
+  incidentMarkdown.textContent = "Generating markdown report...";
+  try {
+    const encodedNamespace = encodeURIComponent(namespace);
+    const encodedDeployment = encodeURIComponent(deployment);
+    const [diagnosis, markdown] = await Promise.all([
+      apiFetch(
+        `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/diagnose`,
+      ),
+      apiFetch(
+        `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report.md`,
+      ),
+    ]);
+    renderDiagnosis(diagnosis);
+    incidentMarkdown.textContent = markdown;
+    await loadOverview();
+  } catch (error) {
+    diagnosisOutput.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+    incidentMarkdown.textContent = "Incident report unavailable.";
+  }
+}
+
+function renderDiagnosis(diagnosis) {
+  const podRows = diagnosis.pods
+    .map(
+      (pod) => `
+        <tr>
+          <td>${escapeHtml(pod.name)}</td>
+          <td>${escapeHtml(pod.phase)}</td>
+          <td>${pod.ready ? "Ready" : "Not ready"}</td>
+          <td>${pod.restart_count}</td>
+          <td>${escapeHtml(pod.reason || "-")}</td>
+        </tr>
+      `,
+    )
+    .join("");
+  const eventItems = diagnosis.events
+    .map((event) => `<li><strong>${escapeHtml(event.reason)}:</strong> ${escapeHtml(event.message)}</li>`)
+    .join("");
+  const logItems = diagnosis.logs
+    .map(
+      (log) => `
+        <li>
+          <strong>${escapeHtml(log.pod_name)} / ${escapeHtml(log.container_name)}</strong>
+          <code>${escapeHtml(log.text)}</code>
+        </li>
+      `,
+    )
+    .join("");
+  const recommendations = diagnosis.recommendations
+    .map((recommendation) => `<li>${escapeHtml(recommendation)}</li>`)
+    .join("");
+  diagnosisOutput.innerHTML = `
+    <div class="diagnosis-summary">
+      <strong>${escapeHtml(diagnosis.namespace)}/deployment/${escapeHtml(diagnosis.name)}</strong>
+      <span>${escapeHtml(diagnosis.health.status)}: ${escapeHtml(diagnosis.health.reason)}</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Pod</th>
+            <th>Phase</th>
+            <th>Ready</th>
+            <th>Restarts</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>${podRows}</tbody>
+      </table>
+    </div>
+    <div class="diagnosis-lists">
+      <section>
+        <h3>Events</h3>
+        <ul>${eventItems || "<li>No events found.</li>"}</ul>
+      </section>
+      <section>
+        <h3>Logs</h3>
+        <ul>${logItems || "<li>No logs captured.</li>"}</ul>
+      </section>
+      <section>
+        <h3>Recommendations</h3>
+        <ul>${recommendations || "<li>No recommendations.</li>"}</ul>
+      </section>
+    </div>
+  `;
+}
+
 function escapeHtml(value) {
   return value.replace(/[&<>"']/g, (character) => {
     const entities = {
@@ -203,6 +297,15 @@ function boot() {
     }
     chatInput.value = "";
     sendChat(message);
+  });
+  diagnosisForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const namespace = namespaceInput.value.trim();
+    const deployment = deploymentInput.value.trim();
+    if (!namespace || !deployment) {
+      return;
+    }
+    diagnoseDeployment(namespace, deployment);
   });
   loadOverview();
 }

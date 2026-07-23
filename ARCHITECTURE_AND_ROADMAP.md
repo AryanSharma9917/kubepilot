@@ -291,6 +291,9 @@ kubepilot/
 - [x] Runtime status endpoint for redacted operator visibility
 - [x] Markdown incident report export
 - [x] Markdown retrieval evaluation reports and CI artifact upload
+- [x] Web UI for runtime status, copilot chat, deployment diagnosis, incidents, traces, and audit events
+- [x] Intentionally failing Kubernetes demo workloads and kind demo workflow
+- [x] Local web smoke checks and compose validation in CI
 - [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
 - [x] Optional Helm NetworkPolicy and container healthchecks
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering

@@ -10,3 +10,12 @@ docker compose up --build
 ```
 
 Then open <http://127.0.0.1:3000>.
+
+The UI includes:
+
+- Runtime status cards
+- Unhealthy workload shortcuts
+- Copilot chat with suggested prompts
+- Deployment diagnosis for pods, events, logs, and recommendations
+- Copyable incident markdown
+- Recent trace and audit activity panels

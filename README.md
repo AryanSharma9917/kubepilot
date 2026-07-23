@@ -24,6 +24,7 @@ and real cluster clients will replace or extend.
 - Markdown incident report export at
   `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report.md`
 - Redacted runtime status endpoint at `GET /api/v1/status`
+- Web UI for cluster status, copilot chat, diagnosis, incidents, traces, and audit events
 - Initial agent boundary for chat-style requests
 - Local markdown runbook loading, chunking, and keyword retrieval
 - Optional vector retrieval with FAISS when installed
@@ -45,6 +46,7 @@ and real cluster clients will replace or extend.
 - Optional API key authentication for `/api/*` routes
 - Optional in-memory rate limiting for `/api/*` routes
 - Namespace and action allowlists for cluster tool APIs
+- Intentionally failing demo workload manifests for kind/local cluster demos
 - Docker, Compose, Helm, Prometheus, Grafana, and GitOps starter manifests
 - API contract tests
 
@@ -168,6 +170,12 @@ Print the demo flow with:
 
 ```bash
 ./scripts/demo.sh
+```
+
+For a real kind-based demo with intentionally unhealthy workloads:
+
+```bash
+./scripts/kind-demo.sh
 ```
 
 After the stack is running, verify the UI and same-origin API proxy with:

@@ -249,16 +249,29 @@ def _build_cluster_health_answer(message: str, cluster_health: ClusterHealth) ->
     unhealthy = cluster_health.unhealthy_workloads
 
     if not unhealthy:
-        return f"{base_answer} No unhealthy workloads were found."
+        return "\n".join(
+            [
+                f"Summary: {base_answer} No unhealthy workloads were found.",
+                "Evidence: Cluster health returned zero degraded workloads.",
+                "Next actions: Continue monitoring readiness and deployment status.",
+            ]
+        )
 
-    findings = "; ".join(
+    findings = "\n".join(
         (
-            f"{workload.display_name} has {workload.ready_replicas}/"
+            f"- {workload.display_name} has {workload.ready_replicas}/"
             f"{workload.desired_replicas} replicas ready ({workload.reason})"
         )
         for workload in unhealthy
     )
-    return f"{base_answer} Unhealthy workloads: {findings}."
+    return "\n".join(
+        [
+            f"Summary: {base_answer} The cluster has {len(unhealthy)} unhealthy workload(s).",
+            "Evidence:",
+            findings,
+            "Next actions: Diagnose the most customer-facing degraded deployment first.",
+        ]
+    )
 
 
 def _build_deployment_diagnosis_answer(
@@ -267,7 +280,13 @@ def _build_deployment_diagnosis_answer(
 ) -> str:
     base_answer = f'KubePilot received your question: "{message}".'
     if diagnosis is None:
-        return f"{base_answer} The requested deployment was not found."
+        return "\n".join(
+            [
+                f"Summary: {base_answer} The requested deployment was not found.",
+                "Evidence: The Kubernetes tool returned no deployment diagnosis.",
+                "Next actions: Confirm the namespace and deployment name.",
+            ]
+        )
 
     unhealthy_pods = [pod for pod in diagnosis.pods if not pod.ready]
     pod_summary = (
@@ -286,11 +305,15 @@ def _build_deployment_diagnosis_answer(
         else "no log excerpts captured"
     )
     recommendations = " ".join(diagnosis.recommendations)
-    return (
-        f"{base_answer} Deployment {diagnosis.display_name} is "
-        f"{diagnosis.health.status.lower()}: {diagnosis.health.reason}. "
-        f"Found {pod_summary}, {event_summary}, and {log_summary}. Recommended next step: "
-        f"{recommendations}"
+    return "\n".join(
+        [
+            (
+                f"Summary: {base_answer} Deployment {diagnosis.display_name} is "
+                f"{diagnosis.health.status.lower()}: {diagnosis.health.reason}."
+            ),
+            f"Evidence: Found {pod_summary}, {event_summary}, and {log_summary}.",
+            f"Next actions: {recommendations}",
+        ]
     )
 
 
@@ -298,8 +321,11 @@ def _build_incident_report_answer(message: str, report: IncidentReport) -> str:
     base_answer = f'KubePilot received your question: "{message}".'
     evidence_summary = "; ".join(item.message for item in report.evidence[:3])
     next_actions = " ".join(report.next_actions)
-    return (
-        f"{base_answer} {report.title}. Severity: {report.severity}. "
-        f"Summary: {report.summary} Evidence: {evidence_summary}. "
-        f"Next actions: {next_actions}"
+    return "\n".join(
+        [
+            f"Summary: {base_answer} {report.title}. Severity: {report.severity}.",
+            f"Impact: {report.summary}",
+            f"Evidence: {evidence_summary}.",
+            f"Next actions: {next_actions}",
+        ]
     )

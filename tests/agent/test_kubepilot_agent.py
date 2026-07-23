@@ -139,11 +139,10 @@ async def test_agent_uses_cluster_tool_for_unhealthy_workload_questions() -> Non
 
     output = await agent.run(AgentInput(message="Show unhealthy workloads"))
 
-    assert output.answer == (
-        'KubePilot received your question: "Show unhealthy workloads". '
-        "Unhealthy workloads: payments/deployment/checkout has 1/3 replicas "
-        "ready (Two replicas are unavailable)."
-    )
+    assert 'Summary: KubePilot received your question: "Show unhealthy workloads".' in output.answer
+    assert "Evidence:" in output.answer
+    assert "- payments/deployment/checkout has 1/3 replicas ready" in output.answer
+    assert "Next actions:" in output.answer
     assert output.sources == ("Unhealthy workloads",)
 
 
@@ -169,6 +168,8 @@ async def test_agent_builds_incident_report_for_deployment_questions() -> None:
 
     assert "Deployment incident: payments/deployment/checkout" in output.answer
     assert "Severity: warning" in output.answer
+    assert "Evidence:" in output.answer
+    assert "Next actions:" in output.answer
     assert "payments/deployment/checkout has 1/3 replicas ready" in output.answer
     assert output.sources == ("Deployment rollout failures",)
 
@@ -192,6 +193,7 @@ async def test_agent_uses_deployment_diagnosis_for_named_deployment() -> None:
     output = await agent.run(AgentInput(message="Diagnose deployment checkout"))
 
     assert "Deployment payments/deployment/checkout is degraded" in output.answer
-    assert "1 unhealthy pod(s)" in output.answer
+    assert "Evidence: Found 1 unhealthy pod(s)" in output.answer
     assert "1 log excerpt(s)" in output.answer
+    assert "Next actions:" in output.answer
     assert "Inspect previous container logs." in output.answer

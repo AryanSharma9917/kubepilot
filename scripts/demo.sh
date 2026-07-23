@@ -21,4 +21,7 @@ KubePilot demo
    http://127.0.0.1:8000/api/v1/cluster/health
    http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose
    http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md
+
+6. Optional real kind demo:
+   ./scripts/kind-demo.sh
 EOF

@@ -71,6 +71,19 @@ helm template kubepilot ./helm/kubepilot \
   --values tests/fixtures/networkpolicy-values.yaml
 ```
 
+## Demo Workloads
+
+Apply intentionally broken workloads to a kind cluster and deploy KubePilot in
+real in-cluster mode:
+
+```bash
+./scripts/kind-demo.sh
+```
+
+The script builds the API image, loads it into kind, applies the demo workloads,
+installs the Helm chart with `KUBEPILOT_K8S_MODE=in_cluster`, and prints the
+port-forward command for local inspection.
+
 ## Real Cluster Mode
 
 Fixture mode is the default. To use the in-cluster Kubernetes client, set:

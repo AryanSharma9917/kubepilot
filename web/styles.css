@@ -241,6 +241,7 @@ input {
 
 .workload-list,
 .trace-list,
+.audit-list,
 .diagnosis-output,
 .chat-log {
   display: grid;
@@ -248,7 +249,8 @@ input {
 }
 
 .workload-card,
-.trace-row {
+.trace-row,
+.audit-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -265,9 +267,18 @@ input {
 }
 
 .workload-card span,
-.trace-row span {
+.trace-row span,
+.audit-row span {
   color: var(--muted);
   font-size: 0.84rem;
+}
+
+.audit-row span {
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-weight: 900;
+  padding: 0.3rem 0.55rem;
 }
 
 .workload-action {

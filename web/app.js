@@ -5,6 +5,7 @@ const refreshButton = document.querySelector("#refreshButton");
 const statusCards = document.querySelector("#statusCards");
 const workloadList = document.querySelector("#workloadList");
 const traceList = document.querySelector("#traceList");
+const auditList = document.querySelector("#auditList");
 const chatForm = document.querySelector("#chatForm");
 const chatInput = document.querySelector("#chatInput");
 const chatLog = document.querySelector("#chatLog");
@@ -52,14 +53,16 @@ async function loadOverview() {
   setConnectionStatus("Connecting", "");
   refreshButton.disabled = true;
   try {
-    const [status, health, traces] = await Promise.all([
+    const [status, health, traces, audit] = await Promise.all([
       apiFetch("/api/v1/status"),
       apiFetch("/api/v1/cluster/health"),
       apiFetch("/api/v1/traces?limit=6"),
+      apiFetch("/api/v1/audit/events?limit=8"),
     ]);
     renderStatus(status);
     renderWorkloads(health);
     renderTraces(traces.spans || []);
+    renderAuditEvents(audit.events || []);
     setConnectionStatus("API connected", "ok");
   } catch (error) {
     setConnectionStatus("API unavailable", "error");
@@ -128,6 +131,23 @@ function renderTraces(spans) {
         <div class="trace-row">
           <strong>${escapeHtml(span.name)}</strong>
           <span>${span.duration_ms.toFixed(2)} ms</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function renderAuditEvents(events) {
+  if (!events.length) {
+    auditList.innerHTML = `<div class="empty-state">Audit events will appear after API calls.</div>`;
+    return;
+  }
+  auditList.innerHTML = events
+    .map(
+      (event) => `
+        <div class="audit-row">
+          <strong>${escapeHtml(event.method)} ${escapeHtml(event.path)}</strong>
+          <span>${event.status_code}</span>
         </div>
       `,
     )

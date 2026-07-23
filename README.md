@@ -1,117 +1,214 @@
-# KubePilot
+<p align="center">
+  <img src="web/kubepilot-icon.svg" alt="KubePilot logo" width="96" />
+</p>
 
-An AI-powered Kubernetes and DevOps copilot with RAG, tool-calling, GitOps
-workflows, and observability.
+<h1 align="center">KubePilot</h1>
 
-The project is being built in small, runnable slices. The current version
-provides a FastAPI service, an initial agent boundary, local runbook retrieval,
-and a deterministic Kubernetes health tool that future LangGraph, vector search,
-and real cluster clients will replace or extend.
+<p align="center">
+  Agentic AI Kubernetes operations workspace for troubleshooting, runbook retrieval,
+  deployment diagnosis, incident reporting, and observability.
+</p>
 
-## Current functionality
+<p align="center">
+  <strong>FastAPI</strong> · <strong>RAG</strong> · <strong>LangGraph-ready agent</strong> ·
+  <strong>Go Kubernetes tool</strong> · <strong>Docker</strong> · <strong>Helm</strong> ·
+  <strong>Prometheus/Grafana</strong>
+</p>
 
-- Service metadata at `GET /`
-- Liveness probe at `GET /healthz`
-- Readiness probe at `GET /readyz`
-- Chat endpoint at `POST /api/v1/chat`
-- Streaming chat endpoint at `POST /api/v1/chat/stream`
-- Knowledge search endpoint at `POST /api/v1/knowledge/search`
-- Cluster health endpoint at `GET /api/v1/cluster/health`
-- Deployment diagnosis endpoint at
-  `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/diagnose`
-- Deployment incident report endpoint at
-  `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report`
-- Markdown incident report export at
-  `GET /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report.md`
-- Redacted runtime status endpoint at `GET /api/v1/status`
-- Web UI for cluster status, copilot chat, diagnosis, incidents, traces, and audit events
-- Initial agent boundary for chat-style requests
-- Local markdown runbook loading, chunking, and keyword retrieval
-- Optional vector retrieval with FAISS when installed
-- Provider-shaped answer synthesis with an offline deterministic LLM client
-- Self-hosted HTTP JSON LLM provider support
-- Structured answer citations in chat responses
+---
+
+## What Is KubePilot?
+
+KubePilot is an agentic AI operations copilot for Kubernetes. It is built to help
+engineers ask operational questions, inspect Kubernetes signals, retrieve runbook
+context, diagnose failing deployments, and generate incident-ready reports from
+one local-first workspace.
+
+The goal is not to hide infrastructure behind a chatbot. KubePilot keeps the
+tool boundary explicit: it retrieves evidence, calls Kubernetes inspection tools,
+shows diagnosis details, records audit and trace data, and returns answers that a
+human operator can review.
+
+## Why It Was Built
+
+Modern DevOps and SRE work often means switching between dashboards, terminals,
+logs, runbooks, API docs, and incident templates. KubePilot explores how an AI
+agent can reduce that context switching while still preserving explainability.
+
+It was built as a production-style portfolio project that brings together:
+
+- AI-assisted infrastructure operations
+- Retrieval-Augmented Generation over runbooks
+- Kubernetes health and deployment diagnosis
+- Incident report generation
+- Metrics, tracing, and audit events
+- Containerized local demos and Kubernetes deployment assets
+- A dark web console for presenting the workflow end to end
+
+## Built By
+
+**Aryan Sharma**  
+DevOps / SRE focused engineer building agentic AI tools for infrastructure
+operations.
+
+## Current Demo
+
+Run the full local demo stack:
+
+```bash
+docker compose up -d --build
+```
+
+Open the web console:
+
+```text
+http://127.0.0.1:3000
+```
+
+The Compose demo starts:
+
+- Static web console on port `3000`
+- FastAPI backend on port `8000`
+- Go Kubernetes tool service on port `8081`
+- Fixture-mode unhealthy workloads for a reliable demo
+
+Useful demo prompts:
+
+```text
+Show unhealthy workloads
+Why is checkout failing?
+Create an incident report for deployment checkout
+How do I troubleshoot ImagePullBackOff?
+```
+
+Verify the UI and same-origin API proxy:
+
+```bash
+./scripts/web-smoke.sh
+```
+
+Run the scripted demo guide:
+
+```bash
+./scripts/demo.sh
+```
+
+Run a kind/local-cluster demo with intentionally failing workloads:
+
+```bash
+./scripts/kind-demo.sh
+```
+
+## What Works Now
+
+- Dark web console with Copilot, Dashboard, Diagnosis, Incident, Observability,
+  and Documentation views
+- Chat endpoint with deterministic offline answer synthesis
+- Streaming chat endpoint
+- Runbook loading, markdown chunking, and keyword retrieval
+- Optional vector and FAISS retrieval paths
+- Structured citations in chat responses
 - Retrieval evaluation CLI for JSONL benchmark cases
-- LangGraph-compatible agent orchestration boundary
-- Explicit graph workflow step plans for agent intents
-- Branch-specific graph nodes for retrieval, tool execution, synthesis, and review
-- Graph output review before returning responses
-- Fixture-mode and real-client Kubernetes tool boundary
-- Environment-based service configuration
-- Prometheus-style metrics at `GET /metrics`
-- Operation metrics for retrieval, cluster tools, chat, and trace buffering
-- Local audit events at `GET /api/v1/audit/events`
-- Local trace spans at `GET /api/v1/traces`
-- Request ID propagation through `X-Request-ID` and audit events
-- Optional API key authentication for `/api/*` routes
-- Optional in-memory rate limiting for `/api/*` routes
-- Namespace and action allowlists for cluster tool APIs
-- Intentionally failing demo workload manifests for kind/local cluster demos
-- Docker, Compose, Helm, Prometheus, Grafana, and GitOps starter manifests
-- API contract tests
+- LangGraph-compatible orchestration boundary
+- Intent routing for runbook, cluster health, diagnosis, and incident workflows
+- Fixture-mode and real-client Kubernetes boundaries
+- Go `k8s-tool` service for Kubernetes inspection
+- Cluster health endpoint
+- Deployment diagnosis endpoint with pods, events, logs, and recommendations
+- JSON and markdown incident report generation
+- Metrics endpoint for Prometheus-style scraping
+- Local trace spans endpoint
+- Local audit events endpoint
+- Request ID propagation through API, traces, and audit events
+- Optional API key authentication
+- Optional in-memory rate limiting
+- Namespace and action allowlists for cluster APIs
+- Dockerfile and Docker Compose local stack
+- Helm chart for Kubernetes deployment
+- GitOps/ArgoCD starter manifest
+- Prometheus config and starter Grafana dashboard
+- Local cluster smoke workflow
+- API and contract tests
 
-## Local knowledge flow
+## Architecture
 
-KubePilot currently retrieves context from markdown runbooks in
-`docs/runbooks/`.
+```text
+Browser UI
+   |
+   | same-origin /api proxy
+   v
+FastAPI API
+   |
+   | chat, status, knowledge, cluster, traces, audit
+   v
+Agent Layer
+   |
+   | intent routing, retrieval, tool calls, answer synthesis
+   +----> RAG Layer
+   |        markdown runbooks, keyword/vector/FAISS-ready retrieval
+   |
+   +----> Kubernetes Tool Boundary
+            fixture mode, service mode, kubeconfig/in-cluster modes
+            |
+            v
+          Go k8s-tool service
+```
 
-When a user sends a chat message:
+## Repository Map
 
-1. FastAPI validates the request.
-2. The chat service passes the message into the agent boundary.
-3. The agent searches local runbook chunks with the keyword retriever.
-4. The answer synthesizer builds a grounded prompt from retrieved context.
-5. The configured LLM provider returns an answer.
-6. The API returns the answer, source titles, and structured citations.
+```text
+agent/                  Agent, graph workflow, tools, LLM providers, incidents
+rag/                    Runbook loading, chunking, indexing, retrieval, eval
+services/api/           FastAPI app, routes, auth, metrics, audit, tracing
+services/k8s-tool/      Go Kubernetes inspection service
+web/                    Static KubePilot console and brand assets
+docs/runbooks/          Local operational runbooks for RAG
+demo/kubernetes/        Intentionally broken demo workloads
+helm/kubepilot/         Kubernetes deployment chart
+gitops/argocd/          ArgoCD application starter manifest
+monitoring/             Prometheus config and Grafana dashboard
+scripts/                Demo, smoke, and local cluster workflows
+tests/                  API, agent, RAG, and tool tests
+```
 
-This keeps the project runnable without external AI or vector database
-dependencies while preserving the architecture seam for hosted LLMs, FAISS,
-sentence transformers, and LangGraph later.
+## API Highlights
 
-## Local cluster tool flow
+```text
+GET  /
+GET  /healthz
+GET  /readyz
+GET  /metrics
+GET  /api/v1/status
+POST /api/v1/chat
+POST /api/v1/chat/stream
+POST /api/v1/knowledge/search
+GET  /api/v1/cluster/health
+GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/diagnose
+GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report
+GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report.md
+GET  /api/v1/traces
+GET  /api/v1/audit/events
+```
 
-KubePilot also has a Kubernetes health inspector for local development. It
-defaults to fixture workload health so the API and agent tool-calling path can
-be tested without a live cluster, and can switch to kubeconfig, in-cluster, or
-Go tool service modes for real cluster inspection.
-
-Cluster health can be queried directly:
+Example:
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/cluster/health
 ```
 
-Deployment diagnosis can also be queried directly:
+Diagnosis:
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose
 ```
 
-KubePilot can also return a structured incident report:
-
-```bash
-curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report
-```
-
-Export the same report as markdown:
+Markdown incident report:
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md
 ```
 
-It can also be reached through chat prompts such as:
-
-```text
-Show unhealthy workloads
-Diagnose deployment checkout
-Create an incident report for deployment checkout
-```
-
-The agent detects the cluster-health, diagnosis, or incident-report intent,
-calls the relevant tool boundary, and includes workload details or next actions
-in the response.
-
-## Local development
+## Local Development
 
 Python 3.11 or newer is required.
 
@@ -122,20 +219,32 @@ python -m pip install -e ".[dev]"
 uvicorn kubepilot_api.main:app --reload
 ```
 
-Open <http://127.0.0.1:8000/docs> for the generated API documentation.
+Open the generated API docs:
 
-Run the checks with:
+```text
+http://127.0.0.1:8000/docs
+```
+
+Run checks:
 
 ```bash
 pytest
 ruff check .
 ```
 
+## Retrieval
+
 Build a persisted runbook index:
 
 ```bash
 kubepilot-index --output .kubepilot/index/runbooks.json
-KUBEPILOT_RAG_INDEX_PATH=.kubepilot/index/runbooks.json uvicorn kubepilot_api.main:app --reload
+```
+
+Run the API with that index:
+
+```bash
+KUBEPILOT_RAG_INDEX_PATH=.kubepilot/index/runbooks.json \
+  uvicorn kubepilot_api.main:app --reload
 ```
 
 Run retrieval evaluation:
@@ -145,8 +254,7 @@ kubepilot-evaluate-retrieval --cases tests/fixtures/retrieval-evaluation.jsonl
 kubepilot-evaluate-retrieval --report-output /tmp/kubepilot-retrieval-report.md
 ```
 
-Build a native FAISS sidecar index when optional FAISS dependencies are
-installed:
+Build a FAISS sidecar index when optional FAISS dependencies are installed:
 
 ```bash
 kubepilot-index \
@@ -154,58 +262,35 @@ kubepilot-index \
   --faiss-output .kubepilot/index/runbooks.faiss
 ```
 
-Run the API with Docker Compose:
+## Kubernetes And Deployment
+
+Deploy with Helm:
 
 ```bash
-docker compose up --build
+helm upgrade --install kubepilot ./helm/kubepilot \
+  --namespace kubepilot \
+  --create-namespace
 ```
 
-Compose starts the web UI, FastAPI service, and Go `k8s-tool` service. Open
-<http://127.0.0.1:3000> for the UI or <http://127.0.0.1:8000/docs> for the API
-docs. The Go tool defaults to fixture mode locally; set
-`KUBEPILOT_K8S_TOOL_MODE=cluster` for real cluster access when running it with
-kubeconfig or in-cluster credentials.
-
-Print the demo flow with:
-
-```bash
-./scripts/demo.sh
-```
-
-For a real kind-based demo with intentionally unhealthy workloads:
-
-```bash
-./scripts/kind-demo.sh
-```
-
-After the stack is running, verify the UI and same-origin API proxy with:
-
-```bash
-./scripts/web-smoke.sh
-```
-
-Deploy to a local Kubernetes cluster after building/loading the image:
-
-```bash
-helm upgrade --install kubepilot ./helm/kubepilot --namespace kubepilot --create-namespace
-```
-
-For an end-to-end local cluster smoke test, run:
+Run a local cluster smoke test:
 
 ```bash
 ./scripts/local-cluster-smoke.sh
 ```
 
-See [docs/local-cluster.md](docs/local-cluster.md) for the manual workflow and
-real-cluster mode notes. The local cluster smoke workflow can be run manually in
-GitHub Actions and also runs on a weekly schedule.
+See [docs/local-cluster.md](docs/local-cluster.md) for real-cluster mode notes.
 
-Prometheus scrape configuration lives at
-[monitoring/prometheus.yml](monitoring/prometheus.yml), and a starter Grafana
-dashboard lives at
-[monitoring/grafana-dashboard.json](monitoring/grafana-dashboard.json).
-Set `KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT` to export OpenTelemetry traces to an
-OTLP HTTP collector while keeping the local trace endpoint available.
+Prometheus scrape config:
+
+```text
+monitoring/prometheus.yml
+```
+
+Starter Grafana dashboard:
+
+```text
+monitoring/grafana-dashboard.json
+```
 
 ## Configuration
 
@@ -216,22 +301,22 @@ OTLP HTTP collector while keeping the local trace endpoint available.
 | `KUBEPILOT_VERSION` | `0.1.0` | Reported service version |
 | `KUBEPILOT_K8S_MODE` | `fixture` | Kubernetes mode: `fixture`, `kubeconfig`, or `in_cluster` |
 | `KUBEPILOT_K8S_TOOL_MODE` | `fixture` | Go `k8s-tool` mode: `fixture` or `cluster` |
-| `KUBEPILOT_K8S_SERVICE_URL` | `http://k8s-tool:8081` | Go Kubernetes tool service URL when using service mode |
-| `KUBEPILOT_KUBECONFIG` | unset | Optional kubeconfig path for `kubeconfig` mode |
-| `KUBEPILOT_ALLOWED_NAMESPACES` | unset | Optional comma-separated namespace allowlist for cluster APIs |
-| `KUBEPILOT_ALLOWED_ACTIONS` | unset | Optional comma-separated action allowlist for cluster APIs |
-| `KUBEPILOT_API_KEYS` | unset | Optional comma-separated API keys for `/api/*` routes |
-| `KUBEPILOT_RATE_LIMIT_PER_MINUTE` | `0` | Optional per-client `/api/*` request limit; `0` disables it |
+| `KUBEPILOT_K8S_SERVICE_URL` | `http://k8s-tool:8081` | Go Kubernetes tool service URL in service mode |
+| `KUBEPILOT_KUBECONFIG` | unset | Optional kubeconfig path |
+| `KUBEPILOT_ALLOWED_NAMESPACES` | unset | Optional namespace allowlist |
+| `KUBEPILOT_ALLOWED_ACTIONS` | unset | Optional cluster action allowlist |
+| `KUBEPILOT_API_KEYS` | unset | Optional comma-separated API keys for `/api/*` |
+| `KUBEPILOT_RATE_LIMIT_PER_MINUTE` | `0` | Per-client API rate limit; `0` disables it |
 | `KUBEPILOT_RAG_MODE` | `keyword` | Retrieval mode: `keyword`, `vector`, or `faiss` |
-| `KUBEPILOT_RAG_INDEX_PATH` | unset | Optional path to a persisted runbook index |
-| `KUBEPILOT_LLM_PROVIDER` | `deterministic` | Answer provider mode; currently `deterministic` |
-| `KUBEPILOT_LLM_ENDPOINT` | unset | HTTP JSON LLM endpoint when `KUBEPILOT_LLM_PROVIDER=http` |
+| `KUBEPILOT_RAG_INDEX_PATH` | unset | Optional persisted runbook index |
+| `KUBEPILOT_LLM_PROVIDER` | `deterministic` | Answer provider mode |
+| `KUBEPILOT_LLM_ENDPOINT` | unset | HTTP JSON LLM endpoint when provider is `http` |
 | `KUBEPILOT_AGENT_MODE` | `deterministic` | Agent mode: `deterministic` or `langgraph` |
 | `KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT` | unset | Optional OTLP HTTP trace export endpoint |
 | `KUBEPILOT_OTEL_SERVICE_NAME` | `kubepilot-api` | OpenTelemetry service name |
 | `KUBEPILOT_OTEL_HEADERS` | unset | Optional comma-separated `key=value` OTLP headers |
 
-Optional integration dependencies are grouped as extras:
+Optional dependency groups:
 
 ```bash
 python -m pip install -e ".[kubernetes]"
@@ -240,5 +325,20 @@ python -m pip install -e ".[agent]"
 python -m pip install -e ".[observability]"
 ```
 
-See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for the target
-architecture and MVP definition.
+## Roadmap
+
+KubePilot is being built in runnable slices. The current foundation is in place;
+future work can keep extending the same README sections as features land.
+
+- Improve the web console visual polish and demo storytelling
+- Expand real Kubernetes diagnosis coverage
+- Add richer RAG evaluation cases and runbooks
+- Wire FAISS retrieval as the default advanced retrieval path
+- Deepen LangGraph orchestration flows
+- Add stronger incident timeline views
+- Expand Helm values and production deployment examples
+- Improve GitOps and ArgoCD environment manifests
+- Add richer monitoring dashboards and OpenTelemetry traces
+
+See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for the detailed
+architecture and implementation plan.

@@ -68,6 +68,9 @@ jobs:
       - name: Build image
         run: docker build -t kubepilot-api:ci .
 
+      - name: Validate compose file
+        run: docker compose config
+
   helm:
     runs-on: ubuntu-latest
     steps:

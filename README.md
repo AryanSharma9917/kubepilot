@@ -170,6 +170,12 @@ Print the demo flow with:
 ./scripts/demo.sh
 ```
 
+After the stack is running, verify the UI and same-origin API proxy with:
+
+```bash
+./scripts/web-smoke.sh
+```
+
 Deploy to a local Kubernetes cluster after building/loading the image:
 
 ```bash

@@ -1,6 +1,7 @@
 const API_BASE = "";
 
 const connectionStatus = document.querySelector("#connectionStatus");
+const refreshButton = document.querySelector("#refreshButton");
 const statusCards = document.querySelector("#statusCards");
 const workloadList = document.querySelector("#workloadList");
 const traceList = document.querySelector("#traceList");
@@ -12,6 +13,7 @@ const namespaceInput = document.querySelector("#namespaceInput");
 const deploymentInput = document.querySelector("#deploymentInput");
 const diagnosisOutput = document.querySelector("#diagnosisOutput");
 const incidentMarkdown = document.querySelector("#incidentMarkdown");
+const copyMarkdownButton = document.querySelector("#copyMarkdownButton");
 
 function setConnectionStatus(message, state = "") {
   connectionStatus.textContent = message;
@@ -48,6 +50,7 @@ async function safeErrorDetail(response) {
 
 async function loadOverview() {
   setConnectionStatus("Connecting", "");
+  refreshButton.disabled = true;
   try {
     const [status, health, traces] = await Promise.all([
       apiFetch("/api/v1/status"),
@@ -61,6 +64,8 @@ async function loadOverview() {
   } catch (error) {
     setConnectionStatus("API unavailable", "error");
     workloadList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+  } finally {
+    refreshButton.disabled = false;
   }
 }
 
@@ -98,7 +103,14 @@ function renderWorkloads(health) {
             <strong>${escapeHtml(workload.namespace)}/${escapeHtml(workload.kind.toLowerCase())}/${escapeHtml(workload.name)}</strong>
             <span>${escapeHtml(workload.reason)}</span>
           </div>
-          <b>${workload.ready_replicas}/${workload.desired_replicas}</b>
+          <button
+            class="workload-action"
+            type="button"
+            data-namespace="${escapeHtml(workload.namespace)}"
+            data-deployment="${escapeHtml(workload.name)}"
+          >
+            ${workload.ready_replicas}/${workload.desired_replicas}
+          </button>
         </div>
       `,
     )
@@ -123,6 +135,7 @@ function renderTraces(spans) {
 }
 
 async function sendChat(message) {
+  chatInput.disabled = true;
   appendChatMessage(message, "user");
   appendChatMessage("Thinking through runbooks and cluster signals...", "assistant", true);
   try {
@@ -134,6 +147,9 @@ async function sendChat(message) {
     await loadOverview();
   } catch (error) {
     replacePendingAssistant(`<div class="error-text">${escapeHtml(error.message)}</div>`);
+  } finally {
+    chatInput.disabled = false;
+    chatInput.focus();
   }
 }
 
@@ -187,6 +203,8 @@ function replacePendingAssistant(html) {
 }
 
 async function diagnoseDeployment(namespace, deployment) {
+  const submitButton = diagnosisForm.querySelector("button[type='submit']");
+  submitButton.disabled = true;
   diagnosisOutput.innerHTML = `<div class="empty-state">Collecting pods, events, and logs...</div>`;
   incidentMarkdown.textContent = "Generating markdown report...";
   try {
@@ -206,6 +224,8 @@ async function diagnoseDeployment(namespace, deployment) {
   } catch (error) {
     diagnosisOutput.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
     incidentMarkdown.textContent = "Incident report unavailable.";
+  } finally {
+    submitButton.disabled = false;
   }
 }
 
@@ -289,6 +309,36 @@ function escapeHtml(value) {
 }
 
 function boot() {
+  refreshButton.addEventListener("click", () => {
+    loadOverview();
+  });
+  workloadList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-namespace][data-deployment]");
+    if (!button) {
+      return;
+    }
+    namespaceInput.value = button.dataset.namespace;
+    deploymentInput.value = button.dataset.deployment;
+    diagnoseDeployment(button.dataset.namespace, button.dataset.deployment);
+    document.querySelector("#diagnosis").scrollIntoView({ behavior: "smooth" });
+  });
+  document.querySelectorAll("[data-prompt]").forEach((button) => {
+    button.addEventListener("click", () => {
+      chatInput.value = button.dataset.prompt;
+      sendChat(button.dataset.prompt);
+    });
+  });
+  copyMarkdownButton.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(incidentMarkdown.textContent);
+      copyMarkdownButton.textContent = "Copied";
+      setTimeout(() => {
+        copyMarkdownButton.textContent = "Copy";
+      }, 1600);
+    } catch {
+      copyMarkdownButton.textContent = "Copy failed";
+    }
+  });
   chatForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const message = chatInput.value.trim();
@@ -308,6 +358,7 @@ function boot() {
     diagnoseDeployment(namespace, deployment);
   });
   loadOverview();
+  diagnoseDeployment(namespaceInput.value.trim(), deploymentInput.value.trim());
 }
 
 boot();

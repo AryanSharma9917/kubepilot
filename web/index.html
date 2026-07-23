@@ -31,7 +31,10 @@
             <p class="eyebrow">Local demo cockpit</p>
             <h1>Kubernetes operations workspace</h1>
           </div>
-          <div class="connection-pill" id="connectionStatus">Booting UI</div>
+          <div class="topbar-actions">
+            <button class="secondary-button" id="refreshButton" type="button">Refresh</button>
+            <div class="connection-pill" id="connectionStatus">Booting UI</div>
+          </div>
         </header>
 
         <section class="dashboard-grid" id="overview">
@@ -78,6 +81,17 @@
                 Ask about unhealthy workloads, rollout failures, or incident reports.
               </div>
             </div>
+            <div class="prompt-row" aria-label="Suggested prompts">
+              <button type="button" data-prompt="Show unhealthy workloads">
+                Unhealthy workloads
+              </button>
+              <button type="button" data-prompt="Why is checkout failing?">
+                Checkout failing
+              </button>
+              <button type="button" data-prompt="Create an incident report for deployment checkout">
+                Incident report
+              </button>
+            </div>
             <form class="chat-form" id="chatForm">
               <input
                 id="chatInput"
@@ -109,8 +123,13 @@
         <section class="two-column">
           <article class="panel" id="incident">
             <div class="panel-heading">
-              <p class="eyebrow">Incident</p>
-              <h2>Markdown Report</h2>
+              <div>
+                <p class="eyebrow">Incident</p>
+                <h2>Markdown Report</h2>
+              </div>
+              <button class="secondary-button" id="copyMarkdownButton" type="button">
+                Copy
+              </button>
             </div>
             <pre class="markdown-preview" id="incidentMarkdown">Generate a report from the diagnosis view.</pre>
           </article>

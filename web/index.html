@@ -4,110 +4,318 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KubePilot</title>
+    <link rel="icon" type="image/svg+xml" href="/kubepilot-icon.svg" />
+    <link rel="apple-touch-icon" href="/kubepilot-icon.png" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <svg class="icon-defs" aria-hidden="true">
+      <symbol id="i-command" viewBox="0 0 24 24"><path d="M9 9h6v6H9z"></path><path d="M9 5.5A3.5 3.5 0 1 0 5.5 9H9V5.5Z"></path><path d="M15 5.5A3.5 3.5 0 1 1 18.5 9H15V5.5Z"></path><path d="M9 18.5A3.5 3.5 0 1 1 5.5 15H9v3.5Z"></path><path d="M15 18.5A3.5 3.5 0 1 0 18.5 15H15v3.5Z"></path></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"></path><path d="m18 15 .8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8L18 15Z"></path></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></symbol>
+      <symbol id="i-report" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M9.5 13h5"></path><path d="M9.5 17h7"></path></symbol>
+      <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"></path></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4h6a3 3 0 0 1 3 3v13a3 3 0 0 0-3-3H5z"></path><path d="M19 4h-6a3 3 0 0 0-3 3v13a3 3 0 0 1 3-3h6z"></path></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-13.7 5.6"></path><path d="M4 12A8 8 0 0 1 17.7 6.4"></path><path d="M7 18H4v3"></path><path d="M17 6h3V3"></path></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="m12 19V5"></path><path d="m5 12 7-7 7 7"></path></symbol>
+      <symbol id="i-panel" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M9 5v14"></path></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"></path></symbol>
+    </svg>
+    <div class="app-shell" id="appShell">
       <aside class="sidebar">
         <div class="brand">
-          <span class="brand-mark">K</span>
-          <div>
+          <span class="brand-mark">
+            <img src="/kubepilot-icon.svg" alt="" />
+          </span>
+          <div class="brand-copy">
             <strong>KubePilot</strong>
-            <span>AI Kubernetes Ops</span>
+            <span>Agentic Kubernetes Ops</span>
           </div>
         </div>
+
         <nav class="nav-list" aria-label="Primary">
-          <a href="#overview" class="nav-item active">Overview</a>
-          <a href="#copilot" class="nav-item">Copilot</a>
-          <a href="#diagnosis" class="nav-item">Diagnosis</a>
-          <a href="#incident" class="nav-item">Incident</a>
-          <a href="#observability" class="nav-item">Observability</a>
+          <button class="nav-item" type="button" data-view="dashboard">
+            <span class="nav-icon"><svg><use href="#i-command"></use></svg></span>
+            <span class="nav-label">Dashboard</span>
+          </button>
+          <button class="nav-item active" type="button" data-view="copilot">
+            <span class="nav-icon"><svg><use href="#i-spark"></use></svg></span>
+            <span class="nav-label">Copilot</span>
+          </button>
+          <button class="nav-item" type="button" data-view="diagnosis">
+            <span class="nav-icon"><svg><use href="#i-search"></use></svg></span>
+            <span class="nav-label">Diagnosis</span>
+          </button>
+          <button class="nav-item" type="button" data-view="incident">
+            <span class="nav-icon"><svg><use href="#i-report"></use></svg></span>
+            <span class="nav-label">Incident</span>
+          </button>
+          <button class="nav-item" type="button" data-view="observability">
+            <span class="nav-icon"><svg><use href="#i-pulse"></use></svg></span>
+            <span class="nav-label">Observability</span>
+          </button>
+          <button class="nav-item" type="button" data-view="documentation">
+            <span class="nav-icon"><svg><use href="#i-book"></use></svg></span>
+            <span class="nav-label">Documentation</span>
+          </button>
         </nav>
+
+        <button
+          class="collapse-button icon-button"
+          id="collapseButton"
+          type="button"
+          aria-label="Collapse sidebar"
+          title="Collapse sidebar"
+        >
+          <span class="icon collapse-open"><svg><use href="#i-panel"></use></svg></span>
+          <span class="icon collapse-closed"><svg><use href="#i-panel"></use></svg></span>
+        </button>
       </aside>
 
       <main class="workspace">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Local demo cockpit</p>
-            <h1>Kubernetes operations workspace</h1>
+            <p class="eyebrow">Agentic Kubernetes control plane</p>
+            <h1>
+              <img class="title-logo" src="/kubepilot-icon.svg" alt="" />
+              <span>KubePilot</span>
+            </h1>
           </div>
           <div class="topbar-actions">
-            <button class="secondary-button" id="refreshButton" type="button">Refresh</button>
+            <button
+              class="secondary-button utility-button"
+              id="refreshButton"
+              type="button"
+              aria-label="Refresh cluster signals"
+              title="Refresh cluster signals"
+            >
+              <span class="icon"><svg><use href="#i-refresh"></use></svg></span>
+              <span>Refresh</span>
+            </button>
             <div class="connection-pill" id="connectionStatus">Booting UI</div>
           </div>
         </header>
 
-        <section class="dashboard-grid" id="overview">
-          <article class="panel status-panel">
-            <div class="panel-heading">
-              <p class="eyebrow">Runtime</p>
-              <h2>Service Status</h2>
+        <section class="view" data-view-panel="dashboard">
+          <div class="hero-strip">
+            <div>
+              <p class="eyebrow">Live demo</p>
+              <h2>Operate your cluster through a calm AI workspace.</h2>
+              <p>
+                Ask KubePilot what broke, inspect the evidence, and turn the diagnosis
+                into an incident report without leaving the console.
+              </p>
             </div>
-            <div class="stat-grid" id="statusCards">
-              <div class="stat-card">
-                <span>Environment</span>
-                <strong>local</strong>
-              </div>
-              <div class="stat-card">
-                <span>Kubernetes</span>
-                <strong>fixture</strong>
-              </div>
-              <div class="stat-card">
-                <span>Agent</span>
-                <strong>deterministic</strong>
-              </div>
+            <div class="hero-actions">
+              <button class="action-button" type="button" data-open-view="copilot">
+                <span class="button-icon"><svg><use href="#i-spark"></use></svg></span>
+                <span>Open Copilot</span>
+              </button>
+              <button class="secondary-button" type="button" data-open-view="documentation">
+                <span class="button-icon"><svg><use href="#i-book"></use></svg></span>
+                <span>Read Docs</span>
+              </button>
             </div>
-          </article>
+          </div>
 
-          <article class="panel health-panel">
-            <div class="panel-heading">
-              <p class="eyebrow">Cluster</p>
-              <h2>Unhealthy Workloads</h2>
-            </div>
-            <div class="workload-list" id="workloadList">
-              <div class="empty-state">Connect the API to load cluster health.</div>
-            </div>
-          </article>
+          <div class="quick-actions" aria-label="Demo actions">
+            <button type="button" data-prompt="Show unhealthy workloads">
+              <span class="quick-icon"><svg><use href="#i-pulse"></use></svg></span>
+              <span>
+                <strong>Find the breakage</strong>
+                <small>Ask the agent for degraded workloads.</small>
+              </span>
+            </button>
+            <button type="button" data-open-view="diagnosis">
+              <span class="quick-icon"><svg><use href="#i-search"></use></svg></span>
+              <span>
+                <strong>Inspect checkout</strong>
+                <small>Run pod, event, and log diagnosis.</small>
+              </span>
+            </button>
+            <button type="button" data-open-view="documentation">
+              <span class="quick-icon"><svg><use href="#i-book"></use></svg></span>
+              <span>
+                <strong>Learn the flow</strong>
+                <small>Open the expandable demo guide.</small>
+              </span>
+            </button>
+          </div>
+
+          <section class="dashboard-grid">
+            <article class="panel status-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Runtime</p>
+                  <h2>Service Status</h2>
+                </div>
+              </div>
+              <div class="stat-grid" id="statusCards">
+                <div class="stat-card">
+                  <span>Environment</span>
+                  <strong>local</strong>
+                </div>
+                <div class="stat-card">
+                  <span>Kubernetes</span>
+                  <strong>fixture</strong>
+                </div>
+                <div class="stat-card">
+                  <span>Agent</span>
+                  <strong>deterministic</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel health-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Cluster</p>
+                  <h2>Unhealthy Workloads</h2>
+                </div>
+                <button class="secondary-button" type="button" data-open-view="diagnosis">
+                  <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
+                  <span>Diagnose</span>
+                </button>
+              </div>
+              <div class="workload-list" id="workloadList">
+                <div class="empty-state">Connect the API to load cluster health.</div>
+              </div>
+            </article>
+          </section>
         </section>
 
-        <section class="two-column">
-          <article class="panel" id="copilot">
-            <div class="panel-heading">
-              <p class="eyebrow">Copilot</p>
-              <h2>Ask KubePilot</h2>
-            </div>
-            <div class="chat-log" id="chatLog">
-              <div class="assistant-message">
-                Ask about unhealthy workloads, rollout failures, or incident reports.
+        <section class="view active" data-view-panel="copilot">
+          <div class="demo-flow" aria-label="Demo flow">
+            <button type="button" data-prompt="Show unhealthy workloads">
+              <span class="flow-step">1</span>
+              <span>
+                <strong>Ask</strong>
+                <small>Find unhealthy workloads</small>
+              </span>
+            </button>
+            <button type="button" data-open-view="diagnosis">
+              <span class="flow-step">2</span>
+              <span>
+                <strong>Diagnose</strong>
+                <small>Inspect pods, events, logs</small>
+              </span>
+            </button>
+            <button type="button" data-open-view="incident">
+              <span class="flow-step">3</span>
+              <span>
+                <strong>Report</strong>
+                <small>Generate markdown evidence</small>
+              </span>
+            </button>
+            <button type="button" data-open-view="observability">
+              <span class="flow-step">4</span>
+              <span>
+                <strong>Observe</strong>
+                <small>Review traces and audit</small>
+              </span>
+            </button>
+          </div>
+
+          <div class="copilot-layout">
+          <article class="panel copilot-panel">
+            <div class="copilot-hero">
+              <div>
+                <p class="eyebrow">AI operations copilot</p>
+                <h2>Diagnose Kubernetes issues with evidence.</h2>
+                <p>
+                  Start with a question. KubePilot turns cluster signals, runbooks,
+                  tool calls, traces, and reports into a guided response.
+                </p>
               </div>
             </div>
-            <div class="prompt-row" aria-label="Suggested prompts">
-              <button type="button" data-prompt="Show unhealthy workloads">
-                Unhealthy workloads
-              </button>
-              <button type="button" data-prompt="Why is checkout failing?">
-                Checkout failing
-              </button>
-              <button type="button" data-prompt="Create an incident report for deployment checkout">
-                Incident report
-              </button>
-            </div>
-            <form class="chat-form" id="chatForm">
-              <input
-                id="chatInput"
-                name="message"
-                type="text"
-                value="Create an incident report for deployment checkout"
-                autocomplete="off"
-              />
-              <button type="submit">Send</button>
-            </form>
-          </article>
-
-          <article class="panel" id="diagnosis">
             <div class="panel-heading">
-              <p class="eyebrow">Deployment</p>
-              <h2>Diagnosis</h2>
+                <div>
+                  <p class="eyebrow">Copilot</p>
+                  <h2>Ask KubePilot</h2>
+                </div>
+                <button class="secondary-button" type="button" data-open-view="documentation">
+                  <span class="button-icon"><svg><use href="#i-book"></use></svg></span>
+                  <span>How it works</span>
+                </button>
+              </div>
+              <div class="chat-log" id="chatLog">
+                <div class="assistant-message">
+                  <strong>Ready when you are.</strong>
+                  <span>Ask what broke, why it broke, and what evidence supports the diagnosis.</span>
+                </div>
+              </div>
+              <div class="prompt-row" aria-label="Suggested prompts">
+                <button type="button" data-prompt="Show unhealthy workloads">
+                  <span class="button-icon"><svg><use href="#i-pulse"></use></svg></span>
+                  <span>Unhealthy workloads</span>
+                </button>
+                <button type="button" data-prompt="Why is checkout failing?">
+                  <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
+                  <span>Checkout failing</span>
+                </button>
+                <button type="button" data-prompt="Create an incident report for deployment checkout">
+                  <span class="button-icon"><svg><use href="#i-report"></use></svg></span>
+                  <span>Incident report</span>
+                </button>
+              </div>
+              <form class="chat-form" id="chatForm">
+                <input
+                  id="chatInput"
+                  name="message"
+                  type="text"
+                  value="Create an incident report for deployment checkout"
+                  placeholder="Ask KubePilot about your cluster..."
+                  autocomplete="off"
+                />
+                <button class="send-button" type="submit" aria-label="Send message" title="Send">
+                  <span class="icon"><svg><use href="#i-send"></use></svg></span>
+                  <span>Send</span>
+                </button>
+              </form>
+            </article>
+
+            <aside class="intel-rail" aria-label="Demo context">
+              <section class="intel-card alert">
+                <div class="intel-icon"><svg><use href="#i-pulse"></use></svg></div>
+                <div>
+                  <p class="eyebrow">Live signal</p>
+                  <h3>2 workloads degraded</h3>
+                  <p>Payments checkout and metrics scraper are intentionally unhealthy for the demo.</p>
+                </div>
+              </section>
+              <section class="intel-card">
+                <div class="intel-icon"><svg><use href="#i-search"></use></svg></div>
+                <div>
+                  <p class="eyebrow">Best next action</p>
+                  <h3>Diagnose checkout</h3>
+                  <p>Inspect replicas, events, logs, and recommendations from the Kubernetes tool boundary.</p>
+                  <button type="button" data-open-view="diagnosis">
+                    <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
+                    <span>Open Diagnosis</span>
+                  </button>
+                </div>
+              </section>
+              <section class="intel-card">
+                <div class="intel-icon"><svg><use href="#i-report"></use></svg></div>
+                <div>
+                  <p class="eyebrow">Deliverable</p>
+                  <h3>Incident-ready report</h3>
+                  <p>Turn the diagnosis into markdown evidence that can be copied into an incident update.</p>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="diagnosis">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Deployment</p>
+                <h2>Diagnosis</h2>
+              </div>
             </div>
             <form class="inline-form" id="diagnosisForm">
               <input id="namespaceInput" value="payments" aria-label="Namespace" />
@@ -120,41 +328,267 @@
           </article>
         </section>
 
-        <section class="two-column">
-          <article class="panel" id="incident">
+        <section class="view" data-view-panel="incident">
+          <article class="panel">
             <div class="panel-heading">
               <div>
                 <p class="eyebrow">Incident</p>
                 <h2>Markdown Report</h2>
               </div>
-              <button class="secondary-button" id="copyMarkdownButton" type="button">
-                Copy
+              <button
+                class="secondary-button icon-button"
+                id="copyMarkdownButton"
+                type="button"
+                aria-label="Copy markdown report"
+                title="Copy markdown report"
+              >
+                <span class="icon"><svg><use href="#i-copy"></use></svg></span>
               </button>
             </div>
             <pre class="markdown-preview" id="incidentMarkdown">Generate a report from the diagnosis view.</pre>
           </article>
-
-          <article class="panel" id="observability">
-            <div class="panel-heading">
-              <p class="eyebrow">Signals</p>
-              <h2>Recent Traces</h2>
-            </div>
-            <div class="trace-list" id="traceList">
-              <div class="empty-state">Trace spans will appear after API calls.</div>
-            </div>
-          </article>
         </section>
 
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">Audit</p>
-              <h2>Recent API Activity</h2>
+        <section class="view" data-view-panel="observability">
+          <div class="two-column">
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Signals</p>
+                  <h2>Recent Traces</h2>
+                </div>
+              </div>
+              <div class="trace-list" id="traceList">
+                <div class="empty-state">Trace spans will appear after API calls.</div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Audit</p>
+                  <h2>Recent API Activity</h2>
+                </div>
+              </div>
+              <div class="audit-list" id="auditList">
+                <div class="empty-state">Audit events will appear after API calls.</div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="documentation">
+          <article class="docs-shell">
+            <div class="docs-hero">
+              <div>
+                <p class="eyebrow">Documentation</p>
+                <h2>KubePilot demo guide</h2>
+                <p>
+                  KubePilot is an agentic Kubernetes operations copilot. It combines
+                  FastAPI, RAG over runbooks, Kubernetes tool-calling, incident reports,
+                  metrics, audit events, and tracing into a local-first demo platform.
+                </p>
+              </div>
             </div>
-          </div>
-          <div class="audit-list" id="auditList">
-            <div class="empty-state">Audit events will appear after API calls.</div>
-          </div>
+
+            <div class="docs-grid">
+              <section class="docs-card wide about-card">
+                <p class="eyebrow">About the project</p>
+                <h3>What KubePilot Actually Is</h3>
+                <p>
+                  KubePilot is an agentic AI Kubernetes operations workspace built to
+                  make production troubleshooting faster, clearer, and more explainable.
+                  Instead of jumping between dashboards, terminals, runbooks, and incident
+                  notes, an engineer can ask one operational question and get a guided
+                  answer backed by cluster evidence.
+                </p>
+                <p>
+                  The project was built to demonstrate how AI can support real DevOps and
+                  SRE workflows without hiding the underlying facts. KubePilot keeps the
+                  Kubernetes tool boundary explicit, retrieves runbook context, shows
+                  diagnosis details, and produces incident-ready reports that a human can
+                  review before taking action.
+                </p>
+              </section>
+
+              <section class="docs-card">
+                <h3>Why It Was Built</h3>
+                <ul>
+                  <li>To reduce the time spent manually stitching together pods, events, logs, and runbooks.</li>
+                  <li>To show how an AI agent can explain Kubernetes failures with evidence.</li>
+                  <li>To create a portfolio-grade DevOps project that combines backend, AI, Kubernetes, and UI work.</li>
+                  <li>To keep troubleshooting local-first and demo-friendly while still supporting a real cluster boundary.</li>
+                </ul>
+              </section>
+
+              <section class="docs-card">
+                <h3>Built By</h3>
+                <div class="creator-card">
+                  <strong>Aryan Sharma</strong>
+                  <span>DevOps / SRE focused engineer building agentic AI tools for infrastructure operations.</span>
+                </div>
+                <p class="docs-note">
+                  KubePilot is designed as a practical showcase of Kubernetes automation,
+                  observability, retrieval, incident reporting, and AI-assisted operations.
+                </p>
+              </section>
+
+              <section class="docs-card wide">
+                <h3>Languages And Stack</h3>
+                <div class="stack-grid">
+                  <span>Python</span>
+                  <span>FastAPI</span>
+                  <span>JavaScript</span>
+                  <span>HTML</span>
+                  <span>CSS</span>
+                  <span>Go</span>
+                  <span>Docker</span>
+                  <span>Kubernetes</span>
+                  <span>Helm</span>
+                  <span>RAG</span>
+                  <span>FAISS-ready retrieval</span>
+                  <span>LangGraph-ready orchestration</span>
+                </div>
+              </section>
+
+              <details class="docs-card" open>
+                <summary>
+                  <span>
+                    <span class="docs-icon"><svg><use href="#i-spark"></use></svg></span>
+                    What It Does
+                  </span>
+                  <span class="chevron"><svg><use href="#i-chevron"></use></svg></span>
+                </summary>
+                <div class="docs-body">
+                  <ul>
+                    <li>Answers operational questions with runbook-backed context.</li>
+                    <li>Inspects cluster health through Kubernetes tool boundaries.</li>
+                    <li>Diagnoses deployments with pods, events, logs, and recommendations.</li>
+                    <li>Generates incident reports as JSON and markdown.</li>
+                  </ul>
+                </div>
+              </details>
+
+              <details class="docs-card" open>
+                <summary>
+                  <span>
+                    <span class="docs-icon"><svg><use href="#i-command"></use></svg></span>
+                    How The Agent Works
+                  </span>
+                  <span class="chevron"><svg><use href="#i-chevron"></use></svg></span>
+                </summary>
+                <div class="docs-body">
+                  <ol>
+                    <li>Classifies the user intent.</li>
+                    <li>Retrieves matching runbook context.</li>
+                    <li>Calls Kubernetes health or diagnosis tools when needed.</li>
+                    <li>Synthesizes an answer with evidence and next actions.</li>
+                    <li>Records audit events, metrics, and trace spans.</li>
+                  </ol>
+                </div>
+              </details>
+
+              <section class="docs-card">
+                <h3>Demo Prompts</h3>
+                <div class="docs-prompts">
+                  <button type="button" data-prompt="Show unhealthy workloads">
+                    <span class="button-icon"><svg><use href="#i-pulse"></use></svg></span>
+                    <span>Show unhealthy workloads</span>
+                  </button>
+                  <button type="button" data-prompt="Why is checkout failing?">
+                    <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
+                    <span>Why is checkout failing?</span>
+                  </button>
+                  <button type="button" data-prompt="Create an incident report for deployment checkout">
+                    <span class="button-icon"><svg><use href="#i-report"></use></svg></span>
+                    <span>Create incident report</span>
+                  </button>
+                  <button type="button" data-prompt="How do I troubleshoot ImagePullBackOff?">
+                    <span class="button-icon"><svg><use href="#i-book"></use></svg></span>
+                    <span>Troubleshoot ImagePullBackOff</span>
+                  </button>
+                </div>
+              </section>
+
+              <section class="docs-card">
+                <h3>Run The Demo</h3>
+                <div class="command-list">
+                  <div class="command-row">
+                    <code>docker compose up --build</code>
+                    <button class="copy-button icon-button" type="button" data-copy="docker compose up --build" aria-label="Copy command" title="Copy command">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>./scripts/web-smoke.sh</code>
+                    <button class="copy-button icon-button" type="button" data-copy="./scripts/web-smoke.sh" aria-label="Copy command" title="Copy command">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>./scripts/kind-demo.sh</code>
+                    <button class="copy-button icon-button" type="button" data-copy="./scripts/kind-demo.sh" aria-label="Copy command" title="Copy command">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <details class="docs-card wide" open>
+                <summary>
+                  <span>
+                    <span class="docs-icon"><svg><use href="#i-pulse"></use></svg></span>
+                    Key Endpoints
+                  </span>
+                  <span class="chevron"><svg><use href="#i-chevron"></use></svg></span>
+                </summary>
+                <div class="endpoint-list docs-body">
+                  <div class="command-row">
+                    <code>POST /api/v1/chat</code>
+                    <button class="copy-button icon-button" type="button" data-copy="POST /api/v1/chat" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/status</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/status" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/cluster/health</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/health" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/cluster/namespaces/payments/deployments/checkout/diagnose</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/namespaces/payments/deployments/checkout/diagnose" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/traces</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/traces" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/audit/events</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/audit/events" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </article>
         </section>
       </main>
     </div>

@@ -1,5 +1,7 @@
 const API_BASE = "";
 
+const appShell = document.querySelector("#appShell");
+const collapseButton = document.querySelector("#collapseButton");
 const connectionStatus = document.querySelector("#connectionStatus");
 const refreshButton = document.querySelector("#refreshButton");
 const statusCards = document.querySelector("#statusCards");
@@ -15,10 +17,37 @@ const deploymentInput = document.querySelector("#deploymentInput");
 const diagnosisOutput = document.querySelector("#diagnosisOutput");
 const incidentMarkdown = document.querySelector("#incidentMarkdown");
 const copyMarkdownButton = document.querySelector("#copyMarkdownButton");
+const copyButtons = document.querySelectorAll("[data-copy]");
+
+const ICONS = {
+  copy: '<svg><use href="#i-copy"></use></svg>',
+  check: '<svg><use href="#i-check"></use></svg>',
+  search: '<svg><use href="#i-search"></use></svg>',
+};
+
+function setIconButtonIcon(button, iconName, label) {
+  const iconElement = button.querySelector(".icon");
+  if (iconElement) {
+    iconElement.innerHTML = ICONS[iconName] || iconName;
+  } else {
+    button.textContent = label;
+  }
+  button.setAttribute("aria-label", label);
+  button.setAttribute("title", label);
+}
 
 function setConnectionStatus(message, state = "") {
   connectionStatus.textContent = message;
   connectionStatus.className = `connection-pill ${state}`.trim();
+}
+
+function openView(viewName) {
+  document.querySelectorAll("[data-view-panel]").forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.viewPanel === viewName);
+  });
+  document.querySelectorAll("[data-view]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.view === viewName);
+  });
 }
 
 async function apiFetch(path, options = {}) {
@@ -112,7 +141,8 @@ function renderWorkloads(health) {
             data-namespace="${escapeHtml(workload.namespace)}"
             data-deployment="${escapeHtml(workload.name)}"
           >
-            ${workload.ready_replicas}/${workload.desired_replicas}
+            <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
+            <span>${workload.ready_replicas}/${workload.desired_replicas}</span>
           </button>
         </div>
       `,
@@ -127,12 +157,18 @@ function renderTraces(spans) {
   }
   traceList.innerHTML = spans
     .map(
-      (span) => `
+      (span) => {
+        const width = Math.min(100, Math.max(8, span.duration_ms * 18));
+        return `
         <div class="trace-row">
-          <strong>${escapeHtml(span.name)}</strong>
+          <div>
+            <strong>${escapeHtml(span.name)}</strong>
+            <div class="trace-meter"><span style="width: ${width}%"></span></div>
+          </div>
           <span>${span.duration_ms.toFixed(2)} ms</span>
         </div>
-      `,
+      `;
+      },
     )
     .join("");
 }
@@ -155,6 +191,7 @@ function renderAuditEvents(events) {
 }
 
 async function sendChat(message) {
+  openView("copilot");
   chatInput.disabled = true;
   appendChatMessage(message, "user");
   appendChatMessage("Thinking through runbooks and cluster signals...", "assistant", true);
@@ -223,6 +260,7 @@ function replacePendingAssistant(html) {
 }
 
 async function diagnoseDeployment(namespace, deployment) {
+  openView("diagnosis");
   const submitButton = diagnosisForm.querySelector("button[type='submit']");
   submitButton.disabled = true;
   diagnosisOutput.innerHTML = `<div class="empty-state">Collecting pods, events, and logs...</div>`;
@@ -316,7 +354,7 @@ function renderDiagnosis(diagnosis) {
 }
 
 function escapeHtml(value) {
-  return value.replace(/[&<>"']/g, (character) => {
+  return String(value).replace(/[&<>"']/g, (character) => {
     const entities = {
       "&": "&amp;",
       "<": "&lt;",
@@ -329,8 +367,24 @@ function escapeHtml(value) {
 }
 
 function boot() {
+  collapseButton.addEventListener("click", () => {
+    appShell.classList.toggle("sidebar-collapsed");
+    const collapsed = appShell.classList.contains("sidebar-collapsed");
+    collapseButton.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
+    collapseButton.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
+  });
   refreshButton.addEventListener("click", () => {
     loadOverview();
+  });
+  document.querySelectorAll("[data-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openView(button.dataset.view);
+    });
+  });
+  document.querySelectorAll("[data-open-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openView(button.dataset.openView);
+    });
   });
   workloadList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-namespace][data-deployment]");
@@ -340,7 +394,6 @@ function boot() {
     namespaceInput.value = button.dataset.namespace;
     deploymentInput.value = button.dataset.deployment;
     diagnoseDeployment(button.dataset.namespace, button.dataset.deployment);
-    document.querySelector("#diagnosis").scrollIntoView({ behavior: "smooth" });
   });
   document.querySelectorAll("[data-prompt]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -351,13 +404,26 @@ function boot() {
   copyMarkdownButton.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(incidentMarkdown.textContent);
-      copyMarkdownButton.textContent = "Copied";
+      setIconButtonIcon(copyMarkdownButton, "check", "Copied markdown report");
       setTimeout(() => {
-        copyMarkdownButton.textContent = "Copy";
+        setIconButtonIcon(copyMarkdownButton, "copy", "Copy markdown report");
       }, 1600);
     } catch {
-      copyMarkdownButton.textContent = "Copy failed";
+      setIconButtonIcon(copyMarkdownButton, "!", "Copy failed");
     }
+  });
+  copyButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy);
+        setIconButtonIcon(button, "check", "Copied");
+        setTimeout(() => {
+          setIconButtonIcon(button, "copy", "Copy");
+        }, 1400);
+      } catch {
+        setIconButtonIcon(button, "!", "Copy failed");
+      }
+    });
   });
   chatForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -378,7 +444,6 @@ function boot() {
     diagnoseDeployment(namespace, deployment);
   });
   loadOverview();
-  diagnoseDeployment(namespaceInput.value.trim(), deploymentInput.value.trim());
 }
 
 boot();

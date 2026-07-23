@@ -1,7 +1,7 @@
 FROM nginx:1.27-alpine
 
 COPY web/nginx.conf /etc/nginx/conf.d/default.conf
-COPY web/index.html web/styles.css web/app.js /usr/share/nginx/html/
+COPY web/index.html web/styles.css web/app.js web/kubepilot-icon.svg web/kubepilot-icon.png /usr/share/nginx/html/
 
 EXPOSE 3000
 

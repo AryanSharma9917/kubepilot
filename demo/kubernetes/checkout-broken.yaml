@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: payments
+  labels:
+    app.kubernetes.io/name: checkout
+    app.kubernetes.io/part-of: kubepilot-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: checkout
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: checkout
+        app.kubernetes.io/part-of: kubepilot-demo
+    spec:
+      containers:
+        - name: checkout
+          image: ghcr.io/kubepilot-demo/checkout:missing
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          env:
+            - name: PAYMENT_GATEWAY_URL
+              value: ""

@@ -7,3 +7,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: notifications

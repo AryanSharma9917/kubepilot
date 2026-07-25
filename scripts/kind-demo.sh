@@ -29,6 +29,7 @@ kind load docker-image "${IMAGE}" --name "${CLUSTER}"
 kubectl apply -f demo/kubernetes/namespace.yaml
 kubectl apply -f demo/kubernetes/checkout-broken.yaml
 kubectl apply -f demo/kubernetes/metrics-scraper-broken.yaml
+kubectl apply -f demo/kubernetes/email-worker-pending.yaml
 
 helm upgrade --install "${RELEASE}" ./helm/kubepilot \
   --namespace "${NAMESPACE}" \

@@ -54,6 +54,25 @@ func TestDeploymentDiagnosis(t *testing.T) {
 	}
 }
 
+func TestDeploymentDiagnosisForPendingWorker(t *testing.T) {
+	response := serveRequest(http.MethodGet, "/api/v1/namespaces/notifications/deployments/email-worker")
+
+	var payload deploymentDiagnosisResponse
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode deployment diagnosis: %v", err)
+	}
+
+	if payload.Name != "email-worker" {
+		t.Fatalf("expected email-worker diagnosis, got %s", payload.Name)
+	}
+	if len(payload.Pods) != 2 {
+		t.Fatalf("expected 2 pods, got %d", len(payload.Pods))
+	}
+	if payload.Events[0].Reason != "FailedScheduling" {
+		t.Fatalf("expected FailedScheduling event, got %#v", payload.Events)
+	}
+}
+
 func TestDeploymentDiagnosisNotFound(t *testing.T) {
 	response := serveRequest(http.MethodGet, "/api/v1/namespaces/default/deployments/missing")
 

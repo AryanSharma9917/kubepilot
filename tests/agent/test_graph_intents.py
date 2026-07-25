@@ -106,6 +106,12 @@ def test_classify_intent_defaults_to_runbook_answer() -> None:
     assert intent.name == "runbook_answer"
 
 
+def test_classify_intent_detects_known_pending_workload() -> None:
+    intent = classify_intent("Why is email-worker pending?")
+
+    assert intent.name == "deployment_diagnosis"
+
+
 def test_build_workflow_steps_for_deployment_diagnosis() -> None:
     intent = classify_intent("Diagnose deployment checkout")
 

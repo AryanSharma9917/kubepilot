@@ -281,8 +281,8 @@
                 <div class="intel-icon"><svg><use href="#i-pulse"></use></svg></div>
                 <div>
                   <p class="eyebrow">Live signal</p>
-                  <h3>2 workloads degraded</h3>
-                  <p>Payments checkout and metrics scraper are intentionally unhealthy for the demo.</p>
+                  <h3>3 workloads degraded</h3>
+                  <p>Checkout, metrics scraper, and email worker cover crash, probe, and scheduling failures.</p>
                 </div>
               </section>
               <section class="intel-card">
@@ -507,6 +507,10 @@
                     <span class="button-icon"><svg><use href="#i-book"></use></svg></span>
                     <span>Troubleshoot ImagePullBackOff</span>
                   </button>
+                  <button type="button" data-prompt="Why is email-worker pending?">
+                    <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
+                    <span>Why is email-worker pending?</span>
+                  </button>
                 </div>
               </section>
 
@@ -564,6 +568,12 @@
                   <div class="command-row">
                     <code>GET /api/v1/cluster/namespaces/payments/deployments/checkout/diagnose</code>
                     <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/namespaces/payments/deployments/checkout/diagnose" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/cluster/namespaces/notifications/deployments/email-worker/diagnose</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/namespaces/notifications/deployments/email-worker/diagnose" aria-label="Copy endpoint" title="Copy endpoint">
                       <span class="icon"><svg><use href="#i-copy"></use></svg></span>
                     </button>
                   </div>

@@ -12,6 +12,7 @@ async def test_in_memory_inspector_returns_default_unhealthy_workloads() -> None
     assert [workload.display_name for workload in health.unhealthy_workloads] == [
         "payments/deployment/checkout",
         "platform/deployment/metrics-scraper",
+        "notifications/deployment/email-worker",
     ]
 
 

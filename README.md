@@ -77,6 +77,7 @@ Useful demo prompts:
 ```text
 Show unhealthy workloads
 Why is checkout failing?
+Why is email-worker pending?
 Create an incident report for deployment checkout
 How do I troubleshoot ImagePullBackOff?
 ```
@@ -115,6 +116,8 @@ Run a kind/local-cluster demo with intentionally failing workloads:
 - Go `k8s-tool` service for Kubernetes inspection
 - Cluster health endpoint
 - Deployment diagnosis endpoint with pods, events, logs, and recommendations
+- Fixture demo cases for CrashLoopBackOff, ImagePullBackOff, readiness probe
+  failures, and pending/unschedulable pods
 - JSON and markdown incident report generation
 - Metrics endpoint for Prometheus-style scraping
 - Local trace spans endpoint

@@ -73,6 +73,11 @@ def _recommendations(
         for event in events
         if getattr(event, "reason", None)
     }
+    event_text = "\n".join(
+        event.message.lower()
+        for event in events
+        if getattr(event, "message", None)
+    )
     log_text = "\n".join(
         log.text.lower()
         for log in logs
@@ -84,13 +89,27 @@ def _recommendations(
         recommendations.append("Verify the image name, tag, registry credentials, and pull secret.")
     if "CrashLoopBackOff" in pod_reasons:
         recommendations.append("Inspect previous container logs and recent configuration changes.")
+    if "Unschedulable" in pod_reasons or "FailedScheduling" in event_reasons:
+        recommendations.append(
+            "Check node capacity, resource requests, quotas, taints, tolerations, and affinity rules."
+        )
+    if "ReadinessProbeFailed" in pod_reasons or "Unhealthy" in event_reasons:
+        recommendations.append(
+            "Validate readiness probe path, port, startup time, dependencies, and health endpoint behavior."
+        )
     if "missing" in log_text and "environment variable" in log_text:
         recommendations.append(
             "Compare required environment variables against the deployment manifest."
         )
+    if "insufficient cpu" in event_text or "insufficient memory" in event_text:
+        recommendations.append("Reduce CPU requests or add cluster capacity before retrying the rollout.")
     if "Readiness probe is failing" in reason:
         recommendations.append(
             "Check readiness probe path, port, timeout, and application startup logs."
+        )
+    if "cannot schedule" in reason.lower() or "pending" in reason.lower():
+        recommendations.append(
+            "Review scheduling events and compare requested resources with available node capacity."
         )
     if not recommendations:
         recommendations.append("Inspect rollout status, pod events, and recent deployment changes.")

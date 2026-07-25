@@ -350,6 +350,15 @@ def create_fixture_kubernetes_client() -> KubernetesClient:
         status="Degraded",
         reason="Readiness probe is failing",
     )
+    email_worker = WorkloadHealth(
+        namespace="notifications",
+        name="email-worker",
+        kind="Deployment",
+        desired_replicas=2,
+        ready_replicas=0,
+        status="Degraded",
+        reason="Pods are pending because the cluster cannot schedule them",
+    )
     return InMemoryKubernetesClient(
         deployments=(
             WorkloadHealth(
@@ -363,6 +372,7 @@ def create_fixture_kubernetes_client() -> KubernetesClient:
             ),
             checkout,
             metrics,
+            email_worker,
         ),
         pods={
             ("payments", "checkout"): (
@@ -382,7 +392,35 @@ def create_fixture_kubernetes_client() -> KubernetesClient:
                     restart_count=0,
                     reason="ImagePullBackOff",
                 ),
-            )
+            ),
+            ("platform", "metrics-scraper"): (
+                PodStatus(
+                    namespace="platform",
+                    name="metrics-scraper-5f99c897b7-rdy01",
+                    phase="Running",
+                    ready=False,
+                    restart_count=0,
+                    reason="ReadinessProbeFailed",
+                ),
+            ),
+            ("notifications", "email-worker"): (
+                PodStatus(
+                    namespace="notifications",
+                    name="email-worker-6b75db69b9-pnd01",
+                    phase="Pending",
+                    ready=False,
+                    restart_count=0,
+                    reason="Unschedulable",
+                ),
+                PodStatus(
+                    namespace="notifications",
+                    name="email-worker-6b75db69b9-pnd02",
+                    phase="Pending",
+                    ready=False,
+                    restart_count=0,
+                    reason="Unschedulable",
+                ),
+            ),
         },
         events={
             ("payments", "checkout"): (
@@ -393,7 +431,25 @@ def create_fixture_kubernetes_client() -> KubernetesClient:
                     message="Failed to pull image registry.example.com/checkout:bad-tag",
                     event_type="Warning",
                 ),
-            )
+            ),
+            ("platform", "metrics-scraper"): (
+                KubernetesEvent(
+                    namespace="platform",
+                    involved_object="metrics-scraper-5f99c897b7-rdy01",
+                    reason="Unhealthy",
+                    message="Readiness probe failed: HTTP probe failed with statuscode: 503",
+                    event_type="Warning",
+                ),
+            ),
+            ("notifications", "email-worker"): (
+                KubernetesEvent(
+                    namespace="notifications",
+                    involved_object="email-worker-6b75db69b9-pnd01",
+                    reason="FailedScheduling",
+                    message="0/3 nodes are available: 3 Insufficient cpu.",
+                    event_type="Warning",
+                ),
+            ),
         },
         logs={
             ("payments", "checkout"): (
@@ -404,7 +460,15 @@ def create_fixture_kubernetes_client() -> KubernetesClient:
                     text="panic: missing PAYMENT_GATEWAY_URL environment variable",
                     previous=True,
                 ),
-            )
+            ),
+            ("platform", "metrics-scraper"): (
+                ContainerLog(
+                    namespace="platform",
+                    pod_name="metrics-scraper-5f99c897b7-rdy01",
+                    container_name="metrics-scraper",
+                    text="readiness endpoint /ready returned 503 while warming metric cache",
+                ),
+            ),
         },
     )
 

@@ -84,4 +84,13 @@ def default_workloads() -> tuple[WorkloadHealth, ...]:
             status="Degraded",
             reason="Readiness probe is failing",
         ),
+        WorkloadHealth(
+            namespace="notifications",
+            name="email-worker",
+            kind="Deployment",
+            desired_replicas=2,
+            ready_replicas=0,
+            status="Degraded",
+            reason="Pods are pending because the cluster cannot schedule them",
+        ),
     )

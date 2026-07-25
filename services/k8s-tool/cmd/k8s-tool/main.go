@@ -260,14 +260,32 @@ func fixtureWorkloads() []workloadHealth {
 			Status:          "Degraded",
 			Reason:          "Readiness probe is failing",
 		},
+		{
+			Namespace:       "notifications",
+			Name:            "email-worker",
+			Kind:            "Deployment",
+			DesiredReplicas: 2,
+			ReadyReplicas:   0,
+			Status:          "Degraded",
+			Reason:          "Pods are pending because the cluster cannot schedule them",
+		},
 	}
 }
 
 func fixtureDiagnosis(namespace string, name string) (deploymentDiagnosisResponse, bool) {
-	if namespace != "payments" || name != "checkout" {
-		return deploymentDiagnosisResponse{}, false
+	if namespace == "payments" && name == "checkout" {
+		return checkoutFixtureDiagnosis(namespace, name), true
 	}
+	if namespace == "platform" && name == "metrics-scraper" {
+		return metricsScraperFixtureDiagnosis(namespace, name), true
+	}
+	if namespace == "notifications" && name == "email-worker" {
+		return emailWorkerFixtureDiagnosis(namespace, name), true
+	}
+	return deploymentDiagnosisResponse{}, false
+}
 
+func checkoutFixtureDiagnosis(namespace string, name string) deploymentDiagnosisResponse {
 	crashLoop := "CrashLoopBackOff"
 	imagePull := "ImagePullBackOff"
 	return deploymentDiagnosisResponse{
@@ -322,5 +340,104 @@ func fixtureDiagnosis(namespace string, name string) (deploymentDiagnosisRespons
 			"Verify the image name, tag, registry credentials, and pull secret.",
 			"Inspect previous container logs and recent configuration changes.",
 		},
-	}, true
+	}
+}
+
+func metricsScraperFixtureDiagnosis(namespace string, name string) deploymentDiagnosisResponse {
+	probeFailed := "ReadinessProbeFailed"
+	return deploymentDiagnosisResponse{
+		Namespace: namespace,
+		Name:      name,
+		Health: workloadHealth{
+			Namespace:       namespace,
+			Name:            name,
+			Kind:            "Deployment",
+			DesiredReplicas: 1,
+			ReadyReplicas:   0,
+			Status:          "Degraded",
+			Reason:          "Readiness probe is failing",
+		},
+		Pods: []podStatus{
+			{
+				Namespace:    namespace,
+				Name:         "metrics-scraper-5f99c897b7-rdy01",
+				Phase:        "Running",
+				Ready:        false,
+				RestartCount: 0,
+				Reason:       &probeFailed,
+			},
+		},
+		Events: []kubernetesEvent{
+			{
+				Namespace:      namespace,
+				InvolvedObject: "metrics-scraper-5f99c897b7-rdy01",
+				Reason:         "Unhealthy",
+				Message:        "Readiness probe failed: HTTP probe failed with statuscode: 503",
+				EventType:      "Warning",
+			},
+		},
+		Logs: []containerLog{
+			{
+				Namespace:     namespace,
+				PodName:       "metrics-scraper-5f99c897b7-rdy01",
+				ContainerName: "metrics-scraper",
+				Text:          "readiness endpoint /ready returned 503 while warming metric cache",
+				Previous:      false,
+			},
+		},
+		Recommendations: []string{
+			"Validate readiness probe path, port, startup time, dependencies, and health endpoint behavior.",
+			"Check readiness probe path, port, timeout, and application startup logs.",
+		},
+	}
+}
+
+func emailWorkerFixtureDiagnosis(namespace string, name string) deploymentDiagnosisResponse {
+	unschedulable := "Unschedulable"
+	return deploymentDiagnosisResponse{
+		Namespace: namespace,
+		Name:      name,
+		Health: workloadHealth{
+			Namespace:       namespace,
+			Name:            name,
+			Kind:            "Deployment",
+			DesiredReplicas: 2,
+			ReadyReplicas:   0,
+			Status:          "Degraded",
+			Reason:          "Pods are pending because the cluster cannot schedule them",
+		},
+		Pods: []podStatus{
+			{
+				Namespace:    namespace,
+				Name:         "email-worker-6b75db69b9-pnd01",
+				Phase:        "Pending",
+				Ready:        false,
+				RestartCount: 0,
+				Reason:       &unschedulable,
+			},
+			{
+				Namespace:    namespace,
+				Name:         "email-worker-6b75db69b9-pnd02",
+				Phase:        "Pending",
+				Ready:        false,
+				RestartCount: 0,
+				Reason:       &unschedulable,
+			},
+		},
+		Events: []kubernetesEvent{
+			{
+				Namespace:      namespace,
+				InvolvedObject: "email-worker-6b75db69b9-pnd01",
+				Reason:         "FailedScheduling",
+				Message:        "0/3 nodes are available: 3 Insufficient cpu.",
+				EventType:      "Warning",
+			},
+		},
+		Logs: []containerLog{},
+		Recommendations: []string{
+			"Check node capacity, resource requests, quotas, taints, tolerations, and affinity rules.",
+			"Reduce CPU requests or add cluster capacity before retrying the rollout.",
+			"Review scheduling events and compare requested resources with available node capacity.",
+		},
+	}
 }

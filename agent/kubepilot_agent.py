@@ -224,11 +224,17 @@ def source_titles(matches: list[RetrievedDocument]) -> tuple[str, ...]:
 
 def _deployment_reference(message: str) -> tuple[str, str] | None:
     normalized = message.lower()
-    if "deployment" not in normalized and "rollout" not in normalized:
+    known_workloads = {
+        "checkout": ("payments", "checkout"),
+        "metrics-scraper": ("platform", "metrics-scraper"),
+        "email-worker": ("notifications", "email-worker"),
+    }
+    mentions_known_workload = any(name in normalized for name in known_workloads)
+    if "deployment" not in normalized and "rollout" not in normalized and not mentions_known_workload:
         return None
     if not any(
         term in normalized
-        for term in ("fail", "failing", "diagnose", "why", "status", "incident")
+        for term in ("fail", "failing", "diagnose", "why", "status", "incident", "pending")
     ):
         return None
 
@@ -237,10 +243,15 @@ def _deployment_reference(message: str) -> tuple[str, str] | None:
     candidate = name_match.group(1) if name_match else None
     if candidate in {"fail", "failing", "failed", "status", "diagnose"}:
         candidate = None
-    if candidate is None and "checkout" not in normalized:
+    if candidate is None:
+        for workload_name, workload_ref in known_workloads.items():
+            if workload_name in normalized:
+                default_namespace, default_name = workload_ref
+                namespace = namespace_match.group(1) if namespace_match else default_namespace
+                return namespace, default_name
         return None
     namespace = namespace_match.group(1) if namespace_match else "payments"
-    name = candidate if candidate else "checkout"
+    name = candidate
     return namespace, name
 
 

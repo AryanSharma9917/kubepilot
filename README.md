@@ -45,12 +45,6 @@ It was built as a production-style portfolio project that brings together:
 - Containerized local demos and Kubernetes deployment assets
 - A dark web console for presenting the workflow end to end
 
-## Built By
-
-**Aryan Sharma**  
-DevOps / SRE focused engineer building agentic AI tools for infrastructure
-operations.
-
 ## Current Demo
 
 Run the full local demo stack:

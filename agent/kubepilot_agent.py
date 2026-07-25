@@ -230,7 +230,11 @@ def _deployment_reference(message: str) -> tuple[str, str] | None:
         "email-worker": ("notifications", "email-worker"),
     }
     mentions_known_workload = any(name in normalized for name in known_workloads)
-    if "deployment" not in normalized and "rollout" not in normalized and not mentions_known_workload:
+    if (
+        "deployment" not in normalized
+        and "rollout" not in normalized
+        and not mentions_known_workload
+    ):
         return None
     if not any(
         term in normalized

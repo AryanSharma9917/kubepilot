@@ -60,6 +60,11 @@ def test_build_deployment_incident_report_marks_zero_ready_as_critical() -> None
     assert report.severity == "critical"
     assert report.impacted_resource == "payments/deployment/checkout"
     assert "0/3 replicas ready" in report.summary
+    assert report.probable_cause == (
+        "Container image pull failure or registry authentication issue."
+    )
+    assert "no ready replicas" in report.operator_impact
+    assert "CRITICAL" in report.status_update
     assert report.next_actions == ("Verify image tag and registry credentials.",)
     assert report.sources == ("Deployment rollout failures",)
     assert [item.source for item in report.evidence] == [
@@ -97,3 +102,5 @@ def test_build_deployment_incident_report_marks_healthy_deployment_as_info() -> 
     assert report.summary == (
         "default/deployment/kubepilot-api currently has all desired replicas ready."
     )
+    assert report.probable_cause == "No active incident cause detected."
+    assert report.operator_impact == "No current operator impact."

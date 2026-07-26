@@ -170,10 +170,13 @@ class IncidentReportResponse(BaseModel):
     title: str
     severity: Literal["info", "warning", "critical"]
     summary: str
+    probable_cause: str
+    operator_impact: str
     impacted_resource: str
     evidence: list[EvidenceItemResponse] = Field(default_factory=list)
     timeline: list[EvidenceItemResponse] = Field(default_factory=list)
     next_actions: list[str] = Field(default_factory=list)
+    status_update: str = ""
     sources: list[str] = Field(default_factory=list)
 
 

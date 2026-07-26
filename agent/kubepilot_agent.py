@@ -339,8 +339,10 @@ def _build_incident_report_answer(message: str, report: IncidentReport) -> str:
     return "\n".join(
         [
             f"Summary: {base_answer} {report.title}. Severity: {report.severity}.",
-            f"Impact: {report.summary}",
+            f"Impact: {report.operator_impact}",
+            f"Probable cause: {report.probable_cause}",
             f"Evidence: {evidence_summary}.",
             f"Next actions: {next_actions}",
+            f"Status update: {report.status_update}",
         ]
     )

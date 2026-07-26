@@ -168,9 +168,12 @@ async def test_agent_builds_incident_report_for_deployment_questions() -> None:
 
     assert "Deployment incident: payments/deployment/checkout" in output.answer
     assert "Severity: warning" in output.answer
+    assert "Probable cause:" in output.answer
+    assert "Impact:" in output.answer
     assert "Evidence:" in output.answer
     assert "Next actions:" in output.answer
-    assert "payments/deployment/checkout has 1/3 replicas ready" in output.answer
+    assert "payments/deployment/checkout is partially available" in output.answer
+    assert "Status update:" in output.answer
     assert output.sources == ("Deployment rollout failures",)
 
 

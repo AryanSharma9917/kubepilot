@@ -198,6 +198,8 @@ class ClusterService:
             title=report.title,
             severity=report.severity,
             summary=report.summary,
+            probable_cause=report.probable_cause,
+            operator_impact=report.operator_impact,
             impacted_resource=report.impacted_resource,
             evidence=[
                 EvidenceItemResponse(source=item.source, message=item.message)
@@ -208,6 +210,7 @@ class ClusterService:
                 for item in report.timeline
             ],
             next_actions=list(report.next_actions),
+            status_update=report.status_update,
             sources=list(report.sources),
         )
 

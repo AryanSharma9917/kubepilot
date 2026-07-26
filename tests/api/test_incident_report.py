@@ -15,6 +15,9 @@ async def test_deployment_incident_report_returns_structured_report(
     assert body["title"] == "Deployment incident: payments/deployment/checkout"
     assert body["severity"] in {"warning", "critical"}
     assert body["impacted_resource"] == "payments/deployment/checkout"
+    assert body["probable_cause"]
+    assert body["operator_impact"]
+    assert body["status_update"]
     assert body["evidence"]
     assert body["timeline"]
     assert body["timeline"][0]["source"] == "deployment"
@@ -32,6 +35,9 @@ async def test_deployment_incident_report_markdown_export(
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/markdown")
     assert "# Deployment incident: payments/deployment/checkout" in response.text
+    assert "## Probable Cause" in response.text
+    assert "## Operator Impact" in response.text
+    assert "## Status Update" in response.text
     assert "## Evidence" in response.text
     assert "## Next Actions" in response.text
 

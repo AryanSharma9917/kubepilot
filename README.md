@@ -113,6 +113,8 @@ Run a kind/local-cluster demo with intentionally failing workloads:
 - Fixture demo cases for CrashLoopBackOff, ImagePullBackOff, readiness probe
   failures, and pending/unschedulable pods
 - JSON and markdown incident report generation
+- Incident reports include severity, probable cause, operator impact, evidence,
+  timeline, next actions, and a copy-ready status update
 - Metrics endpoint for Prometheus-style scraping
 - Local trace spans endpoint
 - Local audit events endpoint

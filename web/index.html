@@ -403,6 +403,9 @@
         </section>
 
         <section class="view" data-view-panel="observability">
+          <div class="observability-summary" id="observabilitySummary">
+            <div class="empty-state compact">API activity summary will appear after calls.</div>
+          </div>
           <div class="two-column">
             <article class="panel">
               <div class="panel-heading">
@@ -422,12 +425,27 @@
                   <p class="eyebrow">Audit</p>
                   <h2>Recent API Activity</h2>
                 </div>
+                <input class="filter-input" id="auditFilter" placeholder="Filter route or status" aria-label="Filter audit events" />
+              </div>
+              <div class="route-groups" id="auditRouteGroups">
+                <div class="empty-state compact">Route groups will appear after API calls.</div>
               </div>
               <div class="audit-list" id="auditList">
                 <div class="empty-state">Audit events will appear after API calls.</div>
               </div>
             </article>
           </div>
+          <article class="panel agent-activity-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Agent Trail</p>
+                <h2>After the Ask</h2>
+              </div>
+            </div>
+            <div class="agent-activity" id="agentActivity">
+              <div class="empty-state compact">Ask KubePilot or run a diagnosis to see the API trail.</div>
+            </div>
+          </article>
         </section>
 
         <section class="view" data-view-panel="documentation">

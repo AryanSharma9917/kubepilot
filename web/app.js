@@ -8,6 +8,10 @@ const statusCards = document.querySelector("#statusCards");
 const workloadList = document.querySelector("#workloadList");
 const traceList = document.querySelector("#traceList");
 const auditList = document.querySelector("#auditList");
+const observabilitySummary = document.querySelector("#observabilitySummary");
+const auditFilter = document.querySelector("#auditFilter");
+const auditRouteGroups = document.querySelector("#auditRouteGroups");
+const agentActivity = document.querySelector("#agentActivity");
 const chatForm = document.querySelector("#chatForm");
 const chatInput = document.querySelector("#chatInput");
 const chatLog = document.querySelector("#chatLog");
@@ -28,6 +32,9 @@ const incidentMarkdown = document.querySelector("#incidentMarkdown");
 const copyMarkdownButton = document.querySelector("#copyMarkdownButton");
 const copyStatusButton = document.querySelector("#copyStatusButton");
 const copyButtons = document.querySelectorAll("[data-copy]");
+
+let latestSpans = [];
+let latestAuditEvents = [];
 
 const ICONS = {
   copy: '<svg><use href="#i-copy"></use></svg>',
@@ -100,8 +107,9 @@ async function loadOverview() {
     ]);
     renderStatus(status);
     renderWorkloads(health);
-    renderTraces(traces.spans || []);
-    renderAuditEvents(audit.events || []);
+    latestSpans = traces.spans || [];
+    latestAuditEvents = audit.events || [];
+    renderObservability();
     setConnectionStatus("API connected", "ok");
   } catch (error) {
     setConnectionStatus("API unavailable", "error");
@@ -109,6 +117,38 @@ async function loadOverview() {
   } finally {
     refreshButton.disabled = false;
   }
+}
+
+function renderObservability() {
+  renderObservabilitySummary(latestSpans, latestAuditEvents);
+  renderTraces(latestSpans);
+  renderRouteGroups(latestAuditEvents);
+  renderAuditEvents(latestAuditEvents);
+  renderAgentActivity(latestAuditEvents);
+}
+
+function renderObservabilitySummary(spans, events) {
+  const averageDuration = spans.length
+    ? spans.reduce((total, span) => total + span.duration_ms, 0) / spans.length
+    : 0;
+  const errorCount = events.filter((event) => event.status_code >= 400).length;
+  const chatCount = events.filter((event) => event.path.includes("/chat")).length;
+  const cards = [
+    ["Trace spans", spans.length],
+    ["Avg duration", `${averageDuration.toFixed(2)} ms`],
+    ["Errors", errorCount],
+    ["Chat calls", chatCount],
+  ];
+  observabilitySummary.innerHTML = cards
+    .map(
+      ([label, value]) => `
+        <div class="obs-card">
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(String(value))}</strong>
+        </div>
+      `,
+    )
+    .join("");
 }
 
 function renderStatus(status) {
@@ -184,20 +224,104 @@ function renderTraces(spans) {
 }
 
 function renderAuditEvents(events) {
-  if (!events.length) {
+  const query = auditFilter.value.trim().toLowerCase();
+  const visibleEvents = query
+    ? events.filter((event) => {
+        const haystack = `${event.method} ${event.path} ${event.status_code}`.toLowerCase();
+        return haystack.includes(query);
+      })
+    : events;
+  if (!visibleEvents.length) {
     auditList.innerHTML = `<div class="empty-state">Audit events will appear after API calls.</div>`;
     return;
   }
-  auditList.innerHTML = events
+  auditList.innerHTML = visibleEvents
     .map(
       (event) => `
         <div class="audit-row">
-          <strong>${escapeHtml(event.method)} ${escapeHtml(event.path)}</strong>
-          <span>${event.status_code}</span>
+          <div>
+            <strong>${escapeHtml(event.method)} ${escapeHtml(event.path)}</strong>
+            <small>${formatTime(event.timestamp)} - ${escapeHtml(event.request_id.slice(0, 8))}</small>
+          </div>
+          <span class="${event.status_code >= 400 ? "status-error" : ""}">${event.status_code}</span>
         </div>
       `,
     )
     .join("");
+}
+
+function renderRouteGroups(events) {
+  if (!events.length) {
+    auditRouteGroups.innerHTML = `<div class="empty-state compact">Route groups will appear after API calls.</div>`;
+    return;
+  }
+  const groups = events.reduce((accumulator, event) => {
+    const key = `${event.method} ${event.path}`;
+    const current = accumulator.get(key) || { count: 0, failures: 0 };
+    current.count += 1;
+    current.failures += event.status_code >= 400 ? 1 : 0;
+    accumulator.set(key, current);
+    return accumulator;
+  }, new Map());
+  auditRouteGroups.innerHTML = [...groups.entries()]
+    .slice(0, 4)
+    .map(
+      ([route, summary]) => `
+        <div class="route-pill">
+          <strong>${escapeHtml(route)}</strong>
+          <span>${summary.count} call${summary.count === 1 ? "" : "s"}${summary.failures ? ` / ${summary.failures} failing` : ""}</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function renderAgentActivity(events) {
+  const interestingEvents = events.filter(
+    (event) =>
+      event.path.includes("/chat") ||
+      event.path.includes("/diagnose") ||
+      event.path.includes("/incident-report"),
+  );
+  if (!interestingEvents.length) {
+    agentActivity.innerHTML = `<div class="empty-state compact">Ask KubePilot or run a diagnosis to see the API trail.</div>`;
+    return;
+  }
+  agentActivity.innerHTML = interestingEvents
+    .slice(0, 5)
+    .map(
+      (event, index) => `
+        <div class="agent-step">
+          <span>${index + 1}</span>
+          <div>
+            <strong>${escapeHtml(activityLabel(event.path))}</strong>
+            <small>${escapeHtml(event.method)} ${escapeHtml(event.path)} - ${event.status_code} - ${formatTime(event.timestamp)}</small>
+          </div>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function activityLabel(path) {
+  if (path.includes("/chat")) {
+    return "Agent answered the operator";
+  }
+  if (path.includes("/diagnose")) {
+    return "Kubernetes diagnosis collected evidence";
+  }
+  if (path.includes("/incident-report")) {
+    return "Incident report generated";
+  }
+  return "API activity recorded";
+}
+
+function formatTime(timestamp) {
+  return new Date(timestamp * 1000).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 }
 
 async function sendChat(message) {
@@ -498,6 +622,9 @@ function boot() {
         setIconButtonIcon(button, "!", "Copy failed");
       }
     });
+  });
+  auditFilter.addEventListener("input", () => {
+    renderAuditEvents(latestAuditEvents);
   });
   chatForm.addEventListener("submit", (event) => {
     event.preventDefault();

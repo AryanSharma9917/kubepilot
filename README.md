@@ -277,7 +277,9 @@ Run a local cluster smoke test:
 ./scripts/local-cluster-smoke.sh
 ```
 
-See [docs/local-cluster.md](docs/local-cluster.md) for real-cluster mode notes.
+See [docs/local-cluster.md](docs/local-cluster.md) for the kind smoke path and
+[docs/real-cluster-readiness.md](docs/real-cluster-readiness.md) for kubeconfig,
+in-cluster Helm mode, namespace/action policy, and troubleshooting.
 
 Prometheus scrape config:
 

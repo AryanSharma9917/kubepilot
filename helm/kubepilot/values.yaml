@@ -16,7 +16,13 @@ networkPolicy:
 
 env:
   KUBEPILOT_ENVIRONMENT: local
+  # Use fixture for deterministic demos, kubeconfig for local API access to a
+  # cluster, or in_cluster when deployed inside Kubernetes.
   KUBEPILOT_K8S_MODE: fixture
+  # Optional guardrails for real clusters. Leave empty to allow all namespaces
+  # and supported read actions.
+  KUBEPILOT_ALLOWED_NAMESPACES: ""
+  KUBEPILOT_ALLOWED_ACTIONS: ""
   KUBEPILOT_RAG_MODE: keyword
   KUBEPILOT_AGENT_MODE: deterministic
   KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT: ""

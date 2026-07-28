@@ -97,3 +97,6 @@ helm upgrade --install kubepilot ./helm/kubepilot \
 
 The chart includes read-only RBAC for deployments, pods, and events. Log access
 uses the pods/log subresource when the cluster enforces subresource permissions.
+
+For kubeconfig mode, policy examples, and troubleshooting, see
+[Real Cluster Readiness](real-cluster-readiness.md).

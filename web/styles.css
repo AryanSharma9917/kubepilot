@@ -1089,6 +1089,67 @@ input:focus {
   margin: 0.45rem 0;
 }
 
+.workflow-panel {
+  display: grid;
+  gap: 0.62rem;
+  margin-top: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.78rem;
+}
+
+.workflow-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink);
+}
+
+.workflow-steps {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.workflow-step-card {
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr) auto;
+  gap: 0.62rem;
+  align-items: start;
+}
+
+.workflow-step-card > span {
+  display: inline-grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background: rgba(126, 226, 184, 0.12);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.workflow-step-card strong {
+  display: block;
+  text-transform: capitalize;
+}
+
+.workflow-step-card p {
+  margin: 0.16rem 0 0;
+  color: var(--muted);
+}
+
+.workflow-step-card small {
+  align-self: center;
+  border: 1px solid rgba(126, 226, 184, 0.24);
+  border-radius: 999px;
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.48rem;
+}
+
 .error-text {
   color: var(--bad);
   font-weight: 760;

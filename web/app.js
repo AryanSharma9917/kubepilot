@@ -382,9 +382,36 @@ function renderChatAnswer(response) {
       </div>
     `
     : "";
+  const workflow = response.workflow_steps?.length
+    ? `
+      <div class="workflow-panel">
+        <div class="workflow-title">
+          <span class="button-icon"><svg><use href="#i-command"></use></svg></span>
+          <strong>Agent Steps</strong>
+        </div>
+        <div class="workflow-steps">
+          ${response.workflow_steps
+            .map(
+              (step, index) => `
+                <div class="workflow-step-card">
+                  <span>${index + 1}</span>
+                  <div>
+                    <strong>${escapeHtml(step.name.replaceAll("_", " "))}</strong>
+                    <p>${escapeHtml(step.description)}</p>
+                  </div>
+                  <small>${escapeHtml(step.status)}</small>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+      </div>
+    `
+    : "";
   renderRetrievedSources(response.sources || [], response.citations || []);
   return `
     <div>${escapeHtml(response.answer)}</div>
+    ${workflow}
     ${sources}
     ${citations}
   `;

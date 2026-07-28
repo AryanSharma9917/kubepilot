@@ -13,6 +13,15 @@ class Citation:
 
 
 @dataclass(frozen=True)
+class WorkflowStep:
+    """One visible step in the agent workflow."""
+
+    name: str
+    description: str
+    status: str = "completed"
+
+
+@dataclass(frozen=True)
 class AgentInput:
     """Input passed from the API layer into the agent."""
 
@@ -26,3 +35,4 @@ class AgentOutput:
     answer: str
     sources: tuple[str, ...] = ()
     citations: tuple[Citation, ...] = ()
+    workflow_steps: tuple[WorkflowStep, ...] = ()

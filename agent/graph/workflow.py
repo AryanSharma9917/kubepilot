@@ -5,17 +5,9 @@ from typing import Any
 
 from agent.graph.intents import Intent, classify_intent
 from agent.kubepilot_agent import KubePilotAgent
-from agent.state.chat import AgentInput, AgentOutput
+from agent.state.chat import AgentInput, AgentOutput, WorkflowStep
 from agent.tools.kubernetes import ClusterHealth, DeploymentDiagnosis
 from rag import RetrievedDocument
-
-
-@dataclass
-class WorkflowStep:
-    """One logical step in an agent workflow."""
-
-    name: str
-    description: str
 
 
 @dataclass
@@ -70,7 +62,7 @@ class GraphAgent:
 
         output = result.get("output")
         if review_agent_output(output):
-            return output
+            return attach_workflow_steps(output, result.get("steps") or ())
         return await self._fallback_agent.run(agent_input)
 
     async def _run_state_machine(self, state: dict[str, Any]) -> dict[str, Any]:
@@ -240,6 +232,20 @@ def create_graph_agent() -> GraphAgent:
     """Create the graph-backed agent runtime."""
 
     return GraphAgent()
+
+
+def attach_workflow_steps(
+    output: AgentOutput,
+    steps: tuple[WorkflowStep, ...],
+) -> AgentOutput:
+    """Return an agent output with workflow steps attached."""
+
+    return AgentOutput(
+        answer=output.answer,
+        sources=output.sources,
+        citations=output.citations,
+        workflow_steps=steps,
+    )
 
 
 def build_workflow_steps(intent: Intent) -> tuple[WorkflowStep, ...]:

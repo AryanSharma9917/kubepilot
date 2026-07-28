@@ -6,7 +6,12 @@ from uuid import uuid4
 
 from agent import Agent, AgentInput, create_agent
 from kubepilot_api.metrics import record_chat_response
-from kubepilot_api.schemas import ChatRequest, ChatResponse, CitationResponse
+from kubepilot_api.schemas import (
+    ChatRequest,
+    ChatResponse,
+    CitationResponse,
+    WorkflowStepResponse,
+)
 from kubepilot_api.tracing import trace_span
 
 
@@ -34,6 +39,14 @@ class ChatService:
                 )
                 for citation in agent_output.citations
             ],
+            workflow_steps=[
+                WorkflowStepResponse(
+                    name=step.name,
+                    description=step.description,
+                    status=step.status,
+                )
+                for step in agent_output.workflow_steps
+            ],
         )
         record_chat_response(
             source_count=len(response.sources),
@@ -54,6 +67,14 @@ class ChatService:
                 "citations": [
                     citation.model_dump(mode="json")
                     for citation in response.citations
+                ]
+            },
+        )
+        yield _event(
+            "workflow_steps",
+            {
+                "workflow_steps": [
+                    step.model_dump(mode="json") for step in response.workflow_steps
                 ]
             },
         )

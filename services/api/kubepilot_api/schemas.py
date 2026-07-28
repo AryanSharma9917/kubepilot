@@ -56,6 +56,14 @@ class CitationResponse(BaseModel):
     snippet: str
 
 
+class WorkflowStepResponse(BaseModel):
+    """One visible agent workflow step."""
+
+    name: str
+    description: str
+    status: str
+
+
 class ChatResponse(BaseModel):
     """KubePilot's response to a chat request."""
 
@@ -63,6 +71,7 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list[str] = Field(default_factory=list)
     citations: list[CitationResponse] = Field(default_factory=list)
+    workflow_steps: list[WorkflowStepResponse] = Field(default_factory=list)
 
 
 class KnowledgeSearchRequest(BaseModel):

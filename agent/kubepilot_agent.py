@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Protocol
 
 from agent.answers import AnswerSynthesizer, create_answer_synthesizer
-from agent.graph.intents import classify_intent
+from agent.graph.intents import Intent, classify_intent
 from agent.incidents import IncidentReport, build_deployment_incident_report
-from agent.state.chat import AgentInput, AgentOutput
+from agent.state.chat import AgentInput, AgentOutput, WorkflowStep
 from agent.tools.kubernetes import (
     ClusterHealth,
     ClusterHealthInspector,
@@ -123,6 +123,7 @@ class KubePilotAgent:
         return AgentOutput(
             answer=_build_cluster_health_answer(message, health),
             sources=source_titles(matches),
+            workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
         )
 
     async def answer_deployment_diagnosis(
@@ -142,6 +143,7 @@ class KubePilotAgent:
         return AgentOutput(
             answer=_build_deployment_diagnosis_answer(message, current_diagnosis),
             sources=source_titles(matches),
+            workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
         )
 
     async def answer_incident_report(
@@ -162,6 +164,7 @@ class KubePilotAgent:
             return AgentOutput(
                 answer=_build_deployment_diagnosis_answer(message, None),
                 sources=source_titles(matches),
+                workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
             )
         report = build_deployment_incident_report(
             current_diagnosis,
@@ -170,6 +173,7 @@ class KubePilotAgent:
         return AgentOutput(
             answer=_build_incident_report_answer(message, report),
             sources=source_titles(matches),
+            workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
         )
 
     async def answer_runbook(
@@ -187,6 +191,7 @@ class KubePilotAgent:
             answer=grounded_answer.answer,
             sources=grounded_answer.sources,
             citations=grounded_answer.citations,
+            workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
         )
 
 def create_agent() -> Agent:
@@ -220,6 +225,35 @@ def source_titles(matches: list[RetrievedDocument]) -> tuple[str, ...]:
         if title not in unique_titles:
             unique_titles.append(title)
     return tuple(unique_titles)
+
+
+def _workflow_steps_for_intent(intent: Intent) -> tuple[WorkflowStep, ...]:
+    common = (
+        WorkflowStep("classify_intent", "Classified the operator request."),
+        WorkflowStep("retrieve_context", "Retrieved matching runbook context."),
+    )
+    if intent.name == "cluster_health":
+        return common + (
+            WorkflowStep("inspect_cluster", "Collected workload health from Kubernetes."),
+            WorkflowStep("summarize_health", "Summarized degraded workloads and next action."),
+            WorkflowStep("review_output", "Checked the answer for a usable operator response."),
+        )
+    if intent.name == "deployment_diagnosis":
+        return common + (
+            WorkflowStep("diagnose_deployment", "Inspected pods, events, logs, and recommendations."),
+            WorkflowStep("synthesize_diagnosis", "Turned evidence into diagnosis guidance."),
+            WorkflowStep("review_output", "Checked the answer for a usable operator response."),
+        )
+    if intent.name == "incident_report":
+        return common + (
+            WorkflowStep("diagnose_deployment", "Collected deployment incident evidence."),
+            WorkflowStep("build_incident_report", "Generated an incident-ready response."),
+            WorkflowStep("review_output", "Checked the answer for a usable operator response."),
+        )
+    return common + (
+        WorkflowStep("synthesize_answer", "Synthesized a grounded runbook answer."),
+        WorkflowStep("review_output", "Checked the answer for a usable operator response."),
+    )
 
 
 def _deployment_reference(message: str) -> tuple[str, str] | None:

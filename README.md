@@ -324,6 +324,22 @@ python -m pip install -e ".[agent]"
 python -m pip install -e ".[observability]"
 ```
 
+## RAG Demo Coverage
+
+The local knowledge base in `docs/runbooks/` now covers rollout failures, pod
+restarts, unhealthy workloads, rolling restarts, pending pod scheduling, image
+pull failures, and readiness probe failures. In fixture mode, these runbooks are
+enough to demo three retrieval outcomes:
+
+- health questions retrieve unhealthy workload and rollout guidance
+- checkout/readiness questions retrieve probe and deployment evidence
+- scheduling or image questions retrieve their targeted remediation runbooks
+
+The web Copilot shows retrieved source cards after each answer so reviewers can
+see which runbooks grounded the response. Use `KUBEPILOT_RAG_MODE=faiss` with
+the `.[rag]` dependency group when you want the same demo flow backed by a FAISS
+vector index instead of keyword retrieval.
+
 ## Roadmap
 
 KubePilot is being built in runnable slices. The current foundation is in place;

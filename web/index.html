@@ -235,6 +235,7 @@
                   <p class="eyebrow">Copilot</p>
                   <h2>Ask KubePilot</h2>
                 </div>
+                <span class="rag-mode-badge" id="ragModeBadge">RAG: loading</span>
                 <button class="secondary-button" type="button" data-open-view="documentation">
                   <span class="button-icon"><svg><use href="#i-book"></use></svg></span>
                   <span>How it works</span>
@@ -303,6 +304,16 @@
                   <p class="eyebrow">Deliverable</p>
                   <h3>Incident-ready report</h3>
                   <p>Turn the diagnosis into markdown evidence that can be copied into an incident update.</p>
+                </div>
+              </section>
+              <section class="intel-card sources-card">
+                <div class="intel-icon"><svg><use href="#i-book"></use></svg></div>
+                <div>
+                  <p class="eyebrow">Retrieved Sources</p>
+                  <h3>Runbook context</h3>
+                  <div class="retrieved-sources" id="retrievedSources">
+                    <span>Ask a runbook-backed question to see citations.</span>
+                  </div>
                 </div>
               </section>
             </aside>

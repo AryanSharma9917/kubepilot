@@ -15,6 +15,8 @@ const agentActivity = document.querySelector("#agentActivity");
 const chatForm = document.querySelector("#chatForm");
 const chatInput = document.querySelector("#chatInput");
 const chatLog = document.querySelector("#chatLog");
+const ragModeBadge = document.querySelector("#ragModeBadge");
+const retrievedSources = document.querySelector("#retrievedSources");
 const diagnosisForm = document.querySelector("#diagnosisForm");
 const namespaceInput = document.querySelector("#namespaceInput");
 const deploymentInput = document.querySelector("#deploymentInput");
@@ -152,6 +154,8 @@ function renderObservabilitySummary(spans, events) {
 }
 
 function renderStatus(status) {
+  ragModeBadge.textContent = `RAG: ${status.rag_mode}`;
+  ragModeBadge.className = `rag-mode-badge ${status.rag_mode}`;
   const cards = [
     ["Environment", status.environment],
     ["Kubernetes", status.kubernetes_mode],
@@ -346,7 +350,20 @@ async function sendChat(message) {
 
 function renderChatAnswer(response) {
   const sources = response.sources?.length
-    ? `<div class="source-list">${response.sources.map((source) => `<span>${escapeHtml(source)}</span>`).join("")}</div>`
+    ? `
+      <div class="source-list">
+        ${response.sources
+          .map(
+            (source) => `
+              <span>
+                <svg><use href="#i-book"></use></svg>
+                ${escapeHtml(source)}
+              </span>
+            `,
+          )
+          .join("")}
+      </div>
+    `
     : "";
   const citations = response.citations?.length
     ? `
@@ -365,11 +382,42 @@ function renderChatAnswer(response) {
       </div>
     `
     : "";
+  renderRetrievedSources(response.sources || [], response.citations || []);
   return `
     <div>${escapeHtml(response.answer)}</div>
     ${sources}
     ${citations}
   `;
+}
+
+function renderRetrievedSources(sources, citations) {
+  if (!sources.length && !citations.length) {
+    retrievedSources.innerHTML = `<span>No retrieved sources for this answer.</span>`;
+    return;
+  }
+  const cards = citations.length
+    ? citations.map((citation) => ({
+        title: citation.title,
+        source: citation.source,
+        snippet: citation.snippet,
+      }))
+    : sources.map((source) => ({
+        title: source,
+        source,
+        snippet: "Retrieved by the configured KubePilot runbook retriever.",
+      }));
+  retrievedSources.innerHTML = cards
+    .slice(0, 4)
+    .map(
+      (card) => `
+        <article class="retrieved-source-card">
+          <strong>${escapeHtml(card.title)}</strong>
+          <p>${escapeHtml(card.snippet)}</p>
+          <small>${escapeHtml(card.source)}</small>
+        </article>
+      `,
+    )
+    .join("");
 }
 
 function appendChatMessage(content, role, pending = false) {

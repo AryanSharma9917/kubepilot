@@ -999,6 +999,9 @@ input:focus {
 }
 
 .source-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   border: 1px solid rgba(126, 226, 184, 0.32);
   border-radius: 999px;
   background: var(--accent-soft);
@@ -1006,6 +1009,66 @@ input:focus {
   font-size: 0.78rem;
   font-weight: 800;
   padding: 0.34rem 0.58rem;
+}
+
+.source-list svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.rag-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.15rem;
+  border: 1px solid rgba(126, 226, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(126, 226, 184, 0.1);
+  color: var(--accent-strong);
+  font-size: 0.74rem;
+  font-weight: 850;
+  padding: 0.28rem 0.65rem;
+  text-transform: uppercase;
+}
+
+.rag-mode-badge.keyword {
+  border-color: rgba(242, 177, 91, 0.28);
+  background: rgba(242, 177, 91, 0.1);
+  color: #ffdca2;
+}
+
+.retrieved-sources {
+  display: grid;
+  gap: 0.62rem;
+  margin-top: 0.75rem;
+}
+
+.retrieved-sources > span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.retrieved-source-card {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.16);
+  padding: 0.72rem;
+}
+
+.retrieved-source-card strong,
+.retrieved-source-card small {
+  display: block;
+}
+
+.retrieved-source-card p {
+  margin: 0.35rem 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.retrieved-source-card small {
+  color: var(--accent-strong);
+  font-size: 0.74rem;
+  overflow-wrap: anywhere;
 }
 
 .citation-list {

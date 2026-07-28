@@ -237,10 +237,13 @@ def _workflow_steps_for_intent(intent: Intent) -> tuple[WorkflowStep, ...]:
             WorkflowStep("inspect_cluster", "Collected workload health from Kubernetes."),
             WorkflowStep("summarize_health", "Summarized degraded workloads and next action."),
             WorkflowStep("review_output", "Checked the answer for a usable operator response."),
-        )
+    )
     if intent.name == "deployment_diagnosis":
         return common + (
-            WorkflowStep("diagnose_deployment", "Inspected pods, events, logs, and recommendations."),
+            WorkflowStep(
+                "diagnose_deployment",
+                "Inspected pods, events, logs, and recommendations.",
+            ),
             WorkflowStep("synthesize_diagnosis", "Turned evidence into diagnosis guidance."),
             WorkflowStep("review_output", "Checked the answer for a usable operator response."),
         )

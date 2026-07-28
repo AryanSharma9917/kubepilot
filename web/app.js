@@ -15,8 +15,18 @@ const diagnosisForm = document.querySelector("#diagnosisForm");
 const namespaceInput = document.querySelector("#namespaceInput");
 const deploymentInput = document.querySelector("#deploymentInput");
 const diagnosisOutput = document.querySelector("#diagnosisOutput");
+const incidentTitle = document.querySelector("#incidentTitle");
+const incidentSummary = document.querySelector("#incidentSummary");
+const incidentSeverity = document.querySelector("#incidentSeverity");
+const incidentCause = document.querySelector("#incidentCause");
+const incidentImpact = document.querySelector("#incidentImpact");
+const incidentResource = document.querySelector("#incidentResource");
+const incidentStatusUpdate = document.querySelector("#incidentStatusUpdate");
+const incidentTimeline = document.querySelector("#incidentTimeline");
+const incidentActions = document.querySelector("#incidentActions");
 const incidentMarkdown = document.querySelector("#incidentMarkdown");
 const copyMarkdownButton = document.querySelector("#copyMarkdownButton");
+const copyStatusButton = document.querySelector("#copyStatusButton");
 const copyButtons = document.querySelectorAll("[data-copy]");
 
 const ICONS = {
@@ -268,23 +278,76 @@ async function diagnoseDeployment(namespace, deployment) {
   try {
     const encodedNamespace = encodeURIComponent(namespace);
     const encodedDeployment = encodeURIComponent(deployment);
-    const [diagnosis, markdown] = await Promise.all([
+    const [diagnosis, report, markdown] = await Promise.all([
       apiFetch(
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/diagnose`,
+      ),
+      apiFetch(
+        `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report`,
       ),
       apiFetch(
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report.md`,
       ),
     ]);
     renderDiagnosis(diagnosis);
+    renderIncidentReport(report);
     incidentMarkdown.textContent = markdown;
     await loadOverview();
   } catch (error) {
     diagnosisOutput.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+    renderIncidentError(error.message);
     incidentMarkdown.textContent = "Incident report unavailable.";
   } finally {
     submitButton.disabled = false;
   }
+}
+
+function renderIncidentReport(report) {
+  incidentTitle.textContent = report.title;
+  incidentSummary.textContent = report.summary;
+  incidentSeverity.textContent = report.severity;
+  incidentSeverity.className = `severity-badge ${report.severity}`;
+  incidentCause.textContent = report.probable_cause;
+  incidentImpact.textContent = report.operator_impact;
+  incidentResource.textContent = report.impacted_resource;
+  incidentStatusUpdate.textContent = report.status_update;
+  incidentTimeline.innerHTML = report.timeline?.length
+    ? report.timeline
+        .map(
+          (item) => `
+            <div class="timeline-item">
+              <span>${escapeHtml(item.source)}</span>
+              <p>${escapeHtml(item.message)}</p>
+            </div>
+          `,
+        )
+        .join("")
+    : `<div class="empty-state compact">No timeline evidence returned.</div>`;
+  incidentActions.innerHTML = report.next_actions?.length
+    ? report.next_actions
+        .map(
+          (action) => `
+            <label class="action-item">
+              <span class="check-dot"><svg><use href="#i-check"></use></svg></span>
+              <span>${escapeHtml(action)}</span>
+            </label>
+          `,
+        )
+        .join("")
+    : `<div class="empty-state compact">No next actions returned.</div>`;
+}
+
+function renderIncidentError(message) {
+  incidentTitle.textContent = "Incident report unavailable";
+  incidentSummary.textContent = message;
+  incidentSeverity.textContent = "Error";
+  incidentSeverity.className = "severity-badge critical";
+  incidentCause.textContent = "KubePilot could not generate the structured incident report.";
+  incidentImpact.textContent = "The diagnosis view may still contain partial evidence.";
+  incidentResource.textContent = "Unavailable";
+  incidentStatusUpdate.textContent = "Incident status update unavailable.";
+  incidentTimeline.innerHTML = `<div class="empty-state compact">No timeline available.</div>`;
+  incidentActions.innerHTML = `<div class="empty-state compact">Retry the diagnosis after the API recovers.</div>`;
 }
 
 function renderDiagnosis(diagnosis) {
@@ -410,6 +473,17 @@ function boot() {
       }, 1600);
     } catch {
       setIconButtonIcon(copyMarkdownButton, "!", "Copy failed");
+    }
+  });
+  copyStatusButton.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(incidentStatusUpdate.textContent);
+      setIconButtonIcon(copyStatusButton, "check", "Copied status update");
+      setTimeout(() => {
+        setIconButtonIcon(copyStatusButton, "copy", "Copy status update");
+      }, 1600);
+    } catch {
+      setIconButtonIcon(copyStatusButton, "!", "Copy failed");
     }
   });
   copyButtons.forEach((button) => {

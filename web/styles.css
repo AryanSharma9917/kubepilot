@@ -321,6 +321,25 @@ input:focus {
   color: white;
 }
 
+.icon-text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+  width: auto;
+  min-height: 2.75rem;
+  white-space: nowrap;
+}
+
+.icon-text-button .icon {
+  display: inline-grid;
+  place-items: center;
+}
+
+.icon-text-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .workspace {
   display: grid;
   align-content: start;
@@ -707,7 +726,9 @@ input:focus {
 .assistant-message,
 .user-message,
 .citation-list details,
-.diagnosis-summary {
+.diagnosis-summary,
+.incident-card,
+.incident-hero {
   border: 1px solid var(--line);
   border-radius: 15px;
   background: var(--surface-soft);
@@ -1002,7 +1023,183 @@ input:focus {
 }
 
 .markdown-preview {
-  min-height: 560px;
+  min-height: 320px;
+}
+
+.incident-room {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 0.95rem;
+}
+
+.incident-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.05rem;
+  background:
+    linear-gradient(135deg, rgba(126, 226, 184, 0.14), transparent 45%),
+    var(--surface-soft);
+}
+
+.incident-hero h3 {
+  margin: 0.55rem 0 0.35rem;
+  font-size: 1.18rem;
+}
+
+.incident-hero p,
+.incident-card p {
+  color: var(--muted);
+}
+
+.incident-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.incident-card {
+  min-height: 150px;
+  padding: 1rem;
+}
+
+.incident-card p:last-child {
+  margin-bottom: 0;
+}
+
+.status-card-wide {
+  min-height: auto;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.card-title-row span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.severity-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.28rem 0.72rem;
+  font-size: 0.75rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.severity-badge.info,
+.severity-badge.muted {
+  background: rgba(126, 226, 184, 0.1);
+  border-color: rgba(126, 226, 184, 0.28);
+  color: var(--accent-strong);
+}
+
+.severity-badge.warning {
+  background: rgba(242, 177, 91, 0.12);
+  border-color: rgba(242, 177, 91, 0.34);
+  color: #ffdca2;
+}
+
+.severity-badge.critical {
+  background: rgba(255, 111, 97, 0.12);
+  border-color: rgba(255, 111, 97, 0.38);
+  color: #ffb2aa;
+}
+
+.status-update {
+  border-left: 3px solid var(--accent);
+  margin-top: 0.7rem;
+  padding-left: 0.8rem;
+  color: var(--text) !important;
+}
+
+.timeline-list,
+.action-checklist {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+}
+
+.timeline-item {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+  padding-left: 1.1rem;
+}
+
+.timeline-item::before {
+  position: absolute;
+  top: 0.35rem;
+  left: 0;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(126, 226, 184, 0.11);
+  content: "";
+}
+
+.timeline-item span {
+  color: var(--accent-strong);
+  font-size: 0.74rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.timeline-item p {
+  margin: 0;
+}
+
+.action-item {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: start;
+  color: var(--muted);
+}
+
+.check-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid rgba(126, 226, 184, 0.24);
+  border-radius: 999px;
+  color: var(--accent-strong);
+  background: rgba(126, 226, 184, 0.1);
+}
+
+.check-dot svg {
+  width: 0.82rem;
+  height: 0.82rem;
+}
+
+.markdown-export {
+  border-top: 1px solid var(--line);
+  padding-top: 0.9rem;
+}
+
+.markdown-export summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 780;
+  margin-bottom: 0.8rem;
+}
+
+.empty-state.compact {
+  min-height: auto;
+  padding: 0.75rem;
 }
 
 .diagnosis-summary {
@@ -1280,12 +1477,17 @@ th {
   .demo-flow,
   .copilot-layout,
   .stat-grid,
+  .incident-grid,
   .inline-form,
   .chat-form,
   .prompt-row,
   .docs-grid,
   .docs-prompts {
     grid-template-columns: 1fr;
+  }
+
+  .incident-hero {
+    flex-direction: column;
   }
 
   .hero-strip,

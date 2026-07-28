@@ -333,7 +333,7 @@
             <div class="panel-heading">
               <div>
                 <p class="eyebrow">Incident</p>
-                <h2>Markdown Report</h2>
+                <h2>Incident Room</h2>
               </div>
               <button
                 class="secondary-button icon-button"
@@ -345,7 +345,60 @@
                 <span class="icon"><svg><use href="#i-copy"></use></svg></span>
               </button>
             </div>
-            <pre class="markdown-preview" id="incidentMarkdown">Generate a report from the diagnosis view.</pre>
+            <div class="incident-room" id="incidentRoom">
+              <div class="incident-hero">
+                <div>
+                  <span class="severity-badge muted" id="incidentSeverity">Waiting</span>
+                  <h3 id="incidentTitle">Run a diagnosis to open the incident room.</h3>
+                  <p id="incidentSummary">KubePilot will turn deployment health, pod state, events, logs, and runbook context into an operator-ready incident view.</p>
+                </div>
+                <button
+                  class="secondary-button icon-text-button"
+                  id="copyStatusButton"
+                  type="button"
+                  aria-label="Copy status update"
+                  title="Copy status update"
+                >
+                  <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                  <span>Status</span>
+                </button>
+              </div>
+              <div class="incident-grid">
+                <section class="incident-card">
+                  <p class="eyebrow">Probable Cause</p>
+                  <p id="incidentCause">Diagnosis evidence will appear here.</p>
+                </section>
+                <section class="incident-card">
+                  <p class="eyebrow">Operator Impact</p>
+                  <p id="incidentImpact">Impact summary will appear here.</p>
+                </section>
+              </div>
+              <section class="incident-card status-card-wide">
+                <div class="card-title-row">
+                  <p class="eyebrow">Copy-ready Update</p>
+                  <span id="incidentResource">No impacted resource yet</span>
+                </div>
+                <p class="status-update" id="incidentStatusUpdate">Generate an incident report to create a concise stakeholder update.</p>
+              </section>
+              <div class="incident-grid">
+                <section class="incident-card">
+                  <p class="eyebrow">Evidence Timeline</p>
+                  <div class="timeline-list" id="incidentTimeline">
+                    <div class="empty-state compact">No timeline yet.</div>
+                  </div>
+                </section>
+                <section class="incident-card">
+                  <p class="eyebrow">Next Actions</p>
+                  <div class="action-checklist" id="incidentActions">
+                    <div class="empty-state compact">No actions yet.</div>
+                  </div>
+                </section>
+              </div>
+            </div>
+            <details class="markdown-export" open>
+              <summary>Markdown Export</summary>
+              <pre class="markdown-preview" id="incidentMarkdown">Generate a report from the diagnosis view.</pre>
+            </details>
           </article>
         </section>
 

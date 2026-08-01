@@ -1,0 +1,38 @@
+groups:
+  - name: kubepilot-api
+    rules:
+      - alert: KubePilotApiDown
+        expr: up{job="kubepilot-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: KubePilot API target is down
+          description: Prometheus cannot scrape the KubePilot API for more than two minutes.
+
+      - alert: KubePilotHighErrorRate
+        expr: sum(rate(kubepilot_http_requests_total{status_code=~"5.."}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: KubePilot API is returning server errors
+          description: Investigate recent audit events and traces in the KubePilot web console.
+
+      - alert: KubePilotClusterToolFailures
+        expr: sum(rate(kubepilot_cluster_tool_calls_total{result!="success"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Kubernetes tool calls are failing
+          description: Check kubeconfig, RBAC, namespace policy, and the k8s-tool service mode.
+
+      - alert: KubePilotTraceBufferNearLimit
+        expr: kubepilot_trace_spans_buffered > 450
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: Local trace buffer is near its in-memory limit
+          description: Configure OTLP export or reduce local demo traffic if traces are being overwritten.

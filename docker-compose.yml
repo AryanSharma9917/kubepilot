@@ -56,3 +56,30 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    profiles: ["monitoring"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    profiles: ["monitoring"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/kubepilot.json:ro
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus

@@ -289,6 +289,9 @@ Prometheus scrape config:
 monitoring/prometheus.yml
 ```
 
+See [docs/monitoring.md](docs/monitoring.md) for Prometheus alerts, Grafana,
+local traces, audit events, and OTLP export.
+
 Starter Grafana dashboard:
 
 ```text

@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: KubePilot
+    orgId: 1
+    folder: KubePilot
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

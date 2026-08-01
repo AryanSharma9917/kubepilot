@@ -50,6 +50,9 @@ Import `monitoring/grafana-dashboard.json` into Grafana and point
 volume, chat responses, retrieval citations, Kubernetes tool calls, and local
 trace-buffer health.
 
+When using `docker compose --profile monitoring up --build`, Grafana is
+provisioned automatically with the Prometheus datasource and KubePilot dashboard.
+
 ## OTLP Export
 
 Set these variables when sending traces to a collector:

@@ -79,6 +79,7 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
     volumes:
       - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/kubepilot.json:ro
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
       - "3001:3000"
     depends_on:

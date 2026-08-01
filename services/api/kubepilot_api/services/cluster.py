@@ -6,6 +6,7 @@ from agent.incidents import build_deployment_incident_report
 from agent.tools.kubernetes import (
     ClusterHealthInspector,
     DeploymentDiagnoser,
+    DeploymentDiagnosis,
     create_cluster_health_inspector,
     create_deployment_diagnoser,
 )
@@ -20,6 +21,8 @@ from kubepilot_api.schemas import (
     IncidentReportResponse,
     KubernetesEventResponse,
     PodStatusResponse,
+    RemediationActionResponse,
+    RemediationPlanResponse,
     WorkloadHealthResponse,
 )
 
@@ -214,8 +217,102 @@ class ClusterService:
             sources=list(report.sources),
         )
 
+    async def remediation_plan(
+        self,
+        namespace: str,
+        name: str,
+    ) -> RemediationPlanResponse | None:
+        """Return approval-gated remediation commands for one deployment."""
+
+        self._namespace_policy.ensure_operation_allowed(
+            namespace=namespace,
+            action="deployment:remediation-plan",
+        )
+        started = perf_counter()
+        try:
+            diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
+        except Exception:
+            record_cluster_tool_call(
+                operation="deployment_remediation_plan",
+                result="error",
+                elapsed_seconds=perf_counter() - started,
+            )
+            raise
+        record_cluster_tool_call(
+            operation="deployment_remediation_plan",
+            result="found" if diagnosis is not None else "missing",
+            elapsed_seconds=perf_counter() - started,
+        )
+        if diagnosis is None:
+            return None
+
+        return RemediationPlanResponse(
+            namespace=diagnosis.namespace,
+            name=diagnosis.name,
+            summary=(
+                f"{diagnosis.display_name} is {diagnosis.health.status.lower()}: "
+                f"{diagnosis.health.reason}. Review and approve before running commands."
+            ),
+            actions=_remediation_actions(diagnosis),
+            rollback=f"kubectl rollout undo deployment/{name} -n {namespace}",
+        )
+
 
 async def get_cluster_service() -> ClusterService:
     """Provide the cluster service to API routes."""
 
     return ClusterService()
+
+
+def _remediation_actions(
+    diagnosis: DeploymentDiagnosis,
+) -> list[RemediationActionResponse]:
+    pod_reasons = {pod.reason for pod in diagnosis.pods if pod.reason}
+    event_reasons = {event.reason for event in diagnosis.events}
+    namespace = diagnosis.namespace
+    name = diagnosis.name
+    actions = [
+        RemediationActionResponse(
+            title="Capture rollout evidence",
+            command=f"kubectl describe deployment/{name} -n {namespace}",
+            risk="low",
+            reason="Read-only evidence capture before any operational change.",
+        )
+    ]
+    if "ImagePullBackOff" in pod_reasons:
+        actions.append(
+            RemediationActionResponse(
+                title="Rollback bad image rollout",
+                command=f"kubectl rollout undo deployment/{name} -n {namespace}",
+                risk="medium",
+                reason="Image pull failures often require reverting to the last known-good tag.",
+            )
+        )
+    if "CrashLoopBackOff" in pod_reasons:
+        actions.append(
+            RemediationActionResponse(
+                title="Restart after config fix",
+                command=f"kubectl rollout restart deployment/{name} -n {namespace}",
+                risk="medium",
+                reason="Use only after the failing config, secret, or dependency has been fixed.",
+            )
+        )
+    if "FailedScheduling" in event_reasons or "Unschedulable" in pod_reasons:
+        actions.append(
+            RemediationActionResponse(
+                title="Review pending pod scheduling",
+                command=f"kubectl describe pods -n {namespace} -l app={name}",
+                risk="low",
+                reason="Scheduling failures need capacity, quota, taint, or affinity review.",
+            )
+        )
+    if not diagnosis.health.ready_replicas:
+        actions.append(
+            RemediationActionResponse(
+                title="Hold traffic until ready",
+                command=f"kubectl rollout status deployment/{name} -n {namespace}",
+                risk="low",
+                reason="Do not route traffic to a deployment with zero ready replicas.",
+            )
+        )
+    return actions

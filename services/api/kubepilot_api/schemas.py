@@ -203,6 +203,27 @@ class IncidentReportResponse(BaseModel):
     sources: list[str] = Field(default_factory=list)
 
 
+class RemediationActionResponse(BaseModel):
+    """One approval-gated remediation action recommendation."""
+
+    title: str
+    command: str
+    risk: Literal["low", "medium", "high"]
+    requires_approval: bool = True
+    reason: str
+
+
+class RemediationPlanResponse(BaseModel):
+    """Read-only remediation plan for a degraded deployment."""
+
+    namespace: str
+    name: str
+    summary: str
+    approval_required: bool = True
+    actions: list[RemediationActionResponse] = Field(default_factory=list)
+    rollback: str
+
+
 class AuditEventResponse(BaseModel):
     """One audit event returned by the API."""
 

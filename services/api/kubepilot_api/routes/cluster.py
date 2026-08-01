@@ -6,6 +6,7 @@ from kubepilot_api.schemas import (
     ClusterHealthResponse,
     DeploymentDiagnosisResponse,
     IncidentReportResponse,
+    RemediationPlanResponse,
 )
 from kubepilot_api.services.cluster import ClusterService, get_cluster_service
 
@@ -83,6 +84,26 @@ async def deployment_incident_report_markdown(
         _incident_report_markdown(report),
         media_type="text/markdown; charset=utf-8",
     )
+
+
+@router.get(
+    "/namespaces/{namespace}/deployments/{name}/remediation-plan",
+    response_model=RemediationPlanResponse,
+)
+async def deployment_remediation_plan(
+    namespace: str,
+    name: str,
+    service: ClusterService = Depends(get_cluster_service),
+) -> RemediationPlanResponse:
+    """Return an approval-gated remediation plan for a Kubernetes deployment."""
+
+    try:
+        plan = await service.remediation_plan(namespace=namespace, name=name)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    if plan is None:
+        raise HTTPException(status_code=404, detail="Deployment not found")
+    return plan
 
 
 def _incident_report_markdown(report: IncidentReportResponse) -> str:

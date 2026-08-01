@@ -187,6 +187,7 @@ GET  /api/v1/cluster/health
 GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/diagnose
 GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report
 GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report.md
+GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/remediation-plan
 GET  /api/v1/traces
 GET  /api/v1/audit/events
 ```

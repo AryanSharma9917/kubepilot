@@ -76,6 +76,48 @@ async def test_deployment_diagnosis_returns_404_for_missing_deployment(
 
 
 @pytest.mark.anyio
+async def test_deployment_remediation_plan_returns_approval_gated_actions(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get(
+        "/api/v1/cluster/namespaces/payments/deployments/checkout/remediation-plan"
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["namespace"] == "payments"
+    assert body["name"] == "checkout"
+    assert body["approval_required"] is True
+    assert body["rollback"] == "kubectl rollout undo deployment/checkout -n payments"
+    assert {action["title"] for action in body["actions"]} >= {
+        "Capture rollout evidence",
+        "Rollback bad image rollout",
+        "Restart after config fix",
+    }
+    assert all(action["requires_approval"] is True for action in body["actions"])
+
+
+@pytest.mark.anyio
+async def test_deployment_remediation_plan_rejects_disallowed_action(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KUBEPILOT_ALLOWED_ACTIONS", "deployment:diagnose")
+    get_settings.cache_clear()
+
+    from kubepilot_api.main import create_app
+
+    transport = httpx.ASGITransport(app=create_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get(
+            "/api/v1/cluster/namespaces/payments/deployments/checkout/remediation-plan"
+        )
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 403
+
+
+@pytest.mark.anyio
 async def test_cluster_routes_reject_disallowed_namespace(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

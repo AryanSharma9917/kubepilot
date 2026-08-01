@@ -17,7 +17,7 @@ env:
   KUBEPILOT_ENVIRONMENT: production
   KUBEPILOT_K8S_MODE: in_cluster
   KUBEPILOT_ALLOWED_NAMESPACES: payments,platform,notifications
-  KUBEPILOT_ALLOWED_ACTIONS: cluster:health,deployment:diagnose,deployment:incident-report
+  KUBEPILOT_ALLOWED_ACTIONS: cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan
   KUBEPILOT_RAG_MODE: faiss
   KUBEPILOT_AGENT_MODE: langgraph
   KUBEPILOT_RATE_LIMIT_PER_MINUTE: "120"

@@ -27,7 +27,7 @@ Use this mode when running the API locally against a real cluster.
 export KUBEPILOT_K8S_MODE=kubeconfig
 export KUBEPILOT_KUBECONFIG="$HOME/.kube/config"
 export KUBEPILOT_ALLOWED_NAMESPACES=payments,platform,notifications
-export KUBEPILOT_ALLOWED_ACTIONS=cluster:health,deployment:diagnose,deployment:incident-report
+export KUBEPILOT_ALLOWED_ACTIONS=cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan
 uvicorn kubepilot_api.main:app --reload
 ```
 
@@ -49,7 +49,7 @@ helm upgrade --install kubepilot ./helm/kubepilot \
   --create-namespace \
   --set env.KUBEPILOT_K8S_MODE=in_cluster \
   --set env.KUBEPILOT_ALLOWED_NAMESPACES=payments,platform,notifications \
-  --set env.KUBEPILOT_ALLOWED_ACTIONS=cluster:health,deployment:diagnose,deployment:incident-report
+  --set env.KUBEPILOT_ALLOWED_ACTIONS=cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan
 ```
 
 For the local kind demo:
@@ -76,7 +76,7 @@ export KUBEPILOT_ALLOWED_NAMESPACES=payments,platform
 Action policy:
 
 ```bash
-export KUBEPILOT_ALLOWED_ACTIONS=cluster:health,deployment:diagnose,deployment:incident-report
+export KUBEPILOT_ALLOWED_ACTIONS=cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan
 ```
 
 API key protection:

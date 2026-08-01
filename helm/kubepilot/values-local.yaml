@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: kubepilot-api
+  tag: local
+  pullPolicy: IfNotPresent
+
+env:
+  KUBEPILOT_ENVIRONMENT: local
+  KUBEPILOT_K8S_MODE: fixture
+  KUBEPILOT_RAG_MODE: keyword
+  KUBEPILOT_AGENT_MODE: deterministic
+  KUBEPILOT_RATE_LIMIT_PER_MINUTE: "0"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

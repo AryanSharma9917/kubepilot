@@ -280,6 +280,8 @@ Run a local cluster smoke test:
 See [docs/local-cluster.md](docs/local-cluster.md) for the kind smoke path and
 [docs/real-cluster-readiness.md](docs/real-cluster-readiness.md) for kubeconfig,
 in-cluster Helm mode, namespace/action policy, and troubleshooting.
+See [docs/gitops.md](docs/gitops.md) for ArgoCD single-app and multi-environment
+deployment flows.
 
 Prometheus scrape config:
 

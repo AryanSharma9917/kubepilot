@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kubepilot-environments
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: local
+            namespace: kubepilot-local
+            valuesFile: values-local.yaml
+            targetRevision: HEAD
+          - name: staging
+            namespace: kubepilot-staging
+            valuesFile: values-staging.yaml
+            targetRevision: HEAD
+          - name: production
+            namespace: kubepilot
+            valuesFile: values-production.yaml
+            targetRevision: HEAD
+  template:
+    metadata:
+      name: "kubepilot-{{name}}"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/your-org/kubepilot.git
+        targetRevision: "{{targetRevision}}"
+        path: helm/kubepilot
+        helm:
+          valueFiles:
+            - "{{valuesFile}}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

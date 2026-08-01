@@ -53,3 +53,46 @@ async def test_runtime_status_reflects_enabled_controls(
     assert body["action_policy_enabled"] is True
     assert body["rate_limit_per_minute"] == 10
     assert body["otel_export_enabled"] is True
+
+
+@pytest.mark.anyio
+async def test_platform_capabilities_describe_core_features(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/capabilities")
+
+    assert response.status_code == 200
+    names = {capability["name"] for capability in response.json()["capabilities"]}
+    assert {
+        "Agentic orchestration",
+        "Runbook RAG",
+        "Kubernetes diagnosis",
+        "Incident reporting",
+        "Observability",
+        "Platform deployment",
+    } <= names
+
+
+@pytest.mark.anyio
+async def test_platform_capabilities_reflect_runtime_modes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KUBEPILOT_AGENT_MODE", "langgraph")
+    monkeypatch.setenv("KUBEPILOT_RAG_MODE", "faiss")
+    monkeypatch.setenv("KUBEPILOT_K8S_MODE", "in_cluster")
+    get_settings.cache_clear()
+
+    transport = httpx.ASGITransport(app=create_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/capabilities")
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 200
+    capabilities = {
+        capability["name"]: capability["status"]
+        for capability in response.json()["capabilities"]
+    }
+    assert capabilities["Agentic orchestration"] == "langgraph"
+    assert capabilities["Runbook RAG"] == "faiss"
+    assert capabilities["Kubernetes diagnosis"] == "in_cluster"

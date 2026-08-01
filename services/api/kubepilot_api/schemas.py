@@ -35,6 +35,20 @@ class RuntimeStatusResponse(BaseModel):
     otel_export_enabled: bool
 
 
+class PlatformCapability(BaseModel):
+    """One platform capability exposed for demos and readiness checks."""
+
+    name: str
+    status: str
+    description: str
+
+
+class PlatformCapabilitiesResponse(BaseModel):
+    """Feature manifest for the KubePilot platform."""
+
+    capabilities: list[PlatformCapability] = Field(default_factory=list)
+
+
 class ChatRequest(BaseModel):
     """A user message submitted to KubePilot."""
 

@@ -1299,6 +1299,111 @@ input:focus {
   padding: 1rem;
 }
 
+.remediation-panel {
+  display: grid;
+  gap: 0.8rem;
+  border: 1px solid rgba(242, 177, 91, 0.32);
+  border-radius: 15px;
+  background:
+    linear-gradient(135deg, rgba(242, 177, 91, 0.1), transparent 42%),
+    rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.remediation-panel h3 {
+  margin: 0.15rem 0 0;
+  font-size: 1rem;
+}
+
+.approval-badge,
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 850;
+  padding: 0.24rem 0.58rem;
+  text-transform: uppercase;
+}
+
+.approval-badge {
+  border: 1px solid rgba(242, 177, 91, 0.34);
+  background: rgba(242, 177, 91, 0.12);
+  color: #ffdca2;
+}
+
+.remediation-summary {
+  margin: 0;
+  color: var(--muted);
+}
+
+.remediation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+}
+
+.remediation-card {
+  display: grid;
+  gap: 0.62rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.16);
+  padding: 0.82rem;
+}
+
+.remediation-card-head,
+.command-line,
+.rollback-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.remediation-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.risk-badge.low {
+  border: 1px solid rgba(126, 226, 184, 0.24);
+  background: rgba(126, 226, 184, 0.1);
+  color: var(--accent-strong);
+}
+
+.risk-badge.medium {
+  border: 1px solid rgba(242, 177, 91, 0.34);
+  background: rgba(242, 177, 91, 0.12);
+  color: #ffdca2;
+}
+
+.risk-badge.high {
+  border: 1px solid rgba(255, 111, 97, 0.38);
+  background: rgba(255, 111, 97, 0.12);
+  color: #ffb2aa;
+}
+
+.command-line code,
+.rollback-row code {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  border-radius: 10px;
+  background: #0b0b0a;
+  color: #f2eadb;
+  font-size: 0.78rem;
+  padding: 0.68rem;
+  white-space: nowrap;
+}
+
+.rollback-row {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.72rem;
+}
+
 .command-palette h3 {
   margin: 0.15rem 0 0;
   font-size: 1rem;
@@ -1797,6 +1902,7 @@ th {
   .incident-grid,
   .inline-form,
   .command-grid,
+  .remediation-grid,
   .chat-form,
   .prompt-row,
   .docs-grid,

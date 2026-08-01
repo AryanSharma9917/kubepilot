@@ -501,7 +501,7 @@ async function diagnoseDeployment(namespace, deployment) {
   try {
     const encodedNamespace = encodeURIComponent(namespace);
     const encodedDeployment = encodeURIComponent(deployment);
-    const [diagnosis, report, markdown] = await Promise.all([
+    const [diagnosis, report, remediation, markdown] = await Promise.all([
       apiFetch(
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/diagnose`,
       ),
@@ -509,10 +509,13 @@ async function diagnoseDeployment(namespace, deployment) {
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report`,
       ),
       apiFetch(
+        `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/remediation-plan`,
+      ),
+      apiFetch(
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report.md`,
       ),
     ]);
-    renderDiagnosis(diagnosis);
+    renderDiagnosis(diagnosis, remediation);
     renderIncidentReport(report);
     incidentMarkdown.textContent = markdown;
     await loadOverview();
@@ -573,7 +576,7 @@ function renderIncidentError(message) {
   incidentActions.innerHTML = `<div class="empty-state compact">Retry the diagnosis after the API recovers.</div>`;
 }
 
-function renderDiagnosis(diagnosis) {
+function renderDiagnosis(diagnosis, remediation) {
   const commands = buildDiagnosisCommands(diagnosis);
   const podRows = diagnosis.pods
     .map(
@@ -637,6 +640,7 @@ function renderDiagnosis(diagnosis) {
         <ul>${recommendations || "<li>No recommendations.</li>"}</ul>
       </section>
     </div>
+    ${renderRemediationPlan(remediation)}
     <section class="command-palette">
       <div class="card-title-row">
         <div>
@@ -666,6 +670,64 @@ function renderDiagnosis(diagnosis) {
             `,
           )
           .join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderRemediationPlan(plan) {
+  if (!plan) {
+    return "";
+  }
+  return `
+    <section class="remediation-panel">
+      <div class="card-title-row">
+        <div>
+          <p class="eyebrow">Remediation</p>
+          <h3>Approval-gated action plan</h3>
+        </div>
+        <span class="approval-badge">${plan.approval_required ? "Approval required" : "Read only"}</span>
+      </div>
+      <p class="remediation-summary">${escapeHtml(plan.summary)}</p>
+      <div class="remediation-grid">
+        ${plan.actions
+          .map(
+            (action) => `
+              <article class="remediation-card">
+                <div class="remediation-card-head">
+                  <strong>${escapeHtml(action.title)}</strong>
+                  <span class="risk-badge ${escapeHtml(action.risk)}">${escapeHtml(action.risk)}</span>
+                </div>
+                <p>${escapeHtml(action.reason)}</p>
+                <div class="command-line">
+                  <code>${escapeHtml(action.command)}</code>
+                  <button
+                    class="secondary-button icon-button"
+                    type="button"
+                    data-copy-dynamic="${escapeHtml(action.command)}"
+                    aria-label="Copy ${escapeHtml(action.title)}"
+                    title="Copy ${escapeHtml(action.title)}"
+                  >
+                    <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                  </button>
+                </div>
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+      <div class="rollback-row">
+        <strong>Rollback</strong>
+        <code>${escapeHtml(plan.rollback)}</code>
+        <button
+          class="secondary-button icon-button"
+          type="button"
+          data-copy-dynamic="${escapeHtml(plan.rollback)}"
+          aria-label="Copy rollback command"
+          title="Copy rollback command"
+        >
+          <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+        </button>
       </div>
     </section>
   `;

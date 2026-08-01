@@ -574,6 +574,7 @@ function renderIncidentError(message) {
 }
 
 function renderDiagnosis(diagnosis) {
+  const commands = buildDiagnosisCommands(diagnosis);
   const podRows = diagnosis.pods
     .map(
       (pod) => `
@@ -636,7 +637,66 @@ function renderDiagnosis(diagnosis) {
         <ul>${recommendations || "<li>No recommendations.</li>"}</ul>
       </section>
     </div>
+    <section class="command-palette">
+      <div class="card-title-row">
+        <div>
+          <p class="eyebrow">Operator Commands</p>
+          <h3>Safe read-only checks</h3>
+        </div>
+      </div>
+      <div class="command-grid">
+        ${commands
+          .map(
+            (command) => `
+              <article class="command-card">
+                <div>
+                  <strong>${escapeHtml(command.label)}</strong>
+                  <button
+                    class="secondary-button icon-button"
+                    type="button"
+                    data-copy-dynamic="${escapeHtml(command.value)}"
+                    aria-label="Copy ${escapeHtml(command.label)}"
+                    title="Copy ${escapeHtml(command.label)}"
+                  >
+                    <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                  </button>
+                </div>
+                <code>${escapeHtml(command.value)}</code>
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+    </section>
   `;
+}
+
+function buildDiagnosisCommands(diagnosis) {
+  const namespace = diagnosis.namespace;
+  const deployment = diagnosis.name;
+  const firstPod = diagnosis.pods[0]?.name || `<pod-name>`;
+  return [
+    {
+      label: "Rollout status",
+      value: `kubectl rollout status deployment/${deployment} -n ${namespace}`,
+    },
+    {
+      label: "Describe deployment",
+      value: `kubectl describe deployment/${deployment} -n ${namespace}`,
+    },
+    {
+      label: "List pods",
+      value: `kubectl get pods -n ${namespace} -l app=${deployment} -o wide`,
+    },
+    {
+      label: "Recent events",
+      value: `kubectl get events -n ${namespace} --sort-by=.lastTimestamp`,
+    },
+    {
+      label: "Pod logs",
+      value: `kubectl logs ${firstPod} -n ${namespace} --tail=80`,
+    },
+  ];
 }
 
 function escapeHtml(value) {
@@ -721,6 +781,21 @@ function boot() {
         setIconButtonIcon(button, "!", "Copy failed");
       }
     });
+  });
+  document.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-copy-dynamic]");
+    if (!button) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(button.dataset.copyDynamic);
+      setIconButtonIcon(button, "check", "Copied");
+      setTimeout(() => {
+        setIconButtonIcon(button, "copy", "Copy");
+      }, 1400);
+    } catch {
+      setIconButtonIcon(button, "!", "Copy failed");
+    }
   });
   auditFilter.addEventListener("input", () => {
     renderAuditEvents(latestAuditEvents);

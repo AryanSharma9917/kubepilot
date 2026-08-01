@@ -1290,6 +1290,53 @@ input:focus {
   white-space: pre-wrap;
 }
 
+.command-palette {
+  display: grid;
+  gap: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.command-palette h3 {
+  margin: 0.15rem 0 0;
+  font-size: 1rem;
+}
+
+.command-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+}
+
+.command-card {
+  display: grid;
+  gap: 0.62rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.16);
+  padding: 0.82rem;
+}
+
+.command-card div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.command-card code {
+  display: block;
+  overflow: auto;
+  border-radius: 10px;
+  background: #0b0b0a;
+  color: #f2eadb;
+  font-size: 0.78rem;
+  padding: 0.68rem;
+  white-space: nowrap;
+}
+
 .markdown-preview {
   min-height: 320px;
 }
@@ -1749,6 +1796,7 @@ th {
   .observability-summary,
   .incident-grid,
   .inline-form,
+  .command-grid,
   .chat-form,
   .prompt-row,
   .docs-grid,

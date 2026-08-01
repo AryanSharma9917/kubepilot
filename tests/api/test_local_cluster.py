@@ -76,6 +76,29 @@ def _transport(request: httpx.Request) -> httpx.Response:
                 "sources": ["Deployment rollout failures"],
             },
         )
+    remediation_path = (
+        "/api/v1/cluster/namespaces/payments/deployments/checkout/remediation-plan"
+    )
+    if request.url.path == remediation_path:
+        return httpx.Response(
+            200,
+            json={
+                "namespace": "payments",
+                "name": "checkout",
+                "summary": "Review and approve before running commands.",
+                "approval_required": True,
+                "actions": [
+                    {
+                        "title": "Capture rollout evidence",
+                        "command": "kubectl describe deployment/checkout -n payments",
+                        "risk": "low",
+                        "requires_approval": True,
+                        "reason": "Read-only evidence capture.",
+                    }
+                ],
+                "rollback": "kubectl rollout undo deployment/checkout -n payments",
+            },
+        )
     if request.url.path == "/api/v1/cluster/health":
         return httpx.Response(
             200,
@@ -99,3 +122,4 @@ def test_validate_local_cluster_client_accepts_expected_responses() -> None:
     assert result.cluster_status == "degraded"
     assert result.unhealthy_count == 2
     assert result.capability_count == 6
+    assert result.remediation_action_count == 1

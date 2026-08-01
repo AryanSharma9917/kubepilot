@@ -718,8 +718,19 @@ input:focus {
   gap: 0.75rem;
 }
 
+.capability-panel {
+  margin-top: 0.95rem;
+}
+
+.capability-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
 .stat-card,
 .obs-card,
+.capability-card,
 .workload-card,
 .trace-row,
 .audit-row,
@@ -767,6 +778,41 @@ input:focus {
   min-height: 88px;
   padding: 0.9rem;
   border-color: rgba(126, 226, 184, 0.18);
+}
+
+.capability-card {
+  display: grid;
+  gap: 0.62rem;
+  min-height: 150px;
+  padding: 0.95rem;
+}
+
+.capability-card div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.capability-card strong {
+  font-size: 0.98rem;
+}
+
+.capability-card span {
+  flex: 0 0 auto;
+  border: 1px solid rgba(126, 226, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(126, 226, 184, 0.1);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 850;
+  padding: 0.22rem 0.5rem;
+  text-transform: uppercase;
+}
+
+.capability-card p {
+  margin: 0;
+  color: var(--muted);
 }
 
 .workload-list,
@@ -1699,6 +1745,7 @@ th {
   .demo-flow,
   .copilot-layout,
   .stat-grid,
+  .capability-grid,
   .observability-summary,
   .incident-grid,
   .inline-form,

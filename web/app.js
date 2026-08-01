@@ -5,6 +5,7 @@ const collapseButton = document.querySelector("#collapseButton");
 const connectionStatus = document.querySelector("#connectionStatus");
 const refreshButton = document.querySelector("#refreshButton");
 const statusCards = document.querySelector("#statusCards");
+const capabilityGrid = document.querySelector("#capabilityGrid");
 const workloadList = document.querySelector("#workloadList");
 const traceList = document.querySelector("#traceList");
 const auditList = document.querySelector("#auditList");
@@ -101,13 +102,15 @@ async function loadOverview() {
   setConnectionStatus("Connecting", "");
   refreshButton.disabled = true;
   try {
-    const [status, health, traces, audit] = await Promise.all([
+    const [status, capabilities, health, traces, audit] = await Promise.all([
       apiFetch("/api/v1/status"),
+      apiFetch("/api/v1/capabilities"),
       apiFetch("/api/v1/cluster/health"),
       apiFetch("/api/v1/traces?limit=6"),
       apiFetch("/api/v1/audit/events?limit=8"),
     ]);
     renderStatus(status);
+    renderCapabilities(capabilities.capabilities || []);
     renderWorkloads(health);
     latestSpans = traces.spans || [];
     latestAuditEvents = audit.events || [];
@@ -115,10 +118,31 @@ async function loadOverview() {
     setConnectionStatus("API connected", "ok");
   } catch (error) {
     setConnectionStatus("API unavailable", "error");
+    capabilityGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
     workloadList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
   } finally {
     refreshButton.disabled = false;
   }
+}
+
+function renderCapabilities(capabilities) {
+  if (!capabilities.length) {
+    capabilityGrid.innerHTML = `<div class="empty-state">No platform capabilities returned.</div>`;
+    return;
+  }
+  capabilityGrid.innerHTML = capabilities
+    .map(
+      (capability) => `
+        <article class="capability-card">
+          <div>
+            <strong>${escapeHtml(capability.name)}</strong>
+            <span>${escapeHtml(capability.status)}</span>
+          </div>
+          <p>${escapeHtml(capability.description)}</p>
+        </article>
+      `,
+    )
+    .join("");
 }
 
 function renderObservability() {

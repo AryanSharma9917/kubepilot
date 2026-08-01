@@ -109,6 +109,7 @@ Run a kind/local-cluster demo with intentionally failing workloads:
 - Fixture-mode and real-client Kubernetes boundaries
 - Go `k8s-tool` service for Kubernetes inspection
 - Cluster health endpoint
+- Platform capabilities endpoint for demo/readiness visibility
 - Deployment diagnosis endpoint with pods, events, logs, and recommendations
 - Fixture demo cases for CrashLoopBackOff, ImagePullBackOff, readiness probe
   failures, and pending/unschedulable pods
@@ -124,8 +125,8 @@ Run a kind/local-cluster demo with intentionally failing workloads:
 - Namespace and action allowlists for cluster APIs
 - Dockerfile and Docker Compose local stack
 - Helm chart for Kubernetes deployment
-- GitOps/ArgoCD starter manifest
-- Prometheus config and starter Grafana dashboard
+- GitOps/ArgoCD starter manifest and multi-environment ApplicationSet
+- Prometheus config, alert rules, and starter Grafana dashboard
 - Local cluster smoke workflow
 - API and contract tests
 
@@ -164,8 +165,8 @@ web/                    Static KubePilot console and brand assets
 docs/runbooks/          Local operational runbooks for RAG
 demo/kubernetes/        Intentionally broken demo workloads
 helm/kubepilot/         Kubernetes deployment chart
-gitops/argocd/          ArgoCD application starter manifest
-monitoring/             Prometheus config and Grafana dashboard
+gitops/argocd/          ArgoCD application and multi-environment ApplicationSet
+monitoring/             Prometheus config, alerts, and Grafana dashboard
 scripts/                Demo, smoke, and local cluster workflows
 tests/                  API, agent, RAG, and tool tests
 ```
@@ -178,6 +179,7 @@ GET  /healthz
 GET  /readyz
 GET  /metrics
 GET  /api/v1/status
+GET  /api/v1/capabilities
 POST /api/v1/chat
 POST /api/v1/chat/stream
 POST /api/v1/knowledge/search
@@ -277,10 +279,10 @@ Run a local cluster smoke test:
 ./scripts/local-cluster-smoke.sh
 ```
 
-See [docs/local-cluster.md](docs/local-cluster.md) for the kind smoke path and
+See [docs/local-cluster.md](docs/local-cluster.md) for the kind smoke path,
 [docs/real-cluster-readiness.md](docs/real-cluster-readiness.md) for kubeconfig,
-in-cluster Helm mode, namespace/action policy, and troubleshooting.
-See [docs/gitops.md](docs/gitops.md) for ArgoCD single-app and multi-environment
+in-cluster Helm mode, namespace/action policy, and troubleshooting, and
+[docs/gitops.md](docs/gitops.md) for ArgoCD single-app and multi-environment
 deployment flows.
 
 Prometheus scrape config:
@@ -347,20 +349,32 @@ see which runbooks grounded the response. Use `KUBEPILOT_RAG_MODE=faiss` with
 the `.[rag]` dependency group when you want the same demo flow backed by a FAISS
 vector index instead of keyword retrieval.
 
-## Roadmap
+## Release Scope
 
-KubePilot is being built in runnable slices. The current foundation is in place;
-future work can keep extending the same README sections as features land.
+This repository now demonstrates the intended end-to-end KubePilot platform:
 
-- Improve the web console visual polish and demo storytelling
-- Expand real Kubernetes diagnosis coverage
-- Add richer RAG evaluation cases and runbooks
-- Wire FAISS retrieval as the default advanced retrieval path
-- Deepen LangGraph orchestration flows
-- Add stronger incident timeline views
-- Expand Helm values and production deployment examples
-- Improve GitOps and ArgoCD environment manifests
-- Add richer monitoring dashboards and OpenTelemetry traces
+- an operator-facing web console
+- a FastAPI control plane
+- deterministic and LangGraph-capable agent workflows
+- runbook RAG with citations and optional FAISS indexes
+- Kubernetes inspection through fixture, service, kubeconfig, and in-cluster paths
+- incident-room reporting with copy-ready handoff text
+- audit events, local traces, Prometheus metrics, Grafana, and alert rules
+- Docker Compose, Helm, kind validation, and ArgoCD deployment assets
+- tests and CI coverage for API, agent, RAG, Kubernetes tooling, Docker, Helm,
+  retrieval evaluation, and local cluster smoke paths
+
+## Future Extensions
+
+These are intentionally beyond the current portfolio-grade release:
+
+- write-action remediation workflows with explicit approvals
+- multi-cluster inventory and routing
+- cloud provider integrations
+- Slack or ticketing integrations
+- external vector database migration
+- production secret-management examples
+- hosted environment deployment records
 
 See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for the detailed
 architecture and implementation plan.

@@ -289,12 +289,13 @@ kubepilot/
 - [x] Optional OpenTelemetry OTLP trace exporter integration
 - [x] Chat, retrieval, cluster-tool, and trace-buffer metrics
 - [x] Runtime status endpoint for redacted operator visibility
+- [x] Platform capability manifest endpoint for demo and readiness visibility
 - [x] Markdown incident report export
 - [x] Markdown retrieval evaluation reports and CI artifact upload
 - [x] Web UI for runtime status, copilot chat, deployment diagnosis, incidents, traces, and audit events
 - [x] Intentionally failing Kubernetes demo workloads and kind demo workflow
 - [x] Local web smoke checks and compose validation in CI
-- [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
+- [x] Docker Compose, Helm chart, environment values, Prometheus config, Grafana dashboard, alert rules, and ArgoCD manifests
 - [x] Optional Helm NetworkPolicy and container healthchecks
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
 - [x] Manual and scheduled GitHub Actions kind smoke workflow
@@ -331,13 +332,12 @@ The first release of KubePilot is considered successful when:
 
 * Multi-cluster support
 * Cloud provider integrations
-* Automated remediation workflows
-* Slack integration
-* RBAC-aware agent actions
-* Vector database migration
-* OpenTelemetry tracing
-* Multi-agent architecture
-* Production cloud deployment
+* Approval-gated write-action remediation workflows
+* Slack, ticketing, and incident-management integrations
+* External vector database migration
+* Multi-agent specialist workflows
+* Production cloud deployment records
+* Secret-manager-backed production configuration
 
 ---
 

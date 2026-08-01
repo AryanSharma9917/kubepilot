@@ -71,6 +71,9 @@ jobs:
       - name: Validate compose file
         run: docker compose config
 
+      - name: Validate monitoring compose profile
+        run: docker compose --profile monitoring config
+
   helm:
     runs-on: ubuntu-latest
     steps:
@@ -88,3 +91,21 @@ jobs:
           helm template kubepilot ./helm/kubepilot
           --namespace kubepilot
           --values tests/fixtures/networkpolicy-values.yaml
+
+      - name: Render local environment chart
+        run: >
+          helm template kubepilot ./helm/kubepilot
+          --namespace kubepilot-local
+          --values helm/kubepilot/values-local.yaml
+
+      - name: Render staging environment chart
+        run: >
+          helm template kubepilot ./helm/kubepilot
+          --namespace kubepilot-staging
+          --values helm/kubepilot/values-staging.yaml
+
+      - name: Render production environment chart
+        run: >
+          helm template kubepilot ./helm/kubepilot
+          --namespace kubepilot
+          --values helm/kubepilot/values-production.yaml

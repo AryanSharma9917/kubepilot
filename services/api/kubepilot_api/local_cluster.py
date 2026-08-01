@@ -17,6 +17,7 @@ class LocalClusterValidationResult:
     healthz_status: str
     cluster_status: str
     unhealthy_count: int
+    capability_count: int
 
 
 def validate_local_cluster_client(
@@ -46,6 +47,13 @@ def validate_local_cluster_client(
             metrics_response.raise_for_status()
             if "kubepilot_http_requests_total" not in metrics_response.text:
                 raise RuntimeError("Metrics endpoint did not expose request counters.")
+
+            capabilities_response = client.get("/api/v1/capabilities")
+            capabilities_response.raise_for_status()
+            capabilities_payload = capabilities_response.json()
+            capabilities = capabilities_payload.get("capabilities", [])
+            if len(capabilities) < 6:
+                raise RuntimeError("Capability endpoint did not expose the platform map.")
 
             chat_response = client.post(
                 "/api/v1/chat",
@@ -85,6 +93,7 @@ def validate_local_cluster_client(
                 readyz_status=str(readyz_payload.get("status", "")),
                 cluster_status=str(cluster_payload["status"]),
                 unhealthy_count=int(cluster_payload["unhealthy_count"]),
+                capability_count=len(capabilities),
             )
         except Exception as exc:  # pragma: no cover - exercised through retry loop
             last_error = str(exc)
@@ -131,7 +140,8 @@ def main() -> None:
         f"healthz={result.healthz_status}, "
         f"readyz={result.readyz_status}, "
         f"cluster={result.cluster_status}, "
-        f"unhealthy_count={result.unhealthy_count}"
+        f"unhealthy_count={result.unhealthy_count}, "
+        f"capabilities={result.capability_count}"
     )
 
 

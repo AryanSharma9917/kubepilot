@@ -16,6 +16,7 @@ require_path() {
 
 require_path "/" "KubePilot"
 require_path "/api/v1/status" "\"environment\""
+require_path "/api/v1/capabilities" "\"capabilities\""
 require_path "/api/v1/cluster/health" "\"unhealthy_count\""
 
 echo "KubePilot web smoke test passed for ${BASE_URL}"

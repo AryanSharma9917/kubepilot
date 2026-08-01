@@ -12,6 +12,20 @@ def _transport(request: httpx.Request) -> httpx.Response:
             200,
             text="# HELP kubepilot_http_requests_total Total HTTP requests.\n",
         )
+    if request.url.path == "/api/v1/capabilities":
+        return httpx.Response(
+            200,
+            json={
+                "capabilities": [
+                    {"name": "Agentic orchestration", "status": "deterministic", "description": ""},
+                    {"name": "Runbook RAG", "status": "keyword", "description": ""},
+                    {"name": "Kubernetes diagnosis", "status": "fixture", "description": ""},
+                    {"name": "Incident reporting", "status": "ready", "description": ""},
+                    {"name": "Observability", "status": "ready", "description": ""},
+                    {"name": "Platform deployment", "status": "ready", "description": ""},
+                ]
+            },
+        )
     if request.url.path == "/api/v1/chat":
         return httpx.Response(
             200,
@@ -84,3 +98,4 @@ def test_validate_local_cluster_client_accepts_expected_responses() -> None:
     assert result.readyz_status == "ready"
     assert result.cluster_status == "degraded"
     assert result.unhealthy_count == 2
+    assert result.capability_count == 6

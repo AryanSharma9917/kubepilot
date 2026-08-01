@@ -300,6 +300,7 @@ kubepilot/
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
 - [x] Manual and scheduled GitHub Actions kind smoke workflow
 - [x] Local cluster smoke-test script and validation guide
+- [x] Demo and funding narrative for presenting the platform
 
 ## Still To Build
 

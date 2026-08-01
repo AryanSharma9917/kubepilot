@@ -305,6 +305,9 @@ Before a real customer or shared-cluster deployment, review
 [SECURITY.md](SECURITY.md) and
 [docs/production-checklist.md](docs/production-checklist.md).
 
+For presenting the project, use
+[docs/demo-and-funding-narrative.md](docs/demo-and-funding-narrative.md).
+
 ## Configuration
 
 | Variable | Default | Purpose |

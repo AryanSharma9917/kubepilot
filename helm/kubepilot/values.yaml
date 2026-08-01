@@ -9,10 +9,31 @@ service:
   type: ClusterIP
   port: 8000
 
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: kubepilot.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
 networkPolicy:
   enabled: false
   ingress:
     - from: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
 
 env:
   KUBEPILOT_ENVIRONMENT: local
@@ -28,5 +49,7 @@ env:
   KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT: ""
   KUBEPILOT_OTEL_SERVICE_NAME: kubepilot-api
   KUBEPILOT_OTEL_HEADERS: ""
+
+envFromSecrets: []
 
 resources: {}

@@ -5,6 +5,19 @@ image:
   tag: staging
   pullPolicy: Always
 
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: kubepilot-staging.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: kubepilot-staging-tls
+      hosts:
+        - kubepilot-staging.example.com
+
 networkPolicy:
   enabled: true
   ingress:
@@ -21,6 +34,14 @@ env:
   KUBEPILOT_RAG_MODE: faiss
   KUBEPILOT_AGENT_MODE: langgraph
   KUBEPILOT_RATE_LIMIT_PER_MINUTE: "60"
+
+envFromSecrets:
+  - name: KUBEPILOT_API_KEYS
+    secretName: kubepilot-api-secrets
+    secretKey: api-keys
+  - name: KUBEPILOT_LLM_ENDPOINT
+    secretName: kubepilot-api-secrets
+    secretKey: llm-endpoint
 
 resources:
   requests:

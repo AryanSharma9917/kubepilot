@@ -5,6 +5,19 @@ image:
   tag: stable
   pullPolicy: IfNotPresent
 
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: kubepilot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: kubepilot-production-tls
+      hosts:
+        - kubepilot.example.com
+
 networkPolicy:
   enabled: true
   ingress:
@@ -22,6 +35,24 @@ env:
   KUBEPILOT_AGENT_MODE: langgraph
   KUBEPILOT_RATE_LIMIT_PER_MINUTE: "120"
   KUBEPILOT_OTEL_SERVICE_NAME: kubepilot-api
+
+envFromSecrets:
+  - name: KUBEPILOT_API_KEYS
+    secretName: kubepilot-api-secrets
+    secretKey: api-keys
+  - name: KUBEPILOT_LLM_ENDPOINT
+    secretName: kubepilot-api-secrets
+    secretKey: llm-endpoint
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
 
 resources:
   requests:

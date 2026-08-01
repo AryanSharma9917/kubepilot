@@ -65,6 +65,35 @@ Then open:
 http://127.0.0.1:18000
 ```
 
+## Production Helm Controls
+
+The chart supports production-shaped controls without enabling them by default:
+
+- `ingress.enabled` for external routing and TLS
+- `autoscaling.enabled` for HorizontalPodAutoscaler
+- `podDisruptionBudget.enabled` for voluntary disruption protection
+- `envFromSecrets` for secret-backed values such as API keys, LLM endpoints, and
+  OTLP headers
+- `networkPolicy.enabled` for restricted ingress
+
+Example secret:
+
+```bash
+kubectl create secret generic kubepilot-api-secrets \
+  --namespace kubepilot \
+  --from-literal=api-keys=replace-me \
+  --from-literal=llm-endpoint=https://llm.example.com/v1/chat \
+  --from-literal=otel-headers=authorization=Bearer-token
+```
+
+Render a production-shaped manifest:
+
+```bash
+helm template kubepilot ./helm/kubepilot \
+  --namespace kubepilot \
+  --values helm/kubepilot/values-production.yaml
+```
+
 ## Policy Examples
 
 Namespace policy:

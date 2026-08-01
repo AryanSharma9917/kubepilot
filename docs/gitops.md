@@ -12,7 +12,8 @@ environment ApplicationSet.
 - `helm/kubepilot/values-staging.yaml` enables in-cluster Kubernetes mode,
   FAISS, LangGraph, namespace/action policy, and network policy.
 - `helm/kubepilot/values-production.yaml` raises replicas, resources, and API
-  rate limits for a production-shaped deployment.
+  rate limits for a production-shaped deployment. It also enables ingress, HPA,
+  PodDisruptionBudget, network policy, and secret-backed configuration.
 
 ## Apply
 

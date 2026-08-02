@@ -2,6 +2,7 @@ const API_BASE = "";
 
 const appShell = document.querySelector("#appShell");
 const collapseButton = document.querySelector("#collapseButton");
+const themeToggle = document.querySelector("#themeToggle");
 const connectionStatus = document.querySelector("#connectionStatus");
 const refreshButton = document.querySelector("#refreshButton");
 const statusCards = document.querySelector("#statusCards");
@@ -35,9 +36,19 @@ const incidentMarkdown = document.querySelector("#incidentMarkdown");
 const copyMarkdownButton = document.querySelector("#copyMarkdownButton");
 const copyStatusButton = document.querySelector("#copyStatusButton");
 const copyButtons = document.querySelectorAll("[data-copy]");
+const heroTyped = document.querySelector("#heroTyped");
+const copilotTyped = document.querySelector("#copilotTyped");
 
 let latestSpans = [];
 let latestAuditEvents = [];
+let typedPhraseIndex = 0;
+
+const TYPED_PHRASES = [
+  "scanning cluster signals",
+  "retrieving runbook context",
+  "building incident evidence",
+  "planning safe remediation",
+];
 
 const ICONS = {
   copy: '<svg><use href="#i-copy"></use></svg>',
@@ -68,6 +79,55 @@ function openView(viewName) {
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === viewName);
   });
+}
+
+function getKnownView(viewName) {
+  const view = document.querySelector(`[data-view-panel="${viewName}"]`);
+  return view ? viewName : "copilot";
+}
+
+function openViewFromHash() {
+  const viewName = getKnownView(window.location.hash.replace("#", ""));
+  openView(viewName);
+}
+
+function setViewHash(viewName) {
+  const nextHash = `#${getKnownView(viewName)}`;
+  if (window.location.hash !== nextHash) {
+    window.history.replaceState(null, "", nextHash);
+  }
+  openViewFromHash();
+}
+
+function setTheme(theme) {
+  document.body.dataset.theme = theme;
+  localStorage.setItem("kubepilot-theme", theme);
+  const nextTheme = theme === "dark" ? "light" : "dark";
+  if (themeToggle) {
+    themeToggle.setAttribute("aria-label", `Switch to ${nextTheme} mode`);
+    themeToggle.setAttribute("title", `Switch to ${nextTheme} mode`);
+  }
+}
+
+function bootTheme() {
+  const savedTheme = localStorage.getItem("kubepilot-theme");
+  const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+  setTheme(savedTheme || (prefersLight ? "light" : "dark"));
+}
+
+function startTypeReadout() {
+  const renderPhrase = () => {
+    const phrase = TYPED_PHRASES[typedPhraseIndex % TYPED_PHRASES.length];
+    if (heroTyped) {
+      heroTyped.textContent = phrase;
+    }
+    if (copilotTyped) {
+      copilotTyped.textContent = phrase.replaceAll(" ", "_");
+    }
+    typedPhraseIndex += 1;
+  };
+  renderPhrase();
+  setInterval(renderPhrase, 2400);
 }
 
 async function apiFetch(path, options = {}) {
@@ -775,6 +835,13 @@ function escapeHtml(value) {
 }
 
 function boot() {
+  bootTheme();
+  startTypeReadout();
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      setTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
+    });
+  }
   collapseButton.addEventListener("click", () => {
     appShell.classList.toggle("sidebar-collapsed");
     const collapsed = appShell.classList.contains("sidebar-collapsed");
@@ -786,14 +853,16 @@ function boot() {
   });
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.addEventListener("click", () => {
-      openView(button.dataset.view);
+      setViewHash(button.dataset.view);
     });
   });
   document.querySelectorAll("[data-open-view]").forEach((button) => {
     button.addEventListener("click", () => {
-      openView(button.dataset.openView);
+      setViewHash(button.dataset.openView);
     });
   });
+  window.addEventListener("hashchange", openViewFromHash);
+  openViewFromHash();
   workloadList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-namespace][data-deployment]");
     if (!button) {

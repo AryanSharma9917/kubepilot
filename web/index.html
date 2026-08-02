@@ -6,9 +6,9 @@
     <title>KubePilot</title>
     <link rel="icon" type="image/svg+xml" href="/kubepilot-icon.svg" />
     <link rel="apple-touch-icon" href="/kubepilot-icon.png" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=20260803-nothing-a1" />
   </head>
-  <body>
+  <body data-theme="dark">
     <svg class="icon-defs" aria-hidden="true">
       <symbol id="i-command" viewBox="0 0 24 24"><path d="M9 9h6v6H9z"></path><path d="M9 5.5A3.5 3.5 0 1 0 5.5 9H9V5.5Z"></path><path d="M15 5.5A3.5 3.5 0 1 1 18.5 9H15V5.5Z"></path><path d="M9 18.5A3.5 3.5 0 1 1 5.5 15H9v3.5Z"></path><path d="M15 18.5A3.5 3.5 0 1 0 18.5 15H15v3.5Z"></path></symbol>
       <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"></path><path d="m18 15 .8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8L18 15Z"></path></symbol>
@@ -22,6 +22,7 @@
       <symbol id="i-send" viewBox="0 0 24 24"><path d="m12 19V5"></path><path d="m5 12 7-7 7 7"></path></symbol>
       <symbol id="i-panel" viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M9 5v14"></path></symbol>
       <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"></path></symbol>
+      <symbol id="i-theme" viewBox="0 0 24 24"><path d="M12 3v2"></path><path d="M12 19v2"></path><path d="M5.6 5.6 7 7"></path><path d="m17 17 1.4 1.4"></path><path d="M3 12h2"></path><path d="M19 12h2"></path><path d="m5.6 18.4 1.4-1.4"></path><path d="m17 7 1.4-1.4"></path><circle cx="12" cy="12" r="4"></circle></symbol>
     </svg>
     <div class="app-shell" id="appShell">
       <aside class="sidebar">
@@ -85,6 +86,15 @@
           </div>
           <div class="topbar-actions">
             <button
+              class="secondary-button icon-button"
+              id="themeToggle"
+              type="button"
+              aria-label="Switch to light mode"
+              title="Switch to light mode"
+            >
+              <span class="icon"><svg><use href="#i-theme"></use></svg></span>
+            </button>
+            <button
               class="secondary-button utility-button"
               id="refreshButton"
               type="button"
@@ -101,12 +111,24 @@
         <section class="view" data-view-panel="dashboard">
           <div class="hero-strip">
             <div>
-              <p class="eyebrow">Live demo</p>
-              <h2>Operate your cluster through a calm AI workspace.</h2>
+              <p class="eyebrow">Live demo / agentic control plane</p>
+              <h2>Operate Kubernetes with evidence, not noise.</h2>
               <p>
                 Ask KubePilot what broke, inspect the evidence, and turn the diagnosis
                 into an incident report without leaving the console.
               </p>
+            </div>
+            <div class="glyph-stage" aria-hidden="true">
+              <div class="glyph-agent">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="glyph-readout">
+                <strong id="heroTyped">scanning cluster signals</strong>
+                <span>rag / tools / traces / incident room</span>
+              </div>
             </div>
             <div class="hero-actions">
               <button class="action-button" type="button" data-open-view="copilot">
@@ -233,6 +255,11 @@
           <div class="copilot-layout">
           <article class="panel copilot-panel">
             <div class="copilot-hero">
+              <div class="agent-character" aria-hidden="true">
+                <span class="agent-eye"></span>
+                <span class="agent-eye"></span>
+                <span class="agent-core"></span>
+              </div>
               <div>
                 <p class="eyebrow">AI operations copilot</p>
                 <h2>Diagnose Kubernetes issues with evidence.</h2>
@@ -240,6 +267,7 @@
                   Start with a question. KubePilot turns cluster signals, runbooks,
                   tool calls, traces, and reports into a guided response.
                 </p>
+                <code class="type-readout" id="copilotTyped">ready_for_operator_input</code>
               </div>
             </div>
             <div class="panel-heading">
@@ -696,6 +724,6 @@
         </section>
       </main>
     </div>
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="/app.js?v=20260803-nothing-a1"></script>
   </body>
 </html>

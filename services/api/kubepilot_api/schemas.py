@@ -1,5 +1,6 @@
 """API response models."""
 
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -190,6 +191,8 @@ class EvidenceItemResponse(BaseModel):
 class IncidentReportResponse(BaseModel):
     """Structured incident report returned by the API."""
 
+    report_id: str
+    generated_at: datetime
     title: str
     severity: Literal["info", "warning", "critical"]
     summary: str
@@ -201,6 +204,23 @@ class IncidentReportResponse(BaseModel):
     next_actions: list[str] = Field(default_factory=list)
     status_update: str = ""
     sources: list[str] = Field(default_factory=list)
+
+
+class IncidentReportSummaryResponse(BaseModel):
+    """Summary of a generated incident report artifact."""
+
+    report_id: str
+    generated_at: datetime
+    title: str
+    severity: Literal["info", "warning", "critical"]
+    impacted_resource: str
+    summary: str
+
+
+class IncidentReportsResponse(BaseModel):
+    """Generated incident report artifact list."""
+
+    reports: list[IncidentReportSummaryResponse] = Field(default_factory=list)
 
 
 class RemediationActionResponse(BaseModel):

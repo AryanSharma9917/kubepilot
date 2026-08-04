@@ -1,6 +1,8 @@
 """Cluster application service."""
 
+from datetime import UTC, datetime
 from time import perf_counter
+from uuid import uuid4
 
 from agent.incidents import build_deployment_incident_report
 from agent.tools.kubernetes import (
@@ -11,6 +13,7 @@ from agent.tools.kubernetes import (
     create_deployment_diagnoser,
 )
 from kubepilot_api.config import get_settings
+from kubepilot_api.incident_store import incident_report_store
 from kubepilot_api.metrics import record_cluster_tool_call
 from kubepilot_api.policy import NamespaceAccessPolicy
 from kubepilot_api.schemas import (
@@ -197,7 +200,9 @@ class ClusterService:
             return None
 
         report = build_deployment_incident_report(diagnosis)
-        return IncidentReportResponse(
+        incident_response = IncidentReportResponse(
+            report_id=str(uuid4()),
+            generated_at=datetime.now(UTC),
             title=report.title,
             severity=report.severity,
             summary=report.summary,
@@ -216,6 +221,7 @@ class ClusterService:
             status_update=report.status_update,
             sources=list(report.sources),
         )
+        return incident_report_store.put(incident_response)
 
     async def remediation_plan(
         self,

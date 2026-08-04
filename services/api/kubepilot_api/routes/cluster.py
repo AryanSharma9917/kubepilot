@@ -2,10 +2,12 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
+from kubepilot_api.incident_store import incident_report_store
 from kubepilot_api.schemas import (
     ClusterHealthResponse,
     DeploymentDiagnosisResponse,
     IncidentReportResponse,
+    IncidentReportsResponse,
     RemediationPlanResponse,
 )
 from kubepilot_api.services.cluster import ClusterService, get_cluster_service
@@ -24,6 +26,25 @@ async def cluster_health(
         return await service.health(namespace=namespace)
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+
+@router.get("/incident-reports", response_model=IncidentReportsResponse)
+async def generated_incident_reports(
+    limit: int = Query(default=20, ge=1, le=100),
+) -> IncidentReportsResponse:
+    """Return recently generated incident report artifacts."""
+
+    return IncidentReportsResponse(reports=incident_report_store.list(limit=limit))
+
+
+@router.get("/incident-reports/{report_id}", response_model=IncidentReportResponse)
+async def generated_incident_report(report_id: str) -> IncidentReportResponse:
+    """Return one generated incident report artifact by ID."""
+
+    report = incident_report_store.get(report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Incident report not found")
+    return report
 
 
 @router.get(

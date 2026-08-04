@@ -116,6 +116,8 @@ Run a kind/local-cluster demo with intentionally failing workloads:
 - JSON and markdown incident report generation
 - Incident reports include severity, probable cause, operator impact, evidence,
   timeline, next actions, and a copy-ready status update
+- Generated incident reports receive backend artifact IDs and are retained in a
+  process-local demo store for list/detail retrieval
 - Metrics endpoint for Prometheus-style scraping
 - Local trace spans endpoint
 - Local audit events endpoint
@@ -187,6 +189,8 @@ GET  /api/v1/cluster/health
 GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/diagnose
 GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report
 GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/incident-report.md
+GET  /api/v1/cluster/incident-reports
+GET  /api/v1/cluster/incident-reports/{report_id}
 GET  /api/v1/cluster/namespaces/{namespace}/deployments/{name}/remediation-plan
 GET  /api/v1/traces
 GET  /api/v1/audit/events
@@ -208,6 +212,12 @@ Markdown incident report:
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md
+```
+
+Generated incident report artifacts:
+
+```bash
+curl http://127.0.0.1:8000/api/v1/cluster/incident-reports
 ```
 
 ## Local Development

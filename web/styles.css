@@ -1665,6 +1665,22 @@ input:focus {
   color: var(--muted);
 }
 
+.incident-hero .artifact-meta {
+  display: inline-flex;
+  max-width: 100%;
+  margin: 0.7rem 0 0;
+  border: 1px solid var(--accent-ring);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--accent-strong);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  padding: 0.32rem 0.5rem;
+  text-transform: uppercase;
+}
+
 .incident-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

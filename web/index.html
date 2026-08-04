@@ -402,6 +402,7 @@
                   <span class="severity-badge muted" id="incidentSeverity">Waiting</span>
                   <h3 id="incidentTitle">Run a diagnosis to open the incident room.</h3>
                   <p id="incidentSummary">KubePilot will turn deployment health, pod state, events, logs, and runbook context into an operator-ready incident view.</p>
+                  <p class="artifact-meta" id="incidentArtifact">No backend artifact generated yet.</p>
                 </div>
                 <button
                   class="secondary-button icon-text-button"
@@ -702,6 +703,18 @@
                   <div class="command-row">
                     <code>GET /api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md</code>
                     <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/namespaces/payments/deployments/checkout/incident-report.md" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/cluster/incident-reports</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/incident-reports" aria-label="Copy endpoint" title="Copy endpoint">
+                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
+                    </button>
+                  </div>
+                  <div class="command-row">
+                    <code>GET /api/v1/cluster/incident-reports/{report_id}</code>
+                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/incident-reports/{report_id}" aria-label="Copy endpoint" title="Copy endpoint">
                       <span class="icon"><svg><use href="#i-copy"></use></svg></span>
                     </button>
                   </div>

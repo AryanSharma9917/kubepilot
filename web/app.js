@@ -26,6 +26,7 @@ const diagnosisOutput = document.querySelector("#diagnosisOutput");
 const incidentTitle = document.querySelector("#incidentTitle");
 const incidentSummary = document.querySelector("#incidentSummary");
 const incidentSeverity = document.querySelector("#incidentSeverity");
+const incidentArtifact = document.querySelector("#incidentArtifact");
 const incidentCause = document.querySelector("#incidentCause");
 const incidentImpact = document.querySelector("#incidentImpact");
 const incidentResource = document.querySelector("#incidentResource");
@@ -593,6 +594,12 @@ function renderIncidentReport(report) {
   incidentSummary.textContent = report.summary;
   incidentSeverity.textContent = report.severity;
   incidentSeverity.className = `severity-badge ${report.severity}`;
+  if (incidentArtifact) {
+    const generatedAt = report.generated_at
+      ? new Date(report.generated_at).toLocaleString()
+      : "unknown time";
+    incidentArtifact.textContent = `Artifact ${report.report_id || "untracked"} / generated ${generatedAt}`;
+  }
   incidentCause.textContent = report.probable_cause;
   incidentImpact.textContent = report.operator_impact;
   incidentResource.textContent = report.impacted_resource;
@@ -628,6 +635,9 @@ function renderIncidentError(message) {
   incidentSummary.textContent = message;
   incidentSeverity.textContent = "Error";
   incidentSeverity.className = "severity-badge critical";
+  if (incidentArtifact) {
+    incidentArtifact.textContent = "No backend artifact generated.";
+  }
   incidentCause.textContent = "KubePilot could not generate the structured incident report.";
   incidentImpact.textContent = "The diagnosis view may still contain partial evidence.";
   incidentResource.textContent = "Unavailable";

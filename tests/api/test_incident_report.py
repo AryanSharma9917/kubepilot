@@ -12,6 +12,8 @@ async def test_deployment_incident_report_returns_structured_report(
 
     assert response.status_code == 200
     body = response.json()
+    assert body["report_id"]
+    assert body["generated_at"]
     assert body["title"] == "Deployment incident: payments/deployment/checkout"
     assert body["severity"] in {"warning", "critical"}
     assert body["impacted_resource"] == "payments/deployment/checkout"
@@ -22,6 +24,36 @@ async def test_deployment_incident_report_returns_structured_report(
     assert body["timeline"]
     assert body["timeline"][0]["source"] == "deployment"
     assert body["next_actions"]
+
+
+@pytest.mark.anyio
+async def test_generated_incident_reports_can_be_listed_and_fetched(
+    client: httpx.AsyncClient,
+) -> None:
+    generated_response = await client.get(
+        "/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report"
+    )
+    report_id = generated_response.json()["report_id"]
+
+    list_response = await client.get("/api/v1/cluster/incident-reports")
+    detail_response = await client.get(f"/api/v1/cluster/incident-reports/{report_id}")
+
+    assert list_response.status_code == 200
+    summaries = list_response.json()["reports"]
+    assert summaries
+    assert summaries[0]["report_id"] == report_id
+    assert summaries[0]["impacted_resource"] == "payments/deployment/checkout"
+    assert detail_response.status_code == 200
+    assert detail_response.json()["report_id"] == report_id
+
+
+@pytest.mark.anyio
+async def test_generated_incident_report_returns_404_for_unknown_id(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/cluster/incident-reports/missing")
+
+    assert response.status_code == 404
 
 
 @pytest.mark.anyio

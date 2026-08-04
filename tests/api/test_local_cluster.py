@@ -67,12 +67,18 @@ def _transport(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
             json={
+                "report_id": "incident-demo-1",
+                "generated_at": "2026-08-04T00:00:00Z",
                 "title": "Deployment incident: payments/deployment/checkout",
                 "severity": "critical",
                 "summary": "The checkout deployment is not fully available.",
+                "probable_cause": "Readiness probe failure.",
+                "operator_impact": "Checkout is partially unavailable.",
                 "impacted_resource": "payments/deployment/checkout",
                 "evidence": [],
+                "timeline": [],
                 "next_actions": ["Investigate pod failures."],
+                "status_update": "CRITICAL: checkout is degraded.",
                 "sources": ["Deployment rollout failures"],
             },
         )

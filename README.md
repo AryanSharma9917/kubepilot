@@ -64,7 +64,7 @@ The Compose demo starts:
 - Static web console on port `3000`
 - FastAPI backend on port `8000`
 - Go Kubernetes tool service on port `8081`
-- Fixture-mode unhealthy workloads for a reliable demo
+- Fixture-mode unhealthy workloads for a reliable demo.
 
 Useful demo prompts:
 
@@ -386,3 +386,6 @@ These are intentionally beyond the current portfolio-grade release:
 
 See [ARCHITECTURE_AND_ROADMAP.md](ARCHITECTURE_AND_ROADMAP.md) for the detailed
 architecture and implementation plan.
+
+
+## Working on the UI : PENDING

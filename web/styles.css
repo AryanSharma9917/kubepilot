@@ -419,6 +419,169 @@ input:focus {
   backdrop-filter: blur(18px);
 }
 
+body[data-active-view="dashboard"] {
+  --bg: #000;
+  --sidebar: #050505;
+  --surface: rgba(9, 9, 9, 0.88);
+  --surface-soft: rgba(255, 255, 255, 0.035);
+  --ink: #f5f2ea;
+  --muted: #bdb8ad;
+  --faint: #7f7a70;
+  --line: rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 1.2px, transparent 1.35px),
+    #000;
+  background-position: 31px 31px;
+  background-size: 154px 154px;
+}
+
+body[data-active-view="dashboard"] .workspace {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+body[data-active-view="dashboard"] .topbar {
+  display: none;
+}
+
+body[data-active-view="dashboard"] .sidebar {
+  background: rgba(5, 5, 5, 0.86);
+}
+
+.glyph-portal {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  grid-template-rows: 1fr auto 1fr;
+  justify-items: center;
+  overflow: hidden;
+  padding: clamp(2rem, 5vw, 4rem) 1rem;
+}
+
+.glyph-portal::before,
+.glyph-portal::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.glyph-portal::before {
+  background:
+    linear-gradient(90deg, transparent 0 49.94%, rgba(255, 255, 255, 0.08) 50%, transparent 50.06%),
+    linear-gradient(0deg, transparent 0 49.94%, rgba(255, 255, 255, 0.08) 50%, transparent 50.06%);
+  background-size: 154px 154px;
+  opacity: 0.26;
+}
+
+.glyph-portal::after {
+  background:
+    linear-gradient(180deg, #000 0, transparent 12%, transparent 88%, #000 100%),
+    linear-gradient(90deg, #000 0, transparent 12%, transparent 88%, #000 100%);
+}
+
+.portal-copy,
+.portal-actions,
+.portal-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.portal-copy {
+  align-self: end;
+  display: grid;
+  gap: 0.72rem;
+  justify-items: center;
+  margin-bottom: clamp(4.5rem, 10vh, 7rem);
+}
+
+.dot-word {
+  min-height: auto;
+  border: 0;
+  background-color: transparent;
+  background-image: radial-gradient(circle, #fff 0 1.12px, transparent 1.28px);
+  background-position: 0 0;
+  background-size: 5px 5px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--mono);
+  font-size: clamp(1.72rem, 3.4vw, 3.1rem);
+  font-weight: 900;
+  line-height: 1.08;
+  padding: 0;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dot-word:hover {
+  background-color: transparent;
+  background-image: radial-gradient(circle, var(--accent-strong) 0 1.12px, transparent 1.28px);
+  background-position: 0 0;
+  background-size: 5px 5px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  transform: none;
+}
+
+.portal-actions {
+  display: grid;
+  width: min(320px, calc(100vw - 2rem));
+  gap: 3px;
+}
+
+.portal-actions button {
+  justify-content: space-between;
+  min-height: 48px;
+  border: 0;
+  border-radius: 5px;
+  background: rgba(18, 18, 18, 0.92);
+  color: #f1ede6;
+  font-size: 0.72rem;
+  font-weight: 520;
+  padding: 0.76rem 1rem;
+}
+
+.portal-actions button:hover {
+  background: #f1ede6;
+  color: #050505;
+  transform: none;
+}
+
+.portal-actions svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.portal-footer {
+  position: absolute;
+  right: 0;
+  bottom: clamp(1rem, 2.4vh, 1.6rem);
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 clamp(1rem, 2vw, 2rem);
+}
+
+.portal-footer button {
+  min-height: auto;
+  border: 0;
+  background: transparent;
+  color: #f1ede6;
+  font-size: 0.72rem;
+  font-weight: 520;
+  padding: 0;
+}
+
+.portal-footer button:hover {
+  background: transparent;
+  color: var(--accent-strong);
+  transform: none;
+}
+
 .topbar-actions,
 .panel-heading,
 .hero-actions {
@@ -2206,6 +2369,21 @@ th {
   .topbar-actions > * {
     flex: 1;
   }
+
+  .glyph-portal {
+    min-height: calc(100vh - 220px);
+    padding-top: 3rem;
+  }
+
+  .portal-copy {
+    margin-bottom: 3rem;
+  }
+
+  .portal-footer {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.85rem;
+  }
 }
 
 @media (max-width: 620px) {
@@ -2236,6 +2414,14 @@ th {
 
   .glyph-stage {
     max-width: 100%;
+  }
+
+  .dot-word {
+    font-size: clamp(1.4rem, 9vw, 2.3rem);
+  }
+
+  .portal-actions {
+    width: min(100%, 320px);
   }
 
   .agent-character {

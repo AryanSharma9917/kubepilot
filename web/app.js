@@ -84,12 +84,13 @@ function openView(viewName) {
 
 function getKnownView(viewName) {
   const view = document.querySelector(`[data-view-panel="${viewName}"]`);
-  return view ? viewName : "copilot";
+  return view ? viewName : "dashboard";
 }
 
 function openViewFromHash() {
   const viewName = getKnownView(window.location.hash.replace("#", ""));
   openView(viewName);
+  document.body.dataset.activeView = viewName;
 }
 
 function setViewHash(viewName) {

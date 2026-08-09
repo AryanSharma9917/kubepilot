@@ -6,7 +6,7 @@
     <title>KubePilot</title>
     <link rel="icon" type="image/svg+xml" href="/kubepilot-icon.svg" />
     <link rel="apple-touch-icon" href="/kubepilot-icon.png" />
-    <link rel="stylesheet" href="/styles.css?v=20260803-nothing-a1" />
+    <link rel="stylesheet" href="/styles.css?v=20260809-glyph-portal" />
   </head>
   <body data-theme="dark">
     <svg class="icon-defs" aria-hidden="true">
@@ -37,11 +37,11 @@
         </div>
 
         <nav class="nav-list" aria-label="Primary">
-          <button class="nav-item" type="button" data-view="dashboard">
+          <button class="nav-item active" type="button" data-view="dashboard">
             <span class="nav-icon"><svg><use href="#i-command"></use></svg></span>
             <span class="nav-label">Dashboard</span>
           </button>
-          <button class="nav-item active" type="button" data-view="copilot">
+          <button class="nav-item" type="button" data-view="copilot">
             <span class="nav-icon"><svg><use href="#i-spark"></use></svg></span>
             <span class="nav-label">Copilot</span>
           </button>
@@ -108,62 +108,46 @@
           </div>
         </header>
 
-        <section class="view" data-view-panel="dashboard">
-          <div class="hero-strip">
-            <div>
-              <p class="eyebrow">Live demo / agentic control plane</p>
-              <h2>Operate Kubernetes with evidence, not noise.</h2>
-              <p>
-                Ask KubePilot what broke, inspect the evidence, and turn the diagnosis
-                into an incident report without leaving the console.
-              </p>
+        <section class="view active" data-view-panel="dashboard">
+          <div class="glyph-portal">
+            <div class="portal-copy" aria-label="KubePilot primary menu">
+              <button class="dot-word" type="button" data-open-view="documentation">ABOUT</button>
+              <button class="dot-word" type="button" data-open-view="copilot">COPILOT</button>
+              <button class="dot-word" type="button" data-open-view="diagnosis">DIAGNOSIS</button>
+              <button class="dot-word" type="button" data-open-view="incident">PLAYGROUND</button>
             </div>
-            <div class="glyph-stage" aria-hidden="true">
-              <div class="glyph-agent">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-              <div class="glyph-readout">
-                <strong id="heroTyped">scanning cluster signals</strong>
-                <span>rag / tools / traces / incident room</span>
-              </div>
-            </div>
-            <div class="hero-actions">
-              <button class="action-button" type="button" data-open-view="copilot">
-                <span class="button-icon"><svg><use href="#i-spark"></use></svg></span>
-                <span>Open Copilot</span>
-              </button>
-              <button class="secondary-button" type="button" data-open-view="documentation">
-                <span class="button-icon"><svg><use href="#i-book"></use></svg></span>
-                <span>Read Docs</span>
-              </button>
-            </div>
-          </div>
 
-          <div class="quick-actions" aria-label="Demo actions">
-            <button type="button" data-prompt="Show unhealthy workloads">
-              <span class="quick-icon"><svg><use href="#i-pulse"></use></svg></span>
-              <span>
-                <strong>Find the breakage</strong>
-                <small>Ask the agent for degraded workloads.</small>
-              </span>
-            </button>
-            <button type="button" data-open-view="diagnosis">
-              <span class="quick-icon"><svg><use href="#i-search"></use></svg></span>
-              <span>
-                <strong>Inspect checkout</strong>
-                <small>Run pod, event, and log diagnosis.</small>
-              </span>
-            </button>
-            <button type="button" data-open-view="documentation">
-              <span class="quick-icon"><svg><use href="#i-book"></use></svg></span>
-              <span>
-                <strong>Learn the flow</strong>
-                <small>Open the expandable demo guide.</small>
-              </span>
-            </button>
+            <div class="portal-actions" aria-label="KubePilot command menu">
+              <button type="button" data-open-view="copilot" data-prompt="Show unhealthy workloads">
+                <span>ASK AGENT</span>
+                <span><svg><use href="#i-spark"></use></svg></span>
+              </button>
+              <button type="button" data-open-view="diagnosis">
+                <span>DIAGNOSE CHECKOUT</span>
+                <span><svg><use href="#i-search"></use></svg></span>
+              </button>
+              <button type="button" data-open-view="incident">
+                <span>INCIDENT REPORT</span>
+                <span><svg><use href="#i-report"></use></svg></span>
+              </button>
+              <button type="button" data-open-view="observability">
+                <span>TRACE + AUDIT</span>
+                <span><svg><use href="#i-pulse"></use></svg></span>
+              </button>
+              <button type="button" data-open-view="documentation">
+                <span>HOW IT WORKS</span>
+                <span><svg><use href="#i-book"></use></svg></span>
+              </button>
+            </div>
+
+            <div class="portal-footer" aria-label="KubePilot demo links">
+              <button type="button" data-open-view="dashboard">STATUS</button>
+              <button type="button" data-open-view="documentation">ABOUT</button>
+              <button type="button" data-open-view="copilot">CHAT</button>
+              <button type="button" data-open-view="diagnosis">TOOLS</button>
+              <button type="button" data-open-view="incident">REPORTS</button>
+              <button type="button" data-open-view="observability">TRACES</button>
+            </div>
           </div>
 
           <section class="dashboard-grid">
@@ -220,7 +204,7 @@
           </article>
         </section>
 
-        <section class="view active" data-view-panel="copilot">
+        <section class="view" data-view-panel="copilot">
           <div class="demo-flow" aria-label="Demo flow">
             <button type="button" data-prompt="Show unhealthy workloads">
               <span class="flow-step">1</span>
@@ -737,6 +721,6 @@
         </section>
       </main>
     </div>
-    <script type="module" src="/app.js?v=20260803-nothing-a1"></script>
+    <script type="module" src="/app.js?v=20260809-glyph-portal"></script>
   </body>
 </html>

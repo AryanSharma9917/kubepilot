@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from kubepilot_api.incident_store import incident_report_store
+from kubepilot_api.incident_store import get_incident_report_store
 from kubepilot_api.schemas import (
     ClusterHealthResponse,
     DeploymentDiagnosisResponse,
@@ -34,14 +34,14 @@ async def generated_incident_reports(
 ) -> IncidentReportsResponse:
     """Return recently generated incident report artifacts."""
 
-    return IncidentReportsResponse(reports=incident_report_store.list(limit=limit))
+    return IncidentReportsResponse(reports=get_incident_report_store().list(limit=limit))
 
 
 @router.get("/incident-reports/{report_id}", response_model=IncidentReportResponse)
 async def generated_incident_report(report_id: str) -> IncidentReportResponse:
     """Return one generated incident report artifact by ID."""
 
-    report = incident_report_store.get(report_id)
+    report = get_incident_report_store().get(report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Incident report not found")
     return report

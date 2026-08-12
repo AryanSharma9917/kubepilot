@@ -13,7 +13,7 @@ from agent.tools.kubernetes import (
     create_deployment_diagnoser,
 )
 from kubepilot_api.config import get_settings
-from kubepilot_api.incident_store import incident_report_store
+from kubepilot_api.incident_store import get_incident_report_store
 from kubepilot_api.metrics import record_cluster_tool_call
 from kubepilot_api.policy import NamespaceAccessPolicy
 from kubepilot_api.schemas import (
@@ -221,7 +221,7 @@ class ClusterService:
             status_update=report.status_update,
             sources=list(report.sources),
         )
-        return incident_report_store.put(incident_response)
+        return get_incident_report_store().put(incident_response)
 
     async def remediation_plan(
         self,

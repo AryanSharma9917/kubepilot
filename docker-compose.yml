@@ -19,6 +19,7 @@ services:
     build: .
     environment:
       KUBEPILOT_ENVIRONMENT: local
+      KUBEPILOT_DATABASE_URL: postgresql://kubepilot:kubepilot@postgres:5432/kubepilot
       KUBEPILOT_K8S_MODE: service
       KUBEPILOT_K8S_SERVICE_URL: http://k8s-tool:8081
       KUBEPILOT_RAG_MODE: keyword
@@ -26,6 +27,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
+      postgres:
+        condition: service_healthy
       k8s-tool:
         condition: service_healthy
     healthcheck:
@@ -40,6 +43,22 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kubepilot
+      POSTGRES_USER: kubepilot
+      POSTGRES_PASSWORD: kubepilot
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kubepilot -d kubepilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   k8s-tool:
     build:
@@ -84,3 +103,6 @@ services:
       - "3001:3000"
     depends_on:
       - prometheus
+
+volumes:
+  postgres-data:

@@ -64,6 +64,7 @@ The Compose demo starts:
 - Static web console on port `3000`
 - FastAPI backend on port `8000`
 - Go Kubernetes tool service on port `8081`
+- Postgres database on port `5432`
 - Fixture-mode unhealthy workloads for a reliable demo.
 
 Useful demo prompts:
@@ -116,8 +117,8 @@ Run a kind/local-cluster demo with intentionally failing workloads:
 - JSON and markdown incident report generation
 - Incident reports include severity, probable cause, operator impact, evidence,
   timeline, next actions, and a copy-ready status update
-- Generated incident reports receive backend artifact IDs and are retained in a
-  process-local demo store for list/detail retrieval
+- Generated incident reports receive backend artifact IDs and are persisted to
+  Postgres when `KUBEPILOT_DATABASE_URL` is configured
 - Metrics endpoint for Prometheus-style scraping
 - Local trace spans endpoint
 - Local audit events endpoint
@@ -218,6 +219,19 @@ Generated incident report artifacts:
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/cluster/incident-reports
+```
+
+## Backend Persistence
+
+The API stores generated incident report artifacts through a repository layer.
+When `KUBEPILOT_DATABASE_URL` is set, reports are persisted in Postgres. Without
+that variable, KubePilot falls back to a process-local in-memory store so tests
+and lightweight demos still run.
+
+The default Docker Compose stack enables Postgres automatically:
+
+```text
+postgresql://kubepilot:kubepilot@postgres:5432/kubepilot
 ```
 
 ## Local Development

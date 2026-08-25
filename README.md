@@ -120,18 +120,37 @@ a local kind cluster, run `./scripts/kind-demo.sh`.
 ## How it works
 
 ```text
-Web console
-    |
-    v
-FastAPI API
-    |
-    v
-Agent workflow: route intent -> retrieve guidance -> inspect evidence -> answer
-    |                         |
-    v                         v
-Runbook retrieval       Kubernetes tool service
-                         (Go, fixture or real cluster mode)
+                    KUBEPILOT
+                       |
+        +--------------+--------------+
+        |                             |
+     Frontend                     Backend/API
+        |                             |
+     HTML/CSS/JS                    FastAPI
+                                      |
+                         +------------+------------+
+                         |            |            |
+                       Agent         RAG       Kubernetes
+                         |            |            |
+                       LLM*       Retrieval    K8s API
+                         |            |            |
+                         +------------+------------+
+                                      |
+                             Infrastructure
+                                      |
+              +----------------------+----------------+
+              |                       |                |
+           Docker                 Kubernetes          GitOps
+              |                       |                |
+         Containers              Helm/ArgoCD       GitHub Actions
+                                      |
+                             Observability
+                                      |
+                         Prometheus/Grafana/OpenTelemetry
 ```
+
+\* The default local demo uses deterministic answer synthesis. A self-hosted
+HTTP LLM can be configured separately when needed.
 
 The main building blocks are:
 

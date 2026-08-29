@@ -418,12 +418,24 @@ async function sendChat(message) {
   openView("copilot");
   chatInput.disabled = true;
   appendChatMessage(message, "user");
-  appendChatMessage("Thinking through runbooks and cluster signals...", "assistant", true);
+
+  // Hide Gemini initial greeting and show chat screen
+  const geminiGreeting = document.querySelector("#geminiGreeting");
+  const geminiChatArea = document.querySelector("#geminiChatArea");
+  if (geminiGreeting) geminiGreeting.style.display = "none";
+  if (geminiChatArea) geminiChatArea.style.display = "flex";
+
+  appendChatMessage("", "assistant", true);
+  const startedAt = performance.now();
   try {
     const response = await apiFetch("/api/v1/chat", {
       method: "POST",
       body: JSON.stringify({ message }),
     });
+    const remaining = Math.max(0, 450 - (performance.now() - startedAt));
+    if (remaining) {
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+    }
     replacePendingAssistant(renderChatAnswer(response));
     await loadOverview();
   } catch (error) {
@@ -435,6 +447,11 @@ async function sendChat(message) {
 }
 
 function renderChatAnswer(response) {
+  const answer = String(response.answer || "")
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .join("");
   const sources = response.sources?.length
     ? `
       <div class="source-list">
@@ -494,9 +511,21 @@ function renderChatAnswer(response) {
       </div>
     `
     : "";
+  const incidentMatch = String(response.answer || "").match(
+    /Deployment incident:\s*([^/\s]+)\/deployment\/([^\s.]+)/i,
+  );
+  const incidentAction = incidentMatch
+    ? `
+      <button class="chat-action" type="button" data-diagnose-namespace="${escapeHtml(incidentMatch[1])}" data-diagnose-deployment="${escapeHtml(incidentMatch[2])}">
+        <span class="button-icon"><svg><use href="#i-report"></use></svg></span>
+        <span>Open structured incident report</span>
+      </button>
+    `
+    : "";
   renderRetrievedSources(response.sources || [], response.citations || []);
   return `
-    <div>${escapeHtml(response.answer)}</div>
+    <div class="chat-answer">${answer}</div>
+    ${incidentAction}
     ${workflow}
     ${sources}
     ${citations}
@@ -539,7 +568,9 @@ function appendChatMessage(content, role, pending = false) {
   if (pending) {
     message.dataset.pending = "true";
   }
-  message.innerHTML = escapeHtml(content);
+  message.innerHTML = pending
+    ? '<span class="chat-loading" role="status" aria-label="Loading answer"><i></i><i></i><i></i></span>'
+    : escapeHtml(content);
   chatLog.append(message);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
@@ -865,14 +896,64 @@ function boot() {
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.addEventListener("click", () => {
       setViewHash(button.dataset.view);
+
+      // If going to copilot, manage visibility of greeting / chat area
+      if (button.dataset.view === "copilot") {
+        const geminiGreeting = document.querySelector("#geminiGreeting");
+        const geminiChatArea = document.querySelector("#geminiChatArea");
+
+        // Show greeting only if there are no user messages in chat log
+        const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
+        if (geminiGreeting && geminiChatArea) {
+          if (hasMessages) {
+            geminiGreeting.style.display = "none";
+            geminiChatArea.style.display = "flex";
+          } else {
+            geminiGreeting.style.display = "flex";
+            geminiChatArea.style.display = "none";
+          }
+        }
+      }
     });
   });
   document.querySelectorAll("[data-open-view]").forEach((button) => {
     button.addEventListener("click", () => {
       setViewHash(button.dataset.openView);
+
+      if (button.dataset.openView === "copilot") {
+        const geminiGreeting = document.querySelector("#geminiGreeting");
+        const geminiChatArea = document.querySelector("#geminiChatArea");
+        const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
+        if (geminiGreeting && geminiChatArea) {
+          if (hasMessages) {
+            geminiGreeting.style.display = "none";
+            geminiChatArea.style.display = "flex";
+          } else {
+            geminiGreeting.style.display = "flex";
+            geminiChatArea.style.display = "none";
+          }
+        }
+      }
     });
   });
-  window.addEventListener("hashchange", openViewFromHash);
+  window.addEventListener("hashchange", () => {
+  openViewFromHash();
+    const currentHash = window.location.hash.replace("#", "");
+    if (currentHash === "copilot") {
+      const geminiGreeting = document.querySelector("#geminiGreeting");
+      const geminiChatArea = document.querySelector("#geminiChatArea");
+      const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
+      if (geminiGreeting && geminiChatArea) {
+        if (hasMessages) {
+          geminiGreeting.style.display = "none";
+          geminiChatArea.style.display = "flex";
+         } else {
+          geminiGreeting.style.display = "flex";
+          geminiChatArea.style.display = "none";
+    }
+      }
+    }
+  });
   openViewFromHash();
   workloadList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-namespace][data-deployment]");
@@ -921,10 +1002,17 @@ function boot() {
         }, 1400);
       } catch {
         setIconButtonIcon(button, "!", "Copy failed");
-      }
-    });
+    }
+  });
   });
   document.addEventListener("click", async (event) => {
+    const diagnosisAction = event.target.closest("[data-diagnose-namespace][data-diagnose-deployment]");
+    if (diagnosisAction) {
+      namespaceInput.value = diagnosisAction.dataset.diagnoseNamespace;
+      deploymentInput.value = diagnosisAction.dataset.diagnoseDeployment;
+      diagnoseDeployment(diagnosisAction.dataset.diagnoseNamespace, diagnosisAction.dataset.diagnoseDeployment);
+      return;
+    }
     const button = event.target.closest("[data-copy-dynamic]");
     if (!button) {
       return;
@@ -964,3 +1052,4 @@ function boot() {
 }
 
 boot();
+

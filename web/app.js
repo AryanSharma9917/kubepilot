@@ -895,7 +895,7 @@ function boot() {
   });
   document.querySelectorAll("[data-view]").forEach((button) => {
     button.addEventListener("click", () => {
-      setViewHash(button.dataset.view);
+    setViewHash(button.dataset.view);
 
       // If going to copilot, manage visibility of greeting / chat area
       if (button.dataset.view === "copilot") {

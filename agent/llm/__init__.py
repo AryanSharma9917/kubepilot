@@ -1,5 +1,17 @@
 """LLM provider boundary."""
 
-from agent.llm.providers import DeterministicLLMClient, HTTPJSONLLMClient, LLMClient
+from agent.llm.providers import (
+    AzureOpenAILLMClient,
+    DeterministicLLMClient,
+    HTTPJSONLLMClient,
+    LLMClient,
+    OpenAICompatibleLLMClient,
+)
 
-__all__ = ["DeterministicLLMClient", "HTTPJSONLLMClient", "LLMClient"]
+__all__ = [
+    "AzureOpenAILLMClient",
+    "DeterministicLLMClient",
+    "HTTPJSONLLMClient",
+    "LLMClient",
+    "OpenAICompatibleLLMClient",
+]

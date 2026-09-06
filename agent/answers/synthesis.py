@@ -5,7 +5,13 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from agent.answers.prompts import build_grounded_answer_prompt, citations_from_matches
-from agent.llm import DeterministicLLMClient, HTTPJSONLLMClient, LLMClient
+from agent.llm import (
+    AzureOpenAILLMClient,
+    DeterministicLLMClient,
+    HTTPJSONLLMClient,
+    LLMClient,
+    OpenAICompatibleLLMClient,
+)
 from agent.state.chat import Citation
 from rag import RetrievedDocument
 
@@ -77,6 +83,46 @@ def create_answer_synthesizer() -> AnswerSynthesizer:
         if not endpoint:
             raise ValueError("KUBEPILOT_LLM_ENDPOINT is required when KUBEPILOT_LLM_PROVIDER=http")
         return GroundedAnswerSynthesizer(HTTPJSONLLMClient(endpoint))
+    if provider == "openai":
+        api_key = os.getenv("KUBEPILOT_LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        model = os.getenv("KUBEPILOT_LLM_MODEL")
+        if not api_key or not model:
+            missing = []
+            if not api_key:
+                missing.append("KUBEPILOT_LLM_API_KEY")
+            if not model:
+                missing.append("KUBEPILOT_LLM_MODEL")
+            raise ValueError(
+                "KUBEPILOT_LLM_API_KEY and KUBEPILOT_LLM_MODEL are required when "
+                f"KUBEPILOT_LLM_PROVIDER=openai. Missing: {', '.join(missing)}"
+            )
+        endpoint = os.getenv("KUBEPILOT_LLM_ENDPOINT") or "https://api.openai.com/v1/chat/completions"
+        return GroundedAnswerSynthesizer(OpenAICompatibleLLMClient(api_key, model, endpoint=endpoint))
+    if provider == "azure_openai":
+        api_key = os.getenv("AZURE_OPENAI_API_KEY")
+        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
+        missing = []
+        if not api_key:
+            missing.append("AZURE_OPENAI_API_KEY")
+        if not endpoint:
+            missing.append("AZURE_OPENAI_ENDPOINT")
+        if not deployment:
+            missing.append("AZURE_OPENAI_DEPLOYMENT")
+        if missing:
+            raise ValueError(
+                "Azure OpenAI configuration is incomplete. Missing: "
+                + ", ".join(missing)
+            )
+        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
+        return GroundedAnswerSynthesizer(
+            AzureOpenAILLMClient(
+                api_key,
+                endpoint,
+                deployment,
+                api_version=api_version,
+            )
+        )
     raise ValueError(f"Unsupported LLM provider: {provider}")
 
 

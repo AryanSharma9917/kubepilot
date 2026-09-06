@@ -69,7 +69,10 @@ def test_create_answer_synthesizer_requires_azure_configuration(
     monkeypatch.delenv("AZURE_OPENAI_ENDPOINT", raising=False)
     monkeypatch.delenv("AZURE_OPENAI_DEPLOYMENT", raising=False)
 
-    with pytest.raises(ValueError, match="AZURE_OPENAI_API_KEY|AZURE_OPENAI_ENDPOINT|AZURE_OPENAI_DEPLOYMENT"):
+    with pytest.raises(
+        ValueError,
+        match="AZURE_OPENAI_API_KEY|AZURE_OPENAI_ENDPOINT|AZURE_OPENAI_DEPLOYMENT",
+    ):
         create_answer_synthesizer()
 
 

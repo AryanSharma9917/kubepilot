@@ -96,8 +96,13 @@ def create_answer_synthesizer() -> AnswerSynthesizer:
                 "KUBEPILOT_LLM_API_KEY and KUBEPILOT_LLM_MODEL are required when "
                 f"KUBEPILOT_LLM_PROVIDER=openai. Missing: {', '.join(missing)}"
             )
-        endpoint = os.getenv("KUBEPILOT_LLM_ENDPOINT") or "https://api.openai.com/v1/chat/completions"
-        return GroundedAnswerSynthesizer(OpenAICompatibleLLMClient(api_key, model, endpoint=endpoint))
+        endpoint = (
+            os.getenv("KUBEPILOT_LLM_ENDPOINT")
+            or "https://api.openai.com/v1/chat/completions"
+        )
+        return GroundedAnswerSynthesizer(
+            OpenAICompatibleLLMClient(api_key, model, endpoint=endpoint)
+        )
     if provider == "azure_openai":
         api_key = os.getenv("AZURE_OPENAI_API_KEY")
         endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")

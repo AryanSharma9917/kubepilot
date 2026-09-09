@@ -2,12 +2,22 @@
 set -euo pipefail
 
 BASE_URL="${KUBEPILOT_WEB_URL:-http://127.0.0.1:3000}"
+CURL_OPTS=(
+  --fail
+  --silent
+  --show-error
+  --location
+  --max-time 10
+  --retry 30
+  --retry-delay 1
+  --retry-connrefused
+)
 
 require_path() {
   local path="$1"
   local expected="$2"
   local body
-  body="$(curl -fsS "${BASE_URL}${path}")"
+  body="$(curl "${CURL_OPTS[@]}" "${BASE_URL}${path}")"
   if ! grep -q "${expected}" <<<"${body}"; then
     echo "Expected ${BASE_URL}${path} to contain: ${expected}" >&2
     exit 1

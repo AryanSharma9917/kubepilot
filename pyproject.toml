@@ -9,7 +9,7 @@ description = "AI-powered Kubernetes operations platform"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.115,<0.116",
+    "fastapi>=0.115,<0.142",
     "psycopg[binary]>=3.2,<4.0",
     "uvicorn[standard]>=0.30,<1.0",
 ]
@@ -21,18 +21,18 @@ kubepilot-evaluate-retrieval = "rag.cli:evaluate"
 [project.optional-dependencies]
 dev = [
     "httpx>=0.27,<1.0",
-    "pytest>=8.0,<9.0",
+    "pytest>=8.0,<10.0",
     "ruff>=0.8,<1.0",
 ]
 kubernetes = [
-    "kubernetes>=30.0,<31.0",
+    "kubernetes>=30.0,<37.0",
 ]
 rag = [
     "faiss-cpu>=1.8,<2.0",
     "numpy>=1.26,<3.0",
 ]
 agent = [
-    "langgraph>=0.2,<1.0",
+    "langgraph>=0.2,<2.0",
 ]
 observability = [
     "opentelemetry-api>=1.25,<2.0",
@@ -41,10 +41,10 @@ observability = [
     "opentelemetry-instrumentation-fastapi>=0.46b0,<1.0",
 ]
 all = [
-    "kubernetes>=30.0,<31.0",
+    "kubernetes>=30.0,<37.0",
     "faiss-cpu>=1.8,<2.0",
     "numpy>=1.26,<3.0",
-    "langgraph>=0.2,<1.0",
+    "langgraph>=0.2,<2.0",
     "opentelemetry-api>=1.25,<2.0",
     "opentelemetry-sdk>=1.25,<2.0",
     "opentelemetry-exporter-otlp-proto-http>=1.25,<2.0",

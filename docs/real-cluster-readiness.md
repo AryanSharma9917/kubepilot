@@ -76,6 +76,28 @@ The chart supports production-shaped controls without enabling them by default:
   OTLP headers
 - `networkPolicy.enabled` for restricted ingress
 
+The production values use `ghcr.io/aryansharma9917/kubepilot-api` with a
+commit-based `sha-...` tag. Publish that exact tag before deploying, or override
+`image.repository` and `image.tag` with an immutable digest-backed release.
+
+Create the referenced secret without committing its values:
+
+```bash
+kubectl create secret generic kubepilot-api-secrets \
+  --namespace kubepilot \
+  --from-literal=api-keys="$KUBEPILOT_API_KEYS" \
+  --from-literal=azure-openai-api-key="$AZURE_OPENAI_API_KEY" \
+  --from-literal=azure-openai-endpoint="$AZURE_OPENAI_ENDPOINT" \
+  --from-literal=azure-openai-deployment="$AZURE_OPENAI_DEPLOYMENT" \
+  --from-literal=otel-endpoint="$KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT" \
+  --from-literal=otel-headers="$KUBEPILOT_OTEL_HEADERS"
+```
+
+For production, replace this imperative Secret with External Secrets Operator,
+Vault, or the cloud provider's secret manager and keep the same secret keys.
+Verify the service account's read-only permissions with
+`kubectl auth can-i --as=system:serviceaccount:kubepilot:kubepilot-kubepilot`.
+
 Example secret:
 
 ```bash

@@ -1,4 +1,4 @@
-"""In-memory audit trail for local development."""
+"""Bounded audit trail for local development and single-process deployments."""
 
 from collections import deque
 from dataclasses import dataclass
@@ -7,8 +7,10 @@ from uuid import uuid4
 
 from fastapi import Request, Response
 
+from kubepilot_api.config import get_settings
+
 MAX_AUDIT_EVENTS = 200
-AUDIT_EVENTS: deque["AuditEvent"] = deque(maxlen=MAX_AUDIT_EVENTS)
+AUDIT_EVENTS: deque["AuditEvent"] = deque()
 
 
 @dataclass(frozen=True)
@@ -39,6 +41,9 @@ async def audit_middleware(request: Request, call_next: object) -> Response:
             status_code=response.status_code,
         )
     )
+    retention = max(1, get_settings().audit_retention_events)
+    while len(AUDIT_EVENTS) > retention:
+        AUDIT_EVENTS.popleft()
     return response
 
 

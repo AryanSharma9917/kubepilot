@@ -1,6 +1,7 @@
 import httpx
 import pytest
 from kubepilot_api.audit import AUDIT_EVENTS
+from kubepilot_api.config import get_settings
 
 
 @pytest.mark.anyio
@@ -17,3 +18,19 @@ async def test_audit_events_records_api_requests(client: httpx.AsyncClient) -> N
     assert "/healthz" in paths
     health_event = next(event for event in body["events"] if event["path"] == "/healthz")
     assert health_event["request_id"] == "test-request"
+
+
+@pytest.mark.anyio
+async def test_audit_events_respect_configured_retention(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    AUDIT_EVENTS.clear()
+    monkeypatch.setenv("KUBEPILOT_AUDIT_RETENTION_EVENTS", "1")
+    get_settings.cache_clear()
+
+    await client.get("/healthz")
+    await client.get("/readyz")
+
+    assert len(AUDIT_EVENTS) == 1
+    get_settings.cache_clear()

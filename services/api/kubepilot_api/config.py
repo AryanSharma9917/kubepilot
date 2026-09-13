@@ -19,6 +19,7 @@ class Settings:
     allowed_actions: tuple[str, ...] = ()
     api_keys: tuple[str, ...] = ()
     rate_limit_per_minute: int = 0
+    audit_retention_events: int = 200
     database_url: str | None = None
     rag_mode: str = "keyword"
     rag_index_path: str | None = None
@@ -48,6 +49,7 @@ def get_settings() -> Settings:
         allowed_actions=_split_csv(os.getenv("KUBEPILOT_ALLOWED_ACTIONS", "")),
         api_keys=_split_csv(os.getenv("KUBEPILOT_API_KEYS", "")),
         rate_limit_per_minute=_int_env("KUBEPILOT_RATE_LIMIT_PER_MINUTE", default=0),
+        audit_retention_events=_int_env("KUBEPILOT_AUDIT_RETENTION_EVENTS", default=200),
         database_url=os.getenv("KUBEPILOT_DATABASE_URL"),
         rag_mode=os.getenv("KUBEPILOT_RAG_MODE", "keyword"),
         rag_index_path=os.getenv("KUBEPILOT_RAG_INDEX_PATH"),

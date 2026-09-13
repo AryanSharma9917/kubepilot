@@ -17,6 +17,17 @@ async def test_http_json_llm_client_uses_injected_transport() -> None:
     assert answer == "answer for question"
 
 
+@pytest.mark.anyio
+async def test_http_json_llm_client_propagates_provider_failures() -> None:
+    def failing_transport(prompt: str) -> str:
+        raise RuntimeError(f"provider unavailable for {prompt}")
+
+    client = HTTPJSONLLMClient("http://llm.local/complete", transport=failing_transport)
+
+    with pytest.raises(RuntimeError, match="provider unavailable"):
+        await client.complete("question")
+
+
 def test_create_answer_synthesizer_requires_http_endpoint(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

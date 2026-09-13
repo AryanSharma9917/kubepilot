@@ -1,13 +1,16 @@
 replicaCount: 2
 
 image:
-  repository: ghcr.io/your-org/kubepilot-api
-  tag: stable
+  repository: ghcr.io/aryansharma9917/kubepilot-api
+  tag: sha-6971e006d342dbe44ebd7a42eb03c4aff8dbd709
   pullPolicy: IfNotPresent
 
 ingress:
   enabled: true
   className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
   hosts:
     - host: kubepilot.example.com
       paths:
@@ -24,6 +27,9 @@ networkPolicy:
     - from:
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: monitoring
 
 env:
@@ -33,16 +39,39 @@ env:
   KUBEPILOT_ALLOWED_ACTIONS: cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan
   KUBEPILOT_RAG_MODE: faiss
   KUBEPILOT_AGENT_MODE: langgraph
+  KUBEPILOT_LLM_PROVIDER: azure_openai
   KUBEPILOT_RATE_LIMIT_PER_MINUTE: "120"
+  KUBEPILOT_AUDIT_RETENTION_EVENTS: "10000"
   KUBEPILOT_OTEL_SERVICE_NAME: kubepilot-api
 
 envFromSecrets:
   - name: KUBEPILOT_API_KEYS
     secretName: kubepilot-api-secrets
     secretKey: api-keys
+  - name: KUBEPILOT_LLM_API_KEY
+    secretName: kubepilot-api-secrets
+    secretKey: llm-api-key
+  - name: KUBEPILOT_LLM_MODEL
+    secretName: kubepilot-api-secrets
+    secretKey: llm-model
   - name: KUBEPILOT_LLM_ENDPOINT
     secretName: kubepilot-api-secrets
     secretKey: llm-endpoint
+  - name: AZURE_OPENAI_API_KEY
+    secretName: kubepilot-api-secrets
+    secretKey: azure-openai-api-key
+  - name: AZURE_OPENAI_ENDPOINT
+    secretName: kubepilot-api-secrets
+    secretKey: azure-openai-endpoint
+  - name: AZURE_OPENAI_DEPLOYMENT
+    secretName: kubepilot-api-secrets
+    secretKey: azure-openai-deployment
+  - name: KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT
+    secretName: kubepilot-api-secrets
+    secretKey: otel-endpoint
+  - name: KUBEPILOT_OTEL_HEADERS
+    secretName: kubepilot-api-secrets
+    secretKey: otel-headers
 
 autoscaling:
   enabled: true

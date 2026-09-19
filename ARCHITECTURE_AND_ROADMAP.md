@@ -331,6 +331,9 @@ The first release of KubePilot is considered successful when:
 
 # Future Enhancements
 
+See [the next-phase roadmap](docs/next-phase-roadmap.md) for the prioritized
+backlog, dependencies, and acceptance criteria.
+
 * Multi-cluster support
 * Cloud provider integrations
 * Approval-gated write-action remediation workflows

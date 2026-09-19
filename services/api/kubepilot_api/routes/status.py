@@ -23,7 +23,7 @@ async def runtime_status() -> RuntimeStatusResponse:
         rag_mode=settings.rag_mode,
         llm_provider=settings.llm_provider,
         agent_mode=settings.agent_mode,
-        auth_enabled=bool(settings.api_keys),
+        auth_enabled=bool(settings.api_keys or settings.oidc_issuer),
         namespace_policy_enabled=bool(settings.allowed_namespaces),
         action_policy_enabled=bool(settings.allowed_actions),
         rate_limit_per_minute=settings.rate_limit_per_minute,

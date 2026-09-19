@@ -40,6 +40,12 @@ env:
   KUBEPILOT_RAG_MODE: faiss
   KUBEPILOT_AGENT_MODE: langgraph
   KUBEPILOT_LLM_PROVIDER: azure_openai
+  KUBEPILOT_OIDC_ISSUER: https://identity.example.com/realms/platform
+  KUBEPILOT_OIDC_AUDIENCE: kubepilot-api
+  KUBEPILOT_OIDC_JWKS_URL: https://identity.example.com/realms/platform/protocol/openid-connect/certs
+  KUBEPILOT_OIDC_REQUIRED: "true"
+  KUBEPILOT_OIDC_ROLE_CLAIM: roles
+  KUBEPILOT_OIDC_ROLE_ACTIONS: read-only=chat,knowledge:search,cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan,system:read;incident-operator=chat,knowledge:search,cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan,system:read;administrator=*
   KUBEPILOT_RATE_LIMIT_PER_MINUTE: "120"
   KUBEPILOT_AUDIT_RETENTION_EVENTS: "10000"
   KUBEPILOT_OTEL_SERVICE_NAME: kubepilot-api
@@ -72,6 +78,36 @@ envFromSecrets:
   - name: KUBEPILOT_OTEL_HEADERS
     secretName: kubepilot-api-secrets
     secretKey: otel-headers
+
+externalSecret:
+  enabled: true
+  refreshInterval: 1h
+  secretStoreRef:
+    name: kubepilot-production
+    kind: ClusterSecretStore
+  target:
+    name: kubepilot-api-secrets
+    creationPolicy: Owner
+  remoteKey: kubepilot/production/api
+  data:
+    - secretKey: api-keys
+      remoteProperty: api-keys
+    - secretKey: llm-api-key
+      remoteProperty: llm-api-key
+    - secretKey: llm-model
+      remoteProperty: llm-model
+    - secretKey: llm-endpoint
+      remoteProperty: llm-endpoint
+    - secretKey: azure-openai-api-key
+      remoteProperty: azure-openai-api-key
+    - secretKey: azure-openai-endpoint
+      remoteProperty: azure-openai-endpoint
+    - secretKey: azure-openai-deployment
+      remoteProperty: azure-openai-deployment
+    - secretKey: otel-endpoint
+      remoteProperty: otel-endpoint
+    - secretKey: otel-headers
+      remoteProperty: otel-headers
 
 autoscaling:
   enabled: true

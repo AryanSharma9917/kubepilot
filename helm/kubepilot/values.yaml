@@ -52,4 +52,16 @@ env:
 
 envFromSecrets: []
 
+externalSecret:
+  enabled: false
+  refreshInterval: 1h
+  secretStoreRef:
+    name: kubepilot-secrets
+    kind: SecretStore
+  target:
+    name: kubepilot-api-secrets
+    creationPolicy: Owner
+  remoteKey: kubepilot/api
+  data: []
+
 resources: {}

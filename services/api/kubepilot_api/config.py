@@ -18,6 +18,12 @@ class Settings:
     allowed_namespaces: tuple[str, ...] = ()
     allowed_actions: tuple[str, ...] = ()
     api_keys: tuple[str, ...] = ()
+    oidc_issuer: str | None = None
+    oidc_audience: str | None = None
+    oidc_jwks_url: str | None = None
+    oidc_required: bool = False
+    oidc_role_claim: str = "roles"
+    oidc_role_actions: tuple[tuple[str, tuple[str, ...]], ...] = ()
     rate_limit_per_minute: int = 0
     audit_retention_events: int = 200
     database_url: str | None = None
@@ -48,6 +54,12 @@ def get_settings() -> Settings:
         allowed_namespaces=_split_csv(os.getenv("KUBEPILOT_ALLOWED_NAMESPACES", "")),
         allowed_actions=_split_csv(os.getenv("KUBEPILOT_ALLOWED_ACTIONS", "")),
         api_keys=_split_csv(os.getenv("KUBEPILOT_API_KEYS", "")),
+        oidc_issuer=os.getenv("KUBEPILOT_OIDC_ISSUER"),
+        oidc_audience=os.getenv("KUBEPILOT_OIDC_AUDIENCE"),
+        oidc_jwks_url=os.getenv("KUBEPILOT_OIDC_JWKS_URL"),
+        oidc_required=_bool_env("KUBEPILOT_OIDC_REQUIRED", default=False),
+        oidc_role_claim=os.getenv("KUBEPILOT_OIDC_ROLE_CLAIM", "roles"),
+        oidc_role_actions=_split_role_actions(os.getenv("KUBEPILOT_OIDC_ROLE_ACTIONS", "")),
         rate_limit_per_minute=_int_env("KUBEPILOT_RATE_LIMIT_PER_MINUTE", default=0),
         audit_retention_events=_int_env("KUBEPILOT_AUDIT_RETENTION_EVENTS", default=200),
         database_url=os.getenv("KUBEPILOT_DATABASE_URL"),
@@ -87,3 +99,22 @@ def _int_env(name: str, *, default: int) -> int:
         return int(value)
     except ValueError:
         return default
+
+
+def _bool_env(name: str, *, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _split_role_actions(value: str) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    mappings: list[tuple[str, tuple[str, ...]]] = []
+    for item in value.split(";"):
+        if "=" not in item:
+            continue
+        role, actions = item.split("=", 1)
+        role = role.strip()
+        if role:
+            mappings.append((role, _split_csv(actions)))
+    return tuple(mappings)

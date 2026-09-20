@@ -51,9 +51,6 @@ env:
   KUBEPILOT_OTEL_SERVICE_NAME: kubepilot-api
 
 envFromSecrets:
-  - name: KUBEPILOT_API_KEYS
-    secretName: kubepilot-api-secrets
-    secretKey: api-keys
   - name: KUBEPILOT_LLM_API_KEY
     secretName: kubepilot-api-secrets
     secretKey: llm-api-key
@@ -90,8 +87,6 @@ externalSecret:
     creationPolicy: Owner
   remoteKey: kubepilot/production/api
   data:
-    - secretKey: api-keys
-      remoteProperty: api-keys
     - secretKey: llm-api-key
       remoteProperty: llm-api-key
     - secretKey: llm-model

@@ -5,7 +5,10 @@ customer environment.
 
 ## Access Control
 
-- [ ] `KUBEPILOT_API_KEYS` is enabled.
+- [ ] OIDC is required with the expected issuer, audience, JWKS URL, and role claim.
+- [ ] A valid OIDC role can call only its configured actions.
+- [ ] An invalid, expired, or unauthorized OIDC token is rejected.
+- [ ] `KUBEPILOT_API_KEYS` is absent from the production secret and deployment.
 - [ ] `KUBEPILOT_ALLOWED_NAMESPACES` is scoped to approved namespaces.
 - [ ] `KUBEPILOT_ALLOWED_ACTIONS` includes only required read/planning actions.
 - [ ] Kubernetes RBAC is reviewed for least privilege.

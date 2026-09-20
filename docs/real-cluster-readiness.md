@@ -72,41 +72,37 @@ The chart supports production-shaped controls without enabling them by default:
 - `ingress.enabled` for external routing and TLS
 - `autoscaling.enabled` for HorizontalPodAutoscaler
 - `podDisruptionBudget.enabled` for voluntary disruption protection
-- `envFromSecrets` for secret-backed values such as API keys, LLM endpoints, and
-  OTLP headers
+- `envFromSecrets` for secret-backed values such as LLM endpoints and OTLP
+  headers
 - `networkPolicy.enabled` for restricted ingress
 
 The production values use `ghcr.io/aryansharma9917/kubepilot-api` with a
 commit-based `sha-...` tag. Publish that exact tag before deploying, or override
 `image.repository` and `image.tag` with an immutable digest-backed release.
 
-Create the referenced secret without committing its values:
-
-```bash
-kubectl create secret generic kubepilot-api-secrets \
-  --namespace kubepilot \
-  --from-literal=api-keys="$KUBEPILOT_API_KEYS" \
-  --from-literal=azure-openai-api-key="$AZURE_OPENAI_API_KEY" \
-  --from-literal=azure-openai-endpoint="$AZURE_OPENAI_ENDPOINT" \
-  --from-literal=azure-openai-deployment="$AZURE_OPENAI_DEPLOYMENT" \
-  --from-literal=otel-endpoint="$KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT" \
-  --from-literal=otel-headers="$KUBEPILOT_OTEL_HEADERS"
-```
-
-For production, replace this imperative Secret with External Secrets Operator,
-Vault, or the cloud provider's secret manager and keep the same secret keys.
-Verify the service account's read-only permissions with
+For production, configure External Secrets Operator with the
+`ClusterSecretStore` or `SecretStore` named by
+`externalSecret.secretStoreRef`. Store the keys listed in
+`helm/kubepilot/values-production.yaml` at the configured
+`externalSecret.remoteKey`; do not commit their values or create the target
+Secret imperatively. Verify the service account's read-only permissions with
 `kubectl auth can-i --as=system:serviceaccount:kubepilot:kubepilot-kubepilot`.
 
-Example secret:
+After deployment, verify the external secret and workload:
 
 ```bash
-kubectl create secret generic kubepilot-api-secrets \
+kubectl get externalsecret kubepilot-kubepilot \
   --namespace kubepilot \
-  --from-literal=api-keys=replace-me \
-  --from-literal=llm-endpoint=https://llm.example.com/v1/chat \
-  --from-literal=otel-headers=authorization=Bearer-token
+  --output=jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+kubectl rollout status deployment/kubepilot-kubepilot \
+  --namespace kubepilot
 ```
+
+To rotate a credential, update only the corresponding property at the
+external provider. Wait for the ExternalSecret refresh interval, confirm the
+target Secret's resource version changes, and verify the API or provider
+connection. No image rebuild or Helm chart change is required. Record the
+rotation and validation result according to the team's audit policy.
 
 Render a production-shaped manifest:
 

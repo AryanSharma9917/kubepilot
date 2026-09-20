@@ -22,6 +22,8 @@ permissions for pods, pod logs, events, and deployments. The chart's
 - TLS at the ingress
 - An external secret provider, exposed through External Secrets Operator
 - OIDC authentication with an issuer, audience, and role claim
+- API-key authentication is disabled in the production deployment; API keys
+   remain available only for environments that do not require OIDC
 - Explicit namespace and action allowlists
 - PostgreSQL backups with a tested restore procedure
 - Network policy allowing ingress only from the ingress and monitoring

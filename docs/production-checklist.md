@@ -9,6 +9,8 @@ customer environment.
 - [ ] A valid OIDC role can call only its configured actions.
 - [ ] An invalid, expired, or unauthorized OIDC token is rejected.
 - [ ] `KUBEPILOT_API_KEYS` is absent from the production secret and deployment.
+- [ ] ExternalSecret reports `Ready` after deployment.
+- [ ] A credential rotation refreshes the target Secret without an image rebuild.
 - [ ] `KUBEPILOT_ALLOWED_NAMESPACES` is scoped to approved namespaces.
 - [ ] `KUBEPILOT_ALLOWED_ACTIONS` includes only required read/planning actions.
 - [ ] Kubernetes RBAC is reviewed for least privilege.
@@ -21,6 +23,7 @@ customer environment.
 - [ ] Health and readiness probes are passing.
 - [ ] Container image tag is immutable.
 - [ ] Secrets are not committed to Git.
+- [ ] A rotated credential is verified against the dependent API or provider.
 
 ## AI And Retrieval
 

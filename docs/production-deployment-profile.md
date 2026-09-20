@@ -57,7 +57,10 @@ actual usage during the pilot and revise these values with the SLO review.
 
 5. Verify the ExternalSecret reaches `Ready`, the API readiness probe passes,
    and the ingress presents the expected certificate.
-6. Run the API, Kubernetes RBAC, and restore checks in the production
+6. For rotation testing, update one remote secret property, wait for the
+   configured refresh interval, and verify that the target Secret and dependent
+   API connection recover without rebuilding the image.
+7. Run the API, Kubernetes RBAC, and restore checks in the production
    checklist before accepting traffic.
 
 ## Upgrade And Recovery

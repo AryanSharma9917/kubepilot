@@ -43,10 +43,10 @@ customer environment.
 
 ## Validation
 
-- [ ] `ruff check .` passes.
-- [ ] `pytest` passes.
-- [ ] `go test ./...` passes for `services/k8s-tool`.
-- [ ] `docker compose config` passes.
-- [ ] `docker compose --profile monitoring config` passes.
+- [x] `ruff check .` passes.
+- [x] `pytest` passes.
+- [x] `go test ./...` passes for `services/k8s-tool`.
+- [x] `docker compose config` passes.
+- [x] `docker compose --profile monitoring config` passes.
 - [ ] Helm renders default, local, staging, and production values.
 - [ ] `./scripts/local-cluster-smoke.sh` passes on kind.

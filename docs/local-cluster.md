@@ -4,10 +4,6 @@ KubePilot can run against a local Kubernetes cluster in fixture mode. This
 validates the container image, Helm chart, readiness probes, and metrics endpoint
 without requiring a live application cluster.
 
-The same smoke path is available as a GitHub Actions workflow. It can be run
-manually from the Actions tab and is scheduled weekly to catch chart, image, and
-startup regressions.
-
 ## Prerequisites
 
 - Docker
@@ -29,7 +25,7 @@ The script:
 4. Installs or upgrades the chart into the `kubepilot` namespace.
 5. Waits for rollout completion.
 6. Port-forwards the service.
-7. Runs the API-side local-cluster validator against `/healthz`, `/readyz`, `/metrics`, `/api/v1/chat`, `/api/v1/cluster/health`, `/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose`, and `/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report`.
+7. Runs the API-side local-cluster validator against `/healthz`, `/readyz`, `/metrics`, and `/api/v1/cluster/health`.
 
 ## Manual Flow
 
@@ -54,7 +50,6 @@ curl http://127.0.0.1:18000/healthz
 curl http://127.0.0.1:18000/readyz
 curl http://127.0.0.1:18000/metrics
 curl http://127.0.0.1:18000/api/v1/cluster/health
-curl http://127.0.0.1:18000/api/v1/status
 ```
 
 You can also run the reusable validator directly once the service is reachable:
@@ -62,27 +57,6 @@ You can also run the reusable validator directly once the service is reachable:
 ```bash
 PYTHONPATH=services/api python -m kubepilot_api.local_cluster --base-url http://127.0.0.1:18000
 ```
-
-To render the chart with a sample NetworkPolicy:
-
-```bash
-helm template kubepilot ./helm/kubepilot \
-  --namespace kubepilot \
-  --values tests/fixtures/networkpolicy-values.yaml
-```
-
-## Demo Workloads
-
-Apply intentionally broken workloads to a kind cluster and deploy KubePilot in
-real in-cluster mode:
-
-```bash
-./scripts/kind-demo.sh
-```
-
-The script builds the API image, loads it into kind, applies the demo workloads,
-installs the Helm chart with `KUBEPILOT_K8S_MODE=in_cluster`, and prints the
-port-forward command for local inspection.
 
 ## Real Cluster Mode
 
@@ -97,6 +71,3 @@ helm upgrade --install kubepilot ./helm/kubepilot \
 
 The chart includes read-only RBAC for deployments, pods, and events. Log access
 uses the pods/log subresource when the cluster enforces subresource permissions.
-
-For kubeconfig mode, policy examples, and troubleshooting, see
-[Real Cluster Readiness](real-cluster-readiness.md).

@@ -6,41 +6,97 @@ by risk reduction and user value.
 
 ## Current Baseline
 
-- The local fixture demo, RAG pipeline, agent workflow, Kubernetes inspection
-  boundary, incident reports, web console, observability, and CI checks are in
-  place.
-- Real-cluster use remains environment-specific and requires an explicit review
-  of permissions, authentication, secrets, network policy, and retention.
-- Write actions are represented as proposed remediation plans; they are not
-  yet executed through an approval workflow.
+- The local-first demo includes a web console, FastAPI API, Go Kubernetes tool,
+  Postgres-backed incident storage, and deterministic fixture workloads.
+- Chat can retrieve Markdown runbooks, answer with source context, inspect
+  cluster health, diagnose deployments, and create incident reports. Keyword
+  retrieval is the default; optional vector/FAISS and LLM provider paths exist.
+- The console includes chat, workload and diagnosis views, incident reports,
+  traces, audit events, and runtime/capability status.
+- The API includes health/readiness, metrics, chat, knowledge, cluster, status,
+  audit, and trace routes. Authentication, role/action checks, namespace policy,
+  rate limiting, request IDs, and audit recording are implemented as
+  configurable controls.
+- Deployment assets include Docker Compose, local/staging/production Helm
+  values, External Secrets templates, OIDC configuration, ingress, network
+  policy, HPA/PDB settings, Prometheus/Grafana assets, and Argo CD manifests.
+- Remediation is currently proposed as a plan; there is no approval-and-execute
+  workflow. Multi-cluster routing and outbound incident collaboration are not
+  implemented.
+
+### Verification Snapshot
+
+The current workspace checks pass: 96 Python tests, Ruff, Go tests, Go vet, and
+default plus monitoring-profile Compose configuration validation. These checks
+do not prove that a real OIDC provider, external secret store, production
+cluster, backup/restore process, or pilot SLO has been exercised.
+
+### Code Cleanup
+
+The current Python and Go static checks report no lint or vet findings. No
+unused functional module has been confirmed, so this pass does not delete
+features based only on their being optional. Keep fixture mode for repeatable
+local use and keep production integrations optional; remove code only after a
+usage check and tests demonstrate that it is genuinely unreachable or
+unsupported.
+
+## Implementation Status
+
+| Area | Status | Remaining proof or work |
+| --- | --- | --- |
+| Local demo and web console | Implemented | Run the full stack smoke test on a clean machine |
+| Runbook chat and retrieval | Implemented | Expand evaluation with real, anonymized operator cases |
+| Kubernetes health and diagnosis | Implemented | Validate least-privilege access against the supported cluster profile |
+| Incident reports and persistence | Implemented | Exercise production database backup and restore |
+| Go Kubernetes tool | Implemented | Validate live-cluster errors, timeouts, and RBAC denials |
+| Authentication and policy | Implemented foundation | Exercise the chosen OIDC provider and role mappings in deployment |
+| External secrets | Deployment integration present | Configure a real secret store and prove credential rotation |
+| Metrics, traces, and audit | Implemented foundation | Define SLOs, verify alerts, and validate retention/correlation |
+| Production Helm profile | Documented/configured | Deploy from a clean environment and prove upgrade/rollback |
+| Approval-gated remediation | Not implemented | Add proposal lifecycle, authorization, approval, execution, and audit |
+| Multi-cluster and incident collaboration | Not implemented | Defer until the single-cluster pilot is safe and useful |
 
 ## Phase 1: Production Readiness
 
 ### 1. Define the supported deployment profile
 
-Document one reference deployment target first, such as a single Kubernetes
-cluster with Helm, Postgres, an external LLM endpoint, and Prometheus. Record
-the supported Kubernetes versions, required ingress and storage behavior,
-resource limits, backup expectations, and upgrade procedure.
+The initial profile is documented in
+[`production-deployment-profile.md`](production-deployment-profile.md): a
+single Kubernetes cluster, Helm, Postgres, external identity/secrets, and
+Prometheus-compatible monitoring. Confirm and maintain its supported versions,
+ingress/storage behavior, resource limits, backup expectations, and upgrade
+procedure.
 
-**Done when:** a clean environment can be deployed from documented values and
-the production checklist has no ambiguous required setting.
+**Status:** Profile documented; clean-environment deployment and rollback still
+need to be exercised.
+
+**Done when:** a clean environment can be deployed and upgraded from documented
+values, recovery is tested, and the production checklist has no ambiguous
+required setting.
 
 ### 2. Move secrets to a managed boundary
 
-Replace plaintext or environment-only production secret handling with a
-secret-manager integration or an external-secrets pattern. Cover LLM keys,
-API keys, database credentials, and kubeconfig or service-account material.
+External Secrets templates and secret-backed Helm environment variables are
+present. Configure the target provider and verify LLM credentials, database
+credentials, and telemetry secrets are supplied and rotated without rebuilding
+the image. Keep Kubernetes service-account credentials in-cluster rather than
+copying them into application secrets.
+
+**Status:** Integration pattern implemented; real provider and rotation are not
+verified.
 
 **Done when:** production manifests contain no secret values, rotation is
 documented, and a rotated credential is verified without rebuilding images.
 
 ### 3. Tighten identity and authorization
 
-Add real user identity through the selected SSO/OIDC provider and map users or
-groups to read-only, incident-operator, and administrator roles. Enforce the
-same policy at the API and Kubernetes tool boundaries, including namespace and
 action allowlists.
+OIDC token validation, role-to-action mapping, API-key support, and namespace
+and action allowlists exist in the API. Configure the selected identity provider
+and prove those decisions remain enforced at every cluster operation boundary.
+
+**Status:** Code and configuration foundation implemented; provider-backed
+deployment validation remains.
 
 **Done when:** an unauthorized user cannot call protected routes or tools, and
 an authorized read-only user cannot request a write action.
@@ -48,8 +104,11 @@ an authorized read-only user cannot request a write action.
 ### 4. Establish operational SLOs and recovery checks
 
 Choose targets for API availability, chat latency, diagnosis latency, and
-report durability. Add dashboards and alerts for those targets, plus a backup
-and restore test for incident data and configuration.
+report durability. Confirm dashboards and alerts measure those targets, then
+test backup/restore for incident data and configuration.
+
+**Status:** Metrics, traces, audit events, dashboards, and alert assets exist;
+SLOs and recovery exercises remain.
 
 **Done when:** the team can demonstrate an alert, inspect correlated traces,
 restore a test database, and follow a documented incident procedure.
@@ -114,9 +173,11 @@ rollback path is documented.
 
 ## Suggested First Slice
 
-Start with the reference deployment profile, managed secret boundary, and the
-OIDC role model. These decisions constrain multi-cluster support,
-approval-gated writes, incident integrations, and production operations.
+Start by deploying the documented single-cluster profile in a clean test
+environment. Validate OIDC roles, external secret provisioning/rotation,
+least-privilege Kubernetes permissions, and Postgres restore there. The code
+foundations exist; the main gap is proving the controls together in the target
+environment.
 
 Do not treat a hosted demo, cloud integration, external vector database, or
 multi-agent workflow as a prerequisite for the first pilot. They are follow-on

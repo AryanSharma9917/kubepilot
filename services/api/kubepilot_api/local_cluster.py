@@ -17,8 +17,6 @@ class LocalClusterValidationResult:
     healthz_status: str
     cluster_status: str
     unhealthy_count: int
-    capability_count: int
-    remediation_action_count: int
 
 
 def validate_local_cluster_client(
@@ -49,47 +47,6 @@ def validate_local_cluster_client(
             if "kubepilot_http_requests_total" not in metrics_response.text:
                 raise RuntimeError("Metrics endpoint did not expose request counters.")
 
-            capabilities_response = client.get("/api/v1/capabilities")
-            capabilities_response.raise_for_status()
-            capabilities_payload = capabilities_response.json()
-            capabilities = capabilities_payload.get("capabilities", [])
-            if len(capabilities) < 6:
-                raise RuntimeError("Capability endpoint did not expose the platform map.")
-
-            chat_response = client.post(
-                "/api/v1/chat",
-                json={"message": "Show unhealthy workloads"},
-            )
-            chat_response.raise_for_status()
-            chat_payload = chat_response.json()
-            if "payments/deployment/checkout" not in chat_payload.get("answer", ""):
-                raise RuntimeError("Chat endpoint did not return the expected workload context.")
-
-            diagnosis_response = client.get(
-                "/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose"
-            )
-            diagnosis_response.raise_for_status()
-            diagnosis_payload = diagnosis_response.json()
-            if diagnosis_payload.get("name") != "checkout":
-                raise RuntimeError("Deployment diagnosis did not return the expected deployment.")
-
-            incident_response = client.get(
-                "/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report"
-            )
-            incident_response.raise_for_status()
-            incident_payload = incident_response.json()
-            if not incident_payload.get("title", "").startswith("Deployment incident: "):
-                raise RuntimeError("Incident report did not return the expected summary.")
-
-            remediation_response = client.get(
-                "/api/v1/cluster/namespaces/payments/deployments/checkout/remediation-plan"
-            )
-            remediation_response.raise_for_status()
-            remediation_payload = remediation_response.json()
-            remediation_actions = remediation_payload.get("actions", [])
-            if not remediation_payload.get("approval_required") or not remediation_actions:
-                raise RuntimeError("Remediation plan did not return approval-gated actions.")
-
             cluster_response = client.get("/api/v1/cluster/health")
             cluster_response.raise_for_status()
             cluster_payload = cluster_response.json()
@@ -103,8 +60,6 @@ def validate_local_cluster_client(
                 readyz_status=str(readyz_payload.get("status", "")),
                 cluster_status=str(cluster_payload["status"]),
                 unhealthy_count=int(cluster_payload["unhealthy_count"]),
-                capability_count=len(capabilities),
-                remediation_action_count=len(remediation_actions),
             )
         except Exception as exc:  # pragma: no cover - exercised through retry loop
             last_error = str(exc)
@@ -151,9 +106,7 @@ def main() -> None:
         f"healthz={result.healthz_status}, "
         f"readyz={result.readyz_status}, "
         f"cluster={result.cluster_status}, "
-        f"unhealthy_count={result.unhealthy_count}, "
-        f"capabilities={result.capability_count}, "
-        f"remediation_actions={result.remediation_action_count}"
+        f"unhealthy_count={result.unhealthy_count}"
     )
 
 

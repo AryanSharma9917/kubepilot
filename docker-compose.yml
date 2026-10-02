@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: web/Dockerfile
     ports:
-      - "3000:3000"
+      - "${KUBEPILOT_WEB_PORT:-3000}:3000"
     depends_on:
       api:
         condition: service_healthy
@@ -30,7 +30,7 @@ services:
       KUBEPILOT_RAG_MODE: keyword
       KUBEPILOT_AGENT_MODE: deterministic
     ports:
-      - "8000:8000"
+      - "${KUBEPILOT_API_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,7 +56,7 @@ services:
       POSTGRES_USER: kubepilot
       POSTGRES_PASSWORD: kubepilot
     ports:
-      - "5432:5432"
+      - "${KUBEPILOT_POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -73,7 +73,7 @@ services:
       KUBEPILOT_K8S_TOOL_ADDR: :8081
       KUBEPILOT_K8S_TOOL_MODE: fixture
     ports:
-      - "8081:8081"
+      - "${KUBEPILOT_K8S_TOOL_PORT:-8081}:8081"
     healthcheck:
       test: ["CMD", "/k8s-tool", "healthcheck"]
       interval: 30s
@@ -90,7 +90,7 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
     ports:
-      - "9090:9090"
+      - "${KUBEPILOT_PROMETHEUS_PORT:-9090}:9090"
     depends_on:
       api:
         condition: service_healthy
@@ -105,7 +105,7 @@ services:
       - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/kubepilot.json:ro
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
-      - "3001:3000"
+      - "${KUBEPILOT_GRAFANA_PORT:-3001}:3000"
     depends_on:
       - prometheus
 

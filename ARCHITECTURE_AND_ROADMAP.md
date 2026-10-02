@@ -264,52 +264,13 @@ kubepilot/
 - [x] FastAPI service with chat, health, readiness, and metrics endpoints
 - [x] Local markdown runbook loading, chunking, and retrieval
 - [x] Optional FAISS-backed vector retrieval
-- [x] Persisted runbook index generation and loading
-- [x] Optional native FAISS sidecar index generation
-- [x] Provider-shaped answer synthesis with structured citations
-- [x] Self-hosted HTTP JSON LLM provider support
-- [x] Knowledge search API for retrieval inspection
-- [x] Retrieval evaluation CLI and JSONL benchmark cases
-- [x] LangGraph-compatible workflow boundary with intent classification
-- [x] Explicit workflow step plans for graph execution
-- [x] Branch-specific retrieval, tool, synthesis, and review graph nodes
-- [x] Graph output review step before returning responses
 - [x] Deterministic Kubernetes health, diagnosis, and incident-report tools
-- [x] Go Kubernetes tool service with fixture and real cluster modes
-- [x] Deployment diagnostics using pod status, events, and log excerpts
-- [x] Incident timeline generation for deployment reports
-- [x] Streaming chat endpoint using server-sent events
-- [x] Namespace allowlist policy for cluster APIs
-- [x] Action allowlist policy for cluster APIs
-- [x] Optional API key authentication for API routes
-- [x] Optional API route rate limiting
-- [x] Local audit event trail for API requests
-- [x] Request ID propagation through audit events and response headers
-- [x] Local trace spans for HTTP, agent, and retrieval operations
-- [x] Optional OpenTelemetry OTLP trace exporter integration
-- [x] Chat, retrieval, cluster-tool, and trace-buffer metrics
-- [x] Runtime status endpoint for redacted operator visibility
-- [x] Platform capability manifest endpoint for demo and readiness visibility
-- [x] Markdown incident report export
-- [x] Markdown retrieval evaluation reports and CI artifact upload
-- [x] Web UI for runtime status, copilot chat, deployment diagnosis, incidents, traces, and audit events
-- [x] Intentionally failing Kubernetes demo workloads and kind demo workflow
-- [x] Local web smoke checks and compose validation in CI
-- [x] Docker Compose, Helm chart, environment values, Prometheus config, Grafana dashboard, alert rules, and ArgoCD manifests
-- [x] Optional Helm NetworkPolicy and container healthchecks
+- [x] Docker Compose, Helm chart, Prometheus config, Grafana dashboard, and ArgoCD manifest
 - [x] GitHub Actions CI for linting, tests, index build validation, Docker build, and Helm rendering
-- [x] Manual and scheduled GitHub Actions kind smoke workflow
-- [x] Local cluster smoke-test script and validation guide
-- [x] Demo and funding narrative for presenting the platform
 
 ## Still To Build
 
-- [x] Hosted or self-hosted LLM provider implementation
-- [x] Deeper LangGraph workflow with branch-specific retrieval, tool, synthesis, and review nodes
-- [x] Go-based Kubernetes tooling/services
-- [x] Auth, RBAC-aware tool execution, and audit logging
-- [x] OpenTelemetry exporter integration
-- [x] Scheduled integration tests against kind or minikube in CI
+- [ ] Full local-cluster deployment validation path (in progress)
 
 ---
 
@@ -323,7 +284,7 @@ The first release of KubePilot is considered successful when:
 - [x] Kubernetes status can be queried through Go services
 - [x] FastAPI exposes a chat endpoint
 - [x] Services run locally using Docker
-- [x] Deployment works on a local Kubernetes cluster
+- [ ] Deployment works on a local Kubernetes cluster (in progress)
 - [x] Basic metrics are exposed
 - [x] GitHub Actions validates builds and tests
 
@@ -331,17 +292,16 @@ The first release of KubePilot is considered successful when:
 
 # Future Enhancements
 
-See [the next-phase roadmap](docs/next-phase-roadmap.md) for the prioritized
-backlog, dependencies, and acceptance criteria.
-
 * Multi-cluster support
 * Cloud provider integrations
-* Approval-gated write-action remediation workflows
-* Slack, ticketing, and incident-management integrations
-* External vector database migration
-* Multi-agent specialist workflows
-* Production cloud deployment records
-* Secret-manager-backed production configuration
+* Incident timeline generation
+* Automated remediation workflows
+* Slack integration
+* RBAC-aware agent actions
+* Vector database migration
+* OpenTelemetry tracing
+* Multi-agent architecture
+* Production cloud deployment
 
 ---
 

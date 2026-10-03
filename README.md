@@ -221,6 +221,36 @@ demo is the easiest way to explore it. Production deployment, real-cluster
 permissions, authentication, and observability still require environment-specific
 configuration and review.
 
+## Hacktoberfest submission
+
+This project is a practical AI operations assistant for a friend or teammate who
+needs to troubleshoot Kubernetes issues without searching through docs and logs by
+hand.
+
+KubePilot helps a platform engineer or on-call operator ask natural-language
+questions like:
+
+- Why is checkout failing?
+- Show unhealthy workloads
+- How do I troubleshoot ImagePullBackOff?
+- Create an incident report for deployment checkout
+
+It combines local retrieval from runbooks, Kubernetes health diagnosis, and a
+reviewable incident workflow so the operator can understand the evidence behind a
+recommendation instead of blindly trusting a model output.
+
+This fits the Build for a Friend challenge because it is a real, day-to-day
+problem for people supporting live systems: operational knowledge is scattered,
+production issues are noisy, and the person who needs help is often under time
+pressure.
+
+Open-source AI matters here because the system can run with local-first rules,
+open retrieval, and deterministic operations workflows instead of depending on a
+closed, opaque external system. That keeps the tool inspectable, adaptable, and
+worth using in environments where trust and operator control matter.
+
+For the write-up and demo notes, see [docs/hacktoberfest-submission.md](docs/hacktoberfest-submission.md).
+
 ## License
 
 See the repository for current licensing information.

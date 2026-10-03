@@ -244,26 +244,6 @@ class RemediationPlanResponse(BaseModel):
     rollback: str
 
 
-class RemediationApprovalRequest(BaseModel):
-    """Approval decision for a remediation plan."""
-
-    approved: bool
-    approver: str | None = None
-    reason: str | None = None
-
-
-class RemediationApprovalResponse(BaseModel):
-    """Recorded approval decision for a remediation plan."""
-
-    namespace: str
-    name: str
-    approved: bool
-    status: Literal["approved", "rejected"]
-    approver: str | None = None
-    reason: str | None = None
-    summary: str
-
-
 class AuditEventResponse(BaseModel):
     """One audit event returned by the API."""
 

@@ -8,6 +8,8 @@ from kubepilot_api.schemas import (
     DeploymentDiagnosisResponse,
     IncidentReportResponse,
     IncidentReportsResponse,
+    RemediationApprovalRequest,
+    RemediationApprovalResponse,
     RemediationPlanResponse,
 )
 from kubepilot_api.services.cluster import ClusterService, get_cluster_service
@@ -125,6 +127,27 @@ async def deployment_remediation_plan(
     if plan is None:
         raise HTTPException(status_code=404, detail="Deployment not found")
     return plan
+
+
+@router.post(
+    "/namespaces/{namespace}/deployments/{name}/remediation-plan/approve",
+    response_model=RemediationApprovalResponse,
+)
+async def approve_deployment_remediation_plan(
+    namespace: str,
+    name: str,
+    request: RemediationApprovalRequest,
+    service: ClusterService = Depends(get_cluster_service),
+) -> RemediationApprovalResponse:
+    """Record whether a remediation plan was approved or rejected."""
+
+    try:
+        approval = await service.approve_remediation_plan(namespace=namespace, name=name, request=request)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    if approval is None:
+        raise HTTPException(status_code=404, detail="Deployment not found")
+    return approval
 
 
 def _incident_report_markdown(report: IncidentReportResponse) -> str:

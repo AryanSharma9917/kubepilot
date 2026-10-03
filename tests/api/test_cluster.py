@@ -118,6 +118,39 @@ async def test_deployment_remediation_plan_rejects_disallowed_action(
 
 
 @pytest.mark.anyio
+async def test_deployment_remediation_approval_accepts_approved_plan(client: httpx.AsyncClient) -> None:
+    response = await client.post(
+        "/api/v1/cluster/namespaces/payments/deployments/checkout/remediation-plan/approve",
+        json={"approved": True, "approver": "platform-oncall", "reason": "Verified image rollback"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["namespace"] == "payments"
+    assert body["name"] == "checkout"
+    assert body["approved"] is True
+    assert body["status"] == "approved"
+    assert body["approver"] == "platform-oncall"
+
+
+@pytest.mark.anyio
+async def test_deployment_remediation_approval_rejects_disapproved_plan(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.post(
+        "/api/v1/cluster/namespaces/payments/deployments/checkout/remediation-plan/approve",
+        json={"approved": False, "approver": "platform-oncall", "reason": "Needs confirmation"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["namespace"] == "payments"
+    assert body["name"] == "checkout"
+    assert body["approved"] is False
+    assert body["status"] == "rejected"
+
+
+@pytest.mark.anyio
 async def test_cluster_routes_reject_disallowed_namespace(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

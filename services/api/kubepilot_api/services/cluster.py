@@ -25,6 +25,8 @@ from kubepilot_api.schemas import (
     KubernetesEventResponse,
     PodStatusResponse,
     RemediationActionResponse,
+    RemediationApprovalRequest,
+    RemediationApprovalResponse,
     RemediationPlanResponse,
     WorkloadHealthResponse,
 )
@@ -261,6 +263,54 @@ class ClusterService:
             ),
             actions=_remediation_actions(diagnosis),
             rollback=f"kubectl rollout undo deployment/{name} -n {namespace}",
+        )
+
+    async def approve_remediation_plan(
+        self,
+        namespace: str,
+        name: str,
+        request: RemediationApprovalRequest,
+    ) -> RemediationApprovalResponse | None:
+        """Record a decision for a remediation plan without executing any commands."""
+
+        self._namespace_policy.ensure_operation_allowed(
+            namespace=namespace,
+            action="deployment:remediation-plan",
+        )
+        started = perf_counter()
+        try:
+            diagnosis = await self._diagnoser.diagnose(namespace=namespace, name=name)
+        except Exception:
+            record_cluster_tool_call(
+                operation="deployment_remediation_approval",
+                result="error",
+                elapsed_seconds=perf_counter() - started,
+            )
+            raise
+        record_cluster_tool_call(
+            operation="deployment_remediation_approval",
+            result="approved" if request.approved else "rejected",
+            elapsed_seconds=perf_counter() - started,
+        )
+        if diagnosis is None:
+            return None
+
+        status = "approved" if request.approved else "rejected"
+        summary = (
+            f"Remediation plan for {diagnosis.display_name} was {status} by "
+            f"{request.approver or 'an unknown approver'}"
+        )
+        if request.reason:
+            summary = f"{summary}: {request.reason}"
+
+        return RemediationApprovalResponse(
+            namespace=diagnosis.namespace,
+            name=diagnosis.name,
+            approved=request.approved,
+            status=status,
+            approver=request.approver,
+            reason=request.reason,
+            summary=summary,
         )
 
 

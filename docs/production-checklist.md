@@ -48,6 +48,5 @@ customer environment.
 - [x] `go test ./...` passes for `services/k8s-tool`.
 - [x] `docker compose config` passes.
 - [x] `docker compose --profile monitoring config` passes.
-- [x] Helm renders default, local, staging, and production values.
-- [x] `./scripts/helm-profile-smoke.sh` passes for all supported Helm profiles.
+- [ ] Helm renders default, local, staging, and production values.
 - [ ] `./scripts/local-cluster-smoke.sh` passes on kind.

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KubePilot</title>
-    <link rel="stylesheet" href="./styles.css?v=20260809-glyph-portal" />
+    <link rel="stylesheet" href="./styles.css?v=20261021-guided-overview" />
   </head>
   <body data-theme="dark">
     <svg class="icon-defs" aria-hidden="true">
@@ -27,36 +27,41 @@
         <div class="brand">
           <div class="brand-copy">
             <strong>KubePilot</strong>
-            <span>Agentic Kubernetes Ops</span>
+            <span>Deployment troubleshooting</span>
           </div>
         </div>
 
         <nav class="nav-list" aria-label="Primary">
-          <button class="nav-item active" type="button" data-view="dashboard">
+          <button class="nav-item active" type="button" data-view="dashboard" aria-current="page" title="Overview">
             <span class="nav-icon"><svg><use href="#i-command"></use></svg></span>
-            <span class="nav-label">Dashboard</span>
+            <span class="nav-label">Overview</span>
           </button>
-          <button class="nav-item" type="button" data-view="copilot">
-            <span class="nav-icon"><svg><use href="#i-spark"></use></svg></span>
-            <span class="nav-label">Copilot</span>
-          </button>
-          <button class="nav-item" type="button" data-view="diagnosis">
+          <button class="nav-item" type="button" data-view="diagnosis" title="Workloads">
             <span class="nav-icon"><svg><use href="#i-search"></use></svg></span>
-            <span class="nav-label">Diagnosis</span>
+            <span class="nav-label">Workloads</span>
           </button>
-          <button class="nav-item" type="button" data-view="incident">
+          <button class="nav-item" type="button" data-view="incident" title="Incidents">
             <span class="nav-icon"><svg><use href="#i-report"></use></svg></span>
-            <span class="nav-label">Incident</span>
-          </button>
-          <button class="nav-item" type="button" data-view="observability">
-            <span class="nav-icon"><svg><use href="#i-pulse"></use></svg></span>
-            <span class="nav-label">Observability</span>
-          </button>
-          <button class="nav-item" type="button" data-view="documentation">
-            <span class="nav-icon"><svg><use href="#i-book"></use></svg></span>
-            <span class="nav-label">Documentation</span>
+            <span class="nav-label">Incidents</span>
           </button>
         </nav>
+        <details class="sidebar-tools">
+          <summary title="Help and tools">Help &amp; tools</summary>
+          <nav class="nav-list" aria-label="Help and tools">
+            <button class="nav-item" type="button" data-view="copilot" title="Ask KubePilot">
+              <span class="nav-icon"><svg><use href="#i-spark"></use></svg></span>
+              <span class="nav-label">Ask KubePilot</span>
+            </button>
+            <button class="nav-item" type="button" data-view="observability" title="Developer activity">
+              <span class="nav-icon"><svg><use href="#i-pulse"></use></svg></span>
+              <span class="nav-label">Developer activity</span>
+            </button>
+            <button class="nav-item" type="button" data-view="documentation" title="Getting started">
+              <span class="nav-icon"><svg><use href="#i-book"></use></svg></span>
+              <span class="nav-label">Getting started</span>
+            </button>
+          </nav>
+        </details>
 
         <button
           class="collapse-button icon-button"
@@ -73,7 +78,7 @@
       <main class="workspace">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Agentic Kubernetes control plane</p>
+            <p class="eyebrow">Understand failing deployments</p>
             <h1>
               <span>KubePilot</span>
             </h1>
@@ -103,48 +108,40 @@
         </header>
 
         <section class="view active" data-view-panel="dashboard">
-          <div class="glyph-portal">
-            <div class="portal-copy" aria-label="KubePilot primary menu">
-              <button class="dot-word" type="button" data-open-view="documentation">ABOUT</button>
-              <button class="dot-word" type="button" data-open-view="copilot">COPILOT</button>
-              <button class="dot-word" type="button" data-open-view="diagnosis">DIAGNOSIS</button>
-              <button class="dot-word" type="button" data-open-view="incident">PLAYGROUND</button>
-            </div>
-
-            <div class="portal-actions" aria-label="KubePilot command menu">
-              <button type="button" data-open-view="copilot" data-prompt="Show unhealthy workloads">
-                <span>ASK AGENT</span>
-                <span><svg><use href="#i-spark"></use></svg></span>
-              </button>
-              <button type="button" data-open-view="diagnosis">
-                <span>DIAGNOSE DEPLOYMENT</span>
-                <span><svg><use href="#i-search"></use></svg></span>
-              </button>
-              <button type="button" data-open-view="incident">
-                <span>INCIDENT REPORT</span>
-                <span><svg><use href="#i-report"></use></svg></span>
-              </button>
-              <button type="button" data-open-view="observability">
-                <span>TRACE + AUDIT</span>
-                <span><svg><use href="#i-pulse"></use></svg></span>
-              </button>
-              <button type="button" data-open-view="documentation">
-                <span>HOW IT WORKS</span>
-                <span><svg><use href="#i-book"></use></svg></span>
-              </button>
-            </div>
-
-            <div class="portal-footer" aria-label="KubePilot demo links">
-              <button type="button" data-open-view="dashboard">STATUS</button>
-              <button type="button" data-open-view="documentation">ABOUT</button>
-              <button type="button" data-open-view="copilot">CHAT</button>
-              <button type="button" data-open-view="diagnosis">TOOLS</button>
-              <button type="button" data-open-view="incident">REPORTS</button>
-              <button type="button" data-open-view="observability">TRACES</button>
-            </div>
-          </div>
+          <article class="overview-intro panel" aria-labelledby="overviewTitle">
+            <p class="eyebrow">Your investigation starts here</p>
+            <h2 id="overviewTitle">Understand why a deployment is failing.</h2>
+            <p>Choose an unhealthy workload below. KubePilot brings together its logs,
+              events, and runbooks to explain what happened and suggest your next checks.</p>
+            <p class="data-mode" id="dataMode" role="status">Checking workload data source…</p>
+            <ol class="journey-steps" aria-label="Investigation steps">
+              <li><strong>Choose a workload</strong><span>Start with a failure below.</span></li>
+              <li><strong>Review the evidence</strong><span>Inspect the diagnosis and suggested checks.</span></li>
+              <li><strong>Share the findings</strong><span>Copy an incident update or export a report.</span></li>
+            </ol>
+            <button class="secondary-button" type="button" data-open-view="documentation">Read the getting started guide</button>
+          </article>
 
           <section class="dashboard-grid">
+            <article class="panel health-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Cluster</p>
+                  <h2>Workloads needing attention</h2>
+                </div>
+                <button class="secondary-button" type="button" data-open-view="diagnosis">
+                  <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
+                  <span>Find a workload</span>
+                </button>
+              </div>
+              <div class="workload-list" id="workloadList">
+                <div class="empty-state">Connect the API to load cluster health.</div>
+              </div>
+            </article>
+          </section>
+
+          <details class="runtime-details panel">
+            <summary>Developer details · runtime and capabilities</summary>
             <article class="panel status-panel">
               <div class="panel-heading">
                 <div>
@@ -168,23 +165,6 @@
               </div>
             </article>
 
-            <article class="panel health-panel">
-              <div class="panel-heading">
-                <div>
-                  <p class="eyebrow">Cluster</p>
-                  <h2>Unhealthy Workloads</h2>
-                </div>
-                <button class="secondary-button" type="button" data-open-view="diagnosis">
-                  <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
-                  <span>Diagnose</span>
-                </button>
-              </div>
-              <div class="workload-list" id="workloadList">
-                <div class="empty-state">Connect the API to load cluster health.</div>
-              </div>
-            </article>
-          </section>
-
           <article class="panel capability-panel">
             <div class="panel-heading">
               <div>
@@ -196,6 +176,8 @@
               <div class="empty-state">Loading platform capabilities.</div>
             </div>
           </article>
+          </details>
+
         </section>
 
         <section class="view" data-view-panel="copilot">
@@ -282,7 +264,7 @@
             <div class="panel-heading">
               <div>
                 <p class="eyebrow">Deployment</p>
-                <h2>Diagnosis</h2>
+                <h2>Workload investigation</h2>
             </div>
                   </div>
             <form class="inline-form" id="diagnosisForm">
@@ -301,7 +283,7 @@
             <div class="panel-heading">
               <div>
                 <p class="eyebrow">Incident</p>
-                <h2>Incident Room</h2>
+                <h2>Incident report</h2>
               </div>
               <button
                 class="secondary-button icon-button"
@@ -652,7 +634,7 @@
         </section>
       </main>
     </div>
-    <script type="module" src="./app.js?v=20260809-glyph-portal"></script>
+    <script type="module" src="./app.js?v=20261021-guided-overview"></script>
   </body>
 </html>
 

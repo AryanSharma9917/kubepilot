@@ -78,7 +78,15 @@ function openView(viewName) {
     panel.classList.toggle("active", panel.dataset.viewPanel === viewName);
   });
   document.querySelectorAll("[data-view]").forEach((button) => {
-    button.classList.toggle("active", button.dataset.view === viewName);
+    const active = button.dataset.view === viewName;
+    button.classList.toggle("active", active);
+    if (active) {
+      button.setAttribute("aria-current", "page");
+      const tools = button.closest("details");
+      if (tools) tools.open = true;
+    } else {
+      button.removeAttribute("aria-current");
+    }
   });
 }
 
@@ -180,6 +188,7 @@ async function loadOverview() {
     setConnectionStatus("API connected", "ok");
   } catch (error) {
     setConnectionStatus("API unavailable", "error");
+    document.querySelector("#dataMode").textContent = "Data source unavailable. Check that the API is running, then select Refresh.";
     capabilityGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
     workloadList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
   } finally {
@@ -240,6 +249,14 @@ function renderObservabilitySummary(spans, events) {
 }
 
 function renderStatus(status) {
+  const mode = document.querySelector("#dataMode");
+  if (status.kubernetes_mode === "fixture") {
+    mode.textContent = "Demo mode · Sample workloads, not a connected cluster. No cluster credentials are needed.";
+  } else if (status.kubernetes_mode === "service") {
+    mode.textContent = "Inspection service · Workloads come from the configured Kubernetes service, which may use demo fixtures. Check its configuration before treating this as live cluster data.";
+  } else {
+    mode.textContent = "Cluster mode · Workloads come from the configured Kubernetes connection.";
+  }
   ragModeBadge.textContent = `RAG: ${status.rag_mode}`;
   ragModeBadge.className = `rag-mode-badge ${status.rag_mode}`;
   const cards = [
@@ -282,7 +299,7 @@ function renderWorkloads(health) {
             data-deployment="${escapeHtml(workload.name)}"
           >
             <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
-            <span>${workload.ready_replicas}/${workload.desired_replicas}</span>
+            <span>Investigate · ${workload.ready_replicas}/${workload.desired_replicas} ready</span>
           </button>
         </div>
       `,

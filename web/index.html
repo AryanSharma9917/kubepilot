@@ -267,13 +267,17 @@
                 <h2>Workload investigation</h2>
             </div>
                   </div>
+            <p>Choose a workload needing attention, or enter another deployment below.</p>
+            <label for="workloadSelect">Workloads needing attention</label>
+            <select id="workloadSelect"><option value="">Loading workloads…</option></select>
+            <p id="selectedWorkload" role="status">No workload selected.</p>
             <form class="inline-form" id="diagnosisForm">
-              <input id="namespaceInput" value="" placeholder="namespace" aria-label="Namespace" />
-              <input id="deploymentInput" value="" placeholder="deployment" aria-label="Deployment" />
-              <button type="submit">Diagnose</button>
+              <label>Namespace <input id="namespaceInput" required placeholder="e.g. payments" aria-label="Namespace" /></label>
+              <label>Deployment <input id="deploymentInput" required placeholder="e.g. checkout" aria-label="Deployment" /></label>
+              <button type="submit">Investigate workload</button>
             </form>
             <div class="diagnosis-output" id="diagnosisOutput">
-              <div class="empty-state">Run a diagnosis to inspect pods, events, and logs.</div>
+              <div class="empty-state">Choose a workload to inspect its problem, evidence, and next checks.</div>
             </div>
           </article>
         </section>

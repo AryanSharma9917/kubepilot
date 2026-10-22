@@ -2733,3 +2733,11 @@ button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); 
   .workload-card { flex-wrap: wrap; }
   .workload-card strong { overflow-wrap: anywhere; }
 }
+
+#workloadSelect { display: block; width: 100%; margin: 10px 0; padding: 12px; background: var(--bg-soft); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 8px; }
+#diagnosisForm label { display: grid; gap: 6px; flex: 1; min-width: 0; }
+#diagnosisForm input { width: 100%; }
+.investigation-cause, .verification-panel { margin: 24px 0; padding: 18px; background: var(--surface-soft); border-radius: 10px; }
+.verification-panel p, .investigation-cause p { line-height: 1.6; }
+.verification-panel button { margin: 8px 8px 0 0; }
+@media (max-width: 700px) { #diagnosisForm { flex-direction: column; align-items: stretch; } }

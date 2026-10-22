@@ -35,3 +35,18 @@ The UI includes:
 - Deployment diagnosis for pods, events, logs, recommendations, remediation plans, and copyable kubectl checks
 - Incident room with severity, cause, impact, timeline, next actions, status copy, and markdown export
 - Observability workspace with trace bars, audit filters, route groups, and agent activity
+
+### Guided workload investigations
+
+Open **Workloads** to choose from workloads needing attention, or enter a namespace
+and deployment manually. Selecting **Investigate** on Overview opens the same workflow.
+The selected deployment remains in the form when switching views during the session.
+Investigations show the observed problem, suggested cause, pod/event/log evidence,
+next checks, and verification guidance. Review suggested causes against the evidence;
+KubePilot does not execute the displayed commands. **Refresh investigation** collects
+another snapshot, and **View incident report** opens the generated handoff.
+Demo fixtures remain unhealthy by design. Selection is not persisted across page reloads.
+
+Run dependency-free investigation rendering and request-order checks with
+`node web/checks/investigation.cjs` from the repository root. These complement
+the Python suite; they do not replace browser interaction or layout checks.

@@ -239,3 +239,14 @@ configuration and review.
 ## License
 
 See the repository for current licensing information.
+
+### Guided workload investigations
+
+Open **Workloads** to choose from workloads needing attention, or enter a namespace
+and deployment manually. Selecting **Investigate** on Overview opens the same workflow.
+The selected deployment remains in the form when switching views during the session.
+Investigations show the observed problem, suggested cause, pod/event/log evidence,
+next checks, and verification guidance. Review suggested causes against the evidence;
+KubePilot does not execute the displayed commands. **Refresh investigation** collects
+another snapshot, and **View incident report** opens the generated handoff.
+Demo fixtures remain unhealthy by design. Selection is not persisted across page reloads.

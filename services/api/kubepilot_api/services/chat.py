@@ -24,8 +24,15 @@ class ChatService:
     async def respond(self, request: ChatRequest) -> ChatResponse:
         """Pass the user request through the KubePilot agent boundary."""
 
+        message = request.message
+        if request.workload is not None:
+            # Put the explicit selection first so reference extraction is deterministic.
+            message = (
+                f"For deployment {request.workload.deployment} "
+                f"in namespace {request.workload.namespace}:\n{message}"
+            )
         with trace_span("agent.respond", message_length=str(len(request.message))):
-            agent_output = await self._agent.run(AgentInput(message=request.message))
+            agent_output = await self._agent.run(AgentInput(message=message))
 
         response = ChatResponse(
             request_id=uuid4(),

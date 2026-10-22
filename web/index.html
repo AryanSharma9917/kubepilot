@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KubePilot</title>
-    <link rel="stylesheet" href="./styles.css?v=20261021-guided-overview" />
+    <link rel="stylesheet" href="./styles.css?v=20261022-contextual-guidance" />
   </head>
   <body data-theme="dark">
     <svg class="icon-defs" aria-hidden="true">
@@ -181,6 +181,15 @@
         </section>
 
         <section class="view" data-view-panel="copilot">
+          <div class="chat-context panel">
+            <p id="chatWorkloadContext" role="status">General questions · no workload attached.</p>
+            <button type="button" class="secondary-button" id="clearChatContext" hidden>Clear workload context</button>
+            <div class="suggested-questions" aria-label="Suggested questions">
+              <button type="button" data-context-question="Why is this deployment failing?">Explain this failure</button>
+              <button type="button" data-context-question="What is the status of this deployment?">Summarize workload status</button>
+              <button type="button" data-context-question="How do I troubleshoot ImagePullBackOff?">Explain image pull failures</button>
+            </div>
+          </div>
           <div class="gemini-container">
             <!-- Starting/empty state -->
             <div class="gemini-empty-state" id="geminiGreeting">
@@ -215,7 +224,7 @@
             <div class="gemini-bottom-bar">
               <form class="gemini-chat-form" id="chatForm">
                 <div class="gemini-capsule">
-                  <button type="button" class="gemini-util-btn" id="geminiAttachBtn" title="Cluster actions">
+                  <button type="button" class="gemini-util-btn" id="geminiAttachBtn" title="Choose a workload" aria-label="Choose a workload">
                     <svg><use href="#i-command"></use></svg>
                   </button>
                   <input
@@ -223,7 +232,9 @@
                     name="message"
                     type="text"
                     value=""
-                    placeholder="Describe a task"
+                    placeholder="Ask about the workload or a Kubernetes problem"
+                    aria-label="Your question"
+                    maxlength="4000"
                     autocomplete="off"
                   />
                   <div class="gemini-capsule-controls">
@@ -276,6 +287,7 @@
               <label>Deployment <input id="deploymentInput" required placeholder="e.g. checkout" aria-label="Deployment" /></label>
               <button type="submit">Investigate workload</button>
             </form>
+            <button type="button" class="secondary-button" id="askAboutWorkload" disabled>Ask about this workload</button>
             <div class="diagnosis-output" id="diagnosisOutput">
               <div class="empty-state">Choose a workload to inspect its problem, evidence, and next checks.</div>
             </div>
@@ -638,7 +650,7 @@
         </section>
       </main>
     </div>
-    <script type="module" src="./app.js?v=20261021-guided-overview"></script>
+    <script type="module" src="./app.js?v=20261022-contextual-guidance"></script>
   </body>
 </html>
 

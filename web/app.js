@@ -40,6 +40,9 @@ const copyButtons = document.querySelectorAll("[data-copy]");
 const heroTyped = document.querySelector("#heroTyped");
 const copilotTyped = document.querySelector("#copilotTyped");
 
+let chatWorkload = null;
+let investigationWorkload = null;
+let chatBusy = false;
 let investigationSequence = 0;
 let knownWorkloads = [];
 let latestSpans = [];
@@ -442,10 +445,25 @@ function formatTime(timestamp) {
   });
 }
 
+function updateChatContext() {
+  document.querySelector("#chatWorkloadContext").textContent = chatWorkload
+    ? `Attached workload: ${chatWorkload.namespace}/${chatWorkload.deployment}. Clear context to ask about another workload.`
+    : "General questions · no workload attached. Choose a workload to ask about its failure or status.";
+  document.querySelector("#clearChatContext").hidden = !chatWorkload;
+  document.querySelectorAll("[data-context-question]").forEach(button => {
+    button.disabled = chatBusy || (!chatWorkload && button.dataset.contextQuestion.includes("this deployment"));
+  });
+}
+
 async function sendChat(message) {
-  openView("copilot");
+  if (chatBusy) return;
+  chatBusy = true;
+  const workload = chatWorkload ? {...chatWorkload} : null;
+  setViewHash("copilot");
   chatInput.disabled = true;
-  appendChatMessage(message, "user");
+  chatForm.querySelector("button[type='submit']").disabled = true;
+  updateChatContext();
+  appendChatMessage(workload ? `[${workload.namespace}/${workload.deployment}] ${message}` : message, "user");
 
   // Hide Gemini initial greeting and show chat screen
   const geminiGreeting = document.querySelector("#geminiGreeting");
@@ -458,7 +476,7 @@ async function sendChat(message) {
   try {
     const response = await apiFetch("/api/v1/chat", {
       method: "POST",
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, ...(workload ? {workload} : {}) }),
     });
     const remaining = Math.max(0, 450 - (performance.now() - startedAt));
     if (remaining) {
@@ -469,7 +487,10 @@ async function sendChat(message) {
   } catch (error) {
     replacePendingAssistant(`<div class="error-text">${escapeHtml(error.message)}</div>`);
   } finally {
+    chatBusy = false;
     chatInput.disabled = false;
+    chatForm.querySelector("button[type='submit']").disabled = false;
+    updateChatContext();
     chatInput.focus();
   }
 }
@@ -478,7 +499,12 @@ function renderChatAnswer(response) {
   const answer = String(response.answer || "")
     .split("\n")
     .filter((line) => line.trim())
-    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .map((line) => {
+      const section = line.match(/^(Summary|Evidence|Next actions):\s*(.*)$/);
+      if (!section) return `<p>${escapeHtml(line)}</p>`;
+      const label = {Summary: "Assessment", Evidence: "Observed evidence", "Next actions": "Suggested next checks"}[section[1]];
+      return `<p><strong>${label}:</strong> ${escapeHtml(section[2])}</p>`;
+    })
     .join("");
   const sources = response.sources?.length
     ? `
@@ -515,7 +541,7 @@ function renderChatAnswer(response) {
     : "";
   const workflow = response.workflow_steps?.length
     ? `
-      <div class="workflow-panel">
+      <details class="workflow-panel"><summary>How this answer was prepared</summary>
         <div class="workflow-title">
           <span class="button-icon"><svg><use href="#i-command"></use></svg></span>
           <strong>Agent Steps</strong>
@@ -536,7 +562,7 @@ function renderChatAnswer(response) {
             )
             .join("")}
         </div>
-      </div>
+      </details>
     `
     : "";
   const incidentMatch = String(response.answer || "").match(
@@ -554,9 +580,10 @@ function renderChatAnswer(response) {
   return `
     <div class="chat-answer">${answer}</div>
     ${incidentAction}
+    <p class="answer-guidance">Suggested explanations and next checks need operator review. Runbooks provide guidance; they do not prove the cause of a cluster failure.</p>
+    ${sources ? `<h4>Referenced sources</h4>${sources}` : ""}
+    ${citations || '<p class="answer-guidance">No runbook excerpts were returned for this answer.</p>'}
     ${workflow}
-    ${sources}
-    ${citations}
   `;
 }
 
@@ -574,7 +601,7 @@ function renderRetrievedSources(sources, citations) {
     : sources.map((source) => ({
         title: source,
         source,
-        snippet: "Retrieved by the configured KubePilot runbook retriever.",
+        snippet: "Source title supplied by the answer. No supporting excerpt was returned.",
       }));
   retrievedSources.innerHTML = cards
     .slice(0, 4)
@@ -617,6 +644,10 @@ async function diagnoseDeployment(namespace, deployment) {
   const sequence = ++investigationSequence;
   namespaceInput.value = namespace;
   deploymentInput.value = deployment;
+  investigationWorkload = {namespace, deployment};
+  chatWorkload = {...investigationWorkload};
+  updateChatContext();
+  document.querySelector("#askAboutWorkload").disabled = false;
   document.querySelector("#selectedWorkload").textContent = `Investigating ${namespace}/${deployment}`;
   setViewHash("diagnosis");
   const submitButton = diagnosisForm.querySelector("button[type='submit']");
@@ -811,6 +842,7 @@ function renderDiagnosis(diagnosis, remediation, report) {
                     <span class="icon"><svg><use href="#i-copy"></use></svg></span>
                   </button>
                 </div>
+                <p>${escapeHtml(command.description)}</p>
                 <code>${escapeHtml(command.value)}</code>
               </article>
             `,
@@ -895,22 +927,27 @@ function buildDiagnosisCommands(diagnosis) {
   return [
     {
       label: "Rollout status",
+      description: "Watch whether the deployment rollout completes. This reads status and may wait; it does not restart pods.",
       value: `kubectl rollout status deployment/${deployment} -n ${namespace}`,
     },
     {
       label: "Describe deployment",
+      description: "Inspect desired replicas, conditions, configuration, and deployment events.",
       value: `kubectl describe deployment/${deployment} -n ${namespace}`,
     },
     {
       label: "List pods",
+      description: "List pods using the app label convention. If no pods appear, verify the deployment selector; labels may differ.",
       value: `kubectl get pods -n ${namespace} -l app=${deployment} -o wide`,
     },
     {
       label: "Recent events",
+      description: "Read namespace events ordered by time; some events may concern other workloads.",
       value: `kubectl get events -n ${namespace} --sort-by=.lastTimestamp`,
     },
     {
       label: "Pod logs",
+      description: "Read recent logs from the first observed pod. For crashes, also inspect previous container logs; review container selection for multi-container pods.",
       value: `kubectl logs ${firstPod} -n ${namespace} --tail=80`,
     },
   ];
@@ -930,6 +967,22 @@ function escapeHtml(value) {
 }
 
 function boot() {
+  updateChatContext();
+  document.querySelector("#clearChatContext").addEventListener("click", () => {
+    chatWorkload = null;
+    updateChatContext();
+  });
+  document.querySelector("#askAboutWorkload").addEventListener("click", () => {
+    if (!investigationWorkload) return;
+    chatWorkload = {...investigationWorkload};
+    updateChatContext();
+    setViewHash("copilot");
+    chatInput.focus();
+  });
+  document.querySelector("#geminiAttachBtn").addEventListener("click", () => setViewHash("diagnosis"));
+  document.querySelectorAll("[data-context-question]").forEach(button => {
+    button.addEventListener("click", () => sendChat(button.dataset.contextQuestion));
+  });
   bootTheme();
   startTypeReadout();
   if (themeToggle) {

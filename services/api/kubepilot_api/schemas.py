@@ -50,10 +50,23 @@ class PlatformCapabilitiesResponse(BaseModel):
     capabilities: list[PlatformCapability] = Field(default_factory=list)
 
 
+class ChatWorkloadContext(BaseModel):
+    """Explicit workload selection attached to a chat question."""
+
+    namespace: str = Field(
+        min_length=1, max_length=63, pattern=r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+    )
+    deployment: str = Field(
+        min_length=1, max_length=253,
+        pattern=r"^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$",
+    )
+
+
 class ChatRequest(BaseModel):
     """A user message submitted to KubePilot."""
 
     message: str = Field(min_length=1, max_length=4000)
+    workload: ChatWorkloadContext | None = None
 
     @field_validator("message", mode="before")
     @classmethod

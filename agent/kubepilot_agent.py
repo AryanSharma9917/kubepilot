@@ -280,7 +280,7 @@ def _deployment_reference(message: str) -> tuple[str, str] | None:
         return None
 
     namespace_match = re.search(r"(?:namespace|ns)\s+([a-z0-9-]+)", normalized)
-    name_match = re.search(r"(?:deployment|deploy)\s+([a-z0-9-]+)", normalized)
+    name_match = re.search(r"(?:deployment|deploy)\s+([a-z0-9.-]*[a-z0-9])", normalized)
     candidate = name_match.group(1) if name_match else None
     if candidate in {"fail", "failing", "failed", "status", "diagnose"}:
         candidate = None

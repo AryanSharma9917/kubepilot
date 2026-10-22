@@ -250,3 +250,23 @@ next checks, and verification guidance. Review suggested causes against the evid
 KubePilot does not execute the displayed commands. **Refresh investigation** collects
 another snapshot, and **View incident report** opens the generated handoff.
 Demo fixtures remain unhealthy by design. Selection is not persisted across page reloads.
+
+### Ask about the selected workload
+
+After starting an investigation, choose **Ask about this workload**. Chat shows the
+attached namespace and deployment, and offers questions about its failure or status.
+Use **Clear workload context** for general questions or before asking about another
+workload. The workload picker icon returns to Workloads to change the selection.
+Each submitted message records its workload label, so changing the selection does
+not change the meaning of earlier messages. Only one chat request runs at a time.
+
+Chat separates observed evidence from suggested checks where the response provides
+those sections. Runbook excerpts appear alongside the answer; source titles without
+excerpts are labelled accordingly. Runbooks are guidance, not proof of the cause.
+Read-only command cards explain their purpose and limitations. Commands are copied
+for operator review, never executed by the browser.
+
+The chat API accepts an optional `workload` object containing `namespace` and
+`deployment` on both `/api/v1/chat` and `/api/v1/chat/stream`. Existing message-only
+requests continue to work. Workload context scopes reference extraction; it does not
+add conversation memory or guarantee that every question invokes Kubernetes tools.

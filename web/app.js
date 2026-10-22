@@ -40,6 +40,8 @@ const copyButtons = document.querySelectorAll("[data-copy]");
 const heroTyped = document.querySelector("#heroTyped");
 const copilotTyped = document.querySelector("#copilotTyped");
 
+let investigationSequence = 0;
+let knownWorkloads = [];
 let latestSpans = [];
 let latestAuditEvents = [];
 let typedPhraseIndex = 0;
@@ -191,6 +193,7 @@ async function loadOverview() {
     document.querySelector("#dataMode").textContent = "Data source unavailable. Check that the API is running, then select Refresh.";
     capabilityGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
     workloadList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+    document.querySelector("#workloadSelect").innerHTML = '<option value="">Workload list unavailable — enter a deployment below</option>';
   } finally {
     refreshButton.disabled = false;
   }
@@ -280,6 +283,14 @@ function renderStatus(status) {
 }
 
 function renderWorkloads(health) {
+  knownWorkloads = health.workloads || [];
+  const select = document.querySelector("#workloadSelect");
+  const selected = JSON.stringify([namespaceInput.value, deploymentInput.value]);
+  select.innerHTML = '<option value="">Choose a workload or enter one below</option>' + knownWorkloads.map((workload, index) =>
+    `<option value="${index}">${escapeHtml(workload.namespace)}/${escapeHtml(workload.name)} — ${escapeHtml(workload.reason)}</option>`
+  ).join("");
+  const index = knownWorkloads.findIndex(workload => JSON.stringify([workload.namespace, workload.name]) === selected);
+  select.value = index < 0 ? "" : String(index);
   if (!health.workloads?.length) {
     workloadList.innerHTML = `<div class="empty-state">No unhealthy workloads found.</div>`;
     return;
@@ -603,7 +614,11 @@ function replacePendingAssistant(html) {
 }
 
 async function diagnoseDeployment(namespace, deployment) {
-  openView("diagnosis");
+  const sequence = ++investigationSequence;
+  namespaceInput.value = namespace;
+  deploymentInput.value = deployment;
+  document.querySelector("#selectedWorkload").textContent = `Investigating ${namespace}/${deployment}`;
+  setViewHash("diagnosis");
   const submitButton = diagnosisForm.querySelector("button[type='submit']");
   submitButton.disabled = true;
   diagnosisOutput.innerHTML = `<div class="empty-state">Collecting pods, events, and logs...</div>`;
@@ -625,16 +640,18 @@ async function diagnoseDeployment(namespace, deployment) {
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report.md`,
       ),
     ]);
-    renderDiagnosis(diagnosis, remediation);
+    if (sequence !== investigationSequence) return;
+    renderDiagnosis(diagnosis, remediation, report);
     renderIncidentReport(report);
     incidentMarkdown.textContent = markdown;
     await loadOverview();
   } catch (error) {
-    diagnosisOutput.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+    if (sequence !== investigationSequence) return;
+    diagnosisOutput.innerHTML = `<div class="empty-state" role="alert">Could not investigate ${escapeHtml(namespace)}/${escapeHtml(deployment)}: ${escapeHtml(error.message)}. Check the workload names and connection, then select Investigate workload to retry.</div>`;
     renderIncidentError(error.message);
     incidentMarkdown.textContent = "Incident report unavailable.";
   } finally {
-    submitButton.disabled = false;
+    if (sequence === investigationSequence) submitButton.disabled = false;
   }
 }
 
@@ -695,7 +712,7 @@ function renderIncidentError(message) {
   incidentActions.innerHTML = `<div class="empty-state compact">Retry the diagnosis after the API recovers.</div>`;
 }
 
-function renderDiagnosis(diagnosis, remediation) {
+function renderDiagnosis(diagnosis, remediation, report) {
   const commands = buildDiagnosisCommands(diagnosis);
   const podRows = diagnosis.pods
     .map(
@@ -727,10 +744,17 @@ function renderDiagnosis(diagnosis, remediation) {
     .map((recommendation) => `<li>${escapeHtml(recommendation)}</li>`)
     .join("");
   diagnosisOutput.innerHTML = `
+    <h3>1. Observed problem</h3>
     <div class="diagnosis-summary">
       <strong>${escapeHtml(diagnosis.namespace)}/deployment/${escapeHtml(diagnosis.name)}</strong>
       <span>${escapeHtml(diagnosis.health.status)}: ${escapeHtml(diagnosis.health.reason)}</span>
     </div>
+    <section class="investigation-cause">
+      <h3>2. Likely cause</h3>
+      <p>${escapeHtml(report?.probable_cause || "Not enough evidence to suggest a cause.")}</p>
+      <p class="muted">This is a suggested explanation. Confirm it against the evidence below.</p>
+    </section>
+    <h3>3. Evidence</h3>
     <div class="table-wrap">
       <table>
         <thead>
@@ -755,11 +779,14 @@ function renderDiagnosis(diagnosis, remediation) {
         <ul>${logItems || "<li>No logs captured.</li>"}</ul>
       </section>
       <section>
-        <h3>Recommendations</h3>
+        <h3>4. Next checks</h3>
         <ul>${recommendations || "<li>No recommendations.</li>"}</ul>
       </section>
     </div>
-    ${renderRemediationPlan(remediation)}
+    <details class="runtime-details">
+      <summary>Review the proposed remediation plan</summary>
+      ${renderRemediationPlan(remediation)}
+    </details>
     <section class="command-palette">
       <div class="card-title-row">
         <div>
@@ -790,6 +817,15 @@ function renderDiagnosis(diagnosis, remediation) {
           )
           .join("")}
       </div>
+    </section>
+    <section class="verification-panel">
+      <h3>5. Verify the outcome</h3>
+      <p>After reviewing and applying an appropriate fix outside KubePilot, investigate
+        this workload again. Check that desired replicas are ready, restarts have stopped
+        increasing, and recent events and logs no longer show the failure.</p>
+      <p>Demo fixtures stay unhealthy by design; investigating again will not repair them.</p>
+      <button type="button" data-diagnose-namespace="${escapeHtml(diagnosis.namespace)}" data-diagnose-deployment="${escapeHtml(diagnosis.name)}">Refresh investigation</button>
+      <button type="button" class="secondary-button" data-show-incident>View incident report</button>
     </section>
   `;
 }
@@ -972,6 +1008,11 @@ function boot() {
     }
   });
   openViewFromHash();
+  document.querySelector("#workloadSelect").addEventListener("change", (event) => {
+    if (event.target.value === "") return;
+    const workload = knownWorkloads[Number(event.target.value)];
+    if (workload) diagnoseDeployment(workload.namespace, workload.name);
+  });
   workloadList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-namespace][data-deployment]");
     if (!button) {
@@ -1023,6 +1064,10 @@ function boot() {
   });
   });
   document.addEventListener("click", async (event) => {
+    if (event.target.closest("[data-show-incident]")) {
+      setViewHash("incident");
+      return;
+    }
     const diagnosisAction = event.target.closest("[data-diagnose-namespace][data-diagnose-deployment]");
     if (diagnosisAction) {
       namespaceInput.value = diagnosisAction.dataset.diagnoseNamespace;

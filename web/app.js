@@ -40,6 +40,10 @@ const copyButtons = document.querySelectorAll("[data-copy]");
 const heroTyped = document.querySelector("#heroTyped");
 const copilotTyped = document.querySelector("#copilotTyped");
 
+let selectedIncident = null;
+let incidentSequence = 0;
+let incidentListSequence = 0;
+let incidentCreating = false;
 let chatWorkload = null;
 let investigationWorkload = null;
 let chatBusy = false;
@@ -104,6 +108,7 @@ function openViewFromHash() {
   const viewName = getKnownView(window.location.hash.replace("#", ""));
   openView(viewName);
   document.body.dataset.activeView = viewName;
+  if (viewName === "incident") loadIncidentReports();
 }
 
 function setViewHash(viewName) {
@@ -653,37 +658,120 @@ async function diagnoseDeployment(namespace, deployment) {
   const submitButton = diagnosisForm.querySelector("button[type='submit']");
   submitButton.disabled = true;
   diagnosisOutput.innerHTML = `<div class="empty-state">Collecting pods, events, and logs...</div>`;
-  incidentMarkdown.textContent = "Generating markdown report...";
+
   try {
     const encodedNamespace = encodeURIComponent(namespace);
     const encodedDeployment = encodeURIComponent(deployment);
-    const [diagnosis, report, remediation, markdown] = await Promise.all([
+    const [diagnosis, remediation] = await Promise.all([
       apiFetch(
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/diagnose`,
       ),
       apiFetch(
-        `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report`,
-      ),
-      apiFetch(
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/remediation-plan`,
-      ),
-      apiFetch(
-        `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report.md`,
       ),
     ]);
     if (sequence !== investigationSequence) return;
-    renderDiagnosis(diagnosis, remediation, report);
-    renderIncidentReport(report);
-    incidentMarkdown.textContent = markdown;
+    renderDiagnosis(diagnosis, remediation);
     await loadOverview();
   } catch (error) {
     if (sequence !== investigationSequence) return;
     diagnosisOutput.innerHTML = `<div class="empty-state" role="alert">Could not investigate ${escapeHtml(namespace)}/${escapeHtml(deployment)}: ${escapeHtml(error.message)}. Check the workload names and connection, then select Investigate workload to retry.</div>`;
-    renderIncidentError(error.message);
-    incidentMarkdown.textContent = "Incident report unavailable.";
+
   } finally {
     if (sequence === investigationSequence) submitButton.disabled = false;
   }
+}
+
+function setIncidentControls(markdownReady = false) {
+  copyStatusButton.disabled = !selectedIncident;
+  copyMarkdownButton.disabled = !markdownReady;
+  document.querySelector("#downloadIncident").disabled = !markdownReady;
+}
+
+function beginIncidentLoad() {
+  selectedIncident = null;
+  setIncidentControls();
+  document.querySelector("#incidentRoom").hidden = true;
+  incidentMarkdown.textContent = "No Markdown loaded.";
+  document.querySelector("#incidentFeedback").textContent = "Loading incident report…";
+  return ++incidentSequence;
+}
+
+async function loadIncidentReports() {
+  const sequence = ++incidentListSequence;
+  const list = document.querySelector("#incidentList");
+  list.innerHTML = '<p role="status">Loading saved reports…</p>';
+  try {
+    const response = await apiFetch("/api/v1/cluster/incident-reports?limit=100");
+    if (sequence !== incidentListSequence) return;
+    list.innerHTML = response.reports.length ? response.reports.map(report => `
+      <button type="button" class="incident-list-item secondary-button" data-incident-id="${escapeHtml(report.report_id)}">
+        <strong>${escapeHtml(report.title)}</strong>
+        <span>${escapeHtml(report.severity)} · ${escapeHtml(new Date(report.generated_at).toLocaleString())}</span>
+        <small>${escapeHtml(report.report_id)}</small>
+      </button>`).join("") : '<p>No saved reports yet. Investigate a workload, then choose Create incident report.</p>';
+  } catch (error) {
+    if (sequence !== incidentListSequence) return;
+    list.innerHTML = `<p role="alert">Could not load reports: ${escapeHtml(error.message)}. Select Refresh reports to retry.</p>`;
+  }
+}
+
+async function showIncidentArtifact(report, sequence) {
+  if (sequence !== incidentSequence) return;
+  selectedIncident = report;
+  renderIncidentReport(report);
+  document.querySelector("#incidentRoom").hidden = false;
+  setIncidentControls();
+  try {
+    const markdown = await apiFetch(`/api/v1/cluster/incident-reports/${encodeURIComponent(report.report_id)}/markdown`);
+    if (sequence !== incidentSequence) return;
+    incidentMarkdown.textContent = markdown;
+    setIncidentControls(true);
+    document.querySelector("#incidentFeedback").textContent = `Report ${report.report_id} loaded. Ready to copy or download.`;
+  } catch (error) {
+    if (sequence !== incidentSequence) return;
+    document.querySelector("#incidentFeedback").textContent = `Report loaded, but Markdown is unavailable: ${error.message}. Select this report again to retry the export.`;
+  }
+}
+
+async function openIncidentReport(reportId) {
+  const sequence = beginIncidentLoad();
+  try {
+    const report = await apiFetch(`/api/v1/cluster/incident-reports/${encodeURIComponent(reportId)}`);
+    await showIncidentArtifact(report, sequence);
+  } catch (error) {
+    if (sequence !== incidentSequence) return;
+    document.querySelector("#incidentFeedback").textContent = `Could not load report: ${error.message}. Select a saved report to retry.`;
+  }
+}
+
+async function createIncidentReport(namespace, deployment) {
+  if (incidentCreating) return;
+  incidentCreating = true;
+  setViewHash("incident");
+  const sequence = beginIncidentLoad();
+  document.querySelector("#incidentFeedback").textContent = `Creating a report for ${namespace}/${deployment}…`;
+  try {
+    const report = await apiFetch(`/api/v1/cluster/namespaces/${encodeURIComponent(namespace)}/deployments/${encodeURIComponent(deployment)}/incident-report`);
+    await showIncidentArtifact(report, sequence);
+    await loadIncidentReports();
+  } catch (error) {
+    if (sequence !== incidentSequence) return;
+    document.querySelector("#incidentFeedback").textContent = `Could not create report: ${error.message}. Return to the investigation and select Create incident report to retry.`;
+  } finally {
+    incidentCreating = false;
+  }
+}
+
+function downloadIncidentReport() {
+  if (!selectedIncident || document.querySelector("#downloadIncident").disabled) return;
+  const url = URL.createObjectURL(new Blob([incidentMarkdown.textContent], {type: "text/markdown;charset=utf-8"}));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `kubepilot-incident-${selectedIncident.report_id.replace(/[^a-zA-Z0-9-]/g, "_")}.md`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  document.querySelector("#incidentFeedback").textContent = "Markdown download requested.";
 }
 
 function renderIncidentReport(report) {
@@ -743,7 +831,7 @@ function renderIncidentError(message) {
   incidentActions.innerHTML = `<div class="empty-state compact">Retry the diagnosis after the API recovers.</div>`;
 }
 
-function renderDiagnosis(diagnosis, remediation, report) {
+function renderDiagnosis(diagnosis, remediation) {
   const commands = buildDiagnosisCommands(diagnosis);
   const podRows = diagnosis.pods
     .map(
@@ -782,8 +870,8 @@ function renderDiagnosis(diagnosis, remediation, report) {
     </div>
     <section class="investigation-cause">
       <h3>2. Likely cause</h3>
-      <p>${escapeHtml(report?.probable_cause || "Not enough evidence to suggest a cause.")}</p>
-      <p class="muted">This is a suggested explanation. Confirm it against the evidence below.</p>
+      <p>${escapeHtml(diagnosis.pods.map(pod => pod.reason).filter(Boolean).join(", ") || diagnosis.health.reason)}</p>
+      <p class="muted">These are observed failure signals, not a confirmed root cause. Use the evidence and next checks below to investigate possible causes.</p>
     </section>
     <h3>3. Evidence</h3>
     <div class="table-wrap">
@@ -857,7 +945,7 @@ function renderDiagnosis(diagnosis, remediation, report) {
         increasing, and recent events and logs no longer show the failure.</p>
       <p>Demo fixtures stay unhealthy by design; investigating again will not repair them.</p>
       <button type="button" data-diagnose-namespace="${escapeHtml(diagnosis.namespace)}" data-diagnose-deployment="${escapeHtml(diagnosis.name)}">Refresh investigation</button>
-      <button type="button" class="secondary-button" data-show-incident>View incident report</button>
+      <button type="button" class="secondary-button" data-create-incident-namespace="${escapeHtml(diagnosis.namespace)}" data-create-incident-deployment="${escapeHtml(diagnosis.name)}">Create incident report</button>
     </section>
   `;
 }
@@ -1081,26 +1169,32 @@ function boot() {
       sendChat(button.dataset.prompt);
     });
   });
+  document.querySelector("#refreshIncidents").addEventListener("click", loadIncidentReports);
+  document.querySelector("#downloadIncident").addEventListener("click", downloadIncidentReport);
   copyMarkdownButton.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(incidentMarkdown.textContent);
       setIconButtonIcon(copyMarkdownButton, "check", "Copied markdown report");
+      document.querySelector("#incidentFeedback").textContent = "Markdown report copied.";
       setTimeout(() => {
         setIconButtonIcon(copyMarkdownButton, "copy", "Copy markdown report");
       }, 1600);
     } catch {
       setIconButtonIcon(copyMarkdownButton, "!", "Copy failed");
+      document.querySelector("#incidentFeedback").textContent = "Clipboard unavailable. Select and copy the Markdown preview, or use Download Markdown.";
     }
   });
   copyStatusButton.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(incidentStatusUpdate.textContent);
       setIconButtonIcon(copyStatusButton, "check", "Copied status update");
+      document.querySelector("#incidentFeedback").textContent = "Status update copied.";
       setTimeout(() => {
         setIconButtonIcon(copyStatusButton, "copy", "Copy status update");
       }, 1600);
     } catch {
       setIconButtonIcon(copyStatusButton, "!", "Copy failed");
+      document.querySelector("#incidentFeedback").textContent = "Clipboard unavailable. Select and copy the status update below.";
     }
   });
   copyButtons.forEach((button) => {
@@ -1117,8 +1211,14 @@ function boot() {
   });
   });
   document.addEventListener("click", async (event) => {
-    if (event.target.closest("[data-show-incident]")) {
-      setViewHash("incident");
+    const createIncident = event.target.closest("[data-create-incident-namespace]");
+    if (createIncident) {
+      createIncidentReport(createIncident.dataset.createIncidentNamespace, createIncident.dataset.createIncidentDeployment);
+      return;
+    }
+    const savedIncident = event.target.closest("[data-incident-id]");
+    if (savedIncident) {
+      openIncidentReport(savedIncident.dataset.incidentId);
       return;
     }
     const diagnosisAction = event.target.closest("[data-diagnose-namespace][data-diagnose-deployment]");

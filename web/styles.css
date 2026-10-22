@@ -2745,3 +2745,11 @@ body[data-theme="light"] :is(.gemini-util-btn, .gemini-submit-btn) { color: var(
 }
 .workspace { grid-template-columns: minmax(0, 1fr); }
 .view { min-width: 0; }
+
+.incident-list { display: grid; gap: 12px; margin-top: 16px; }
+.incident-list-item { display: grid; text-align: left; gap: 6px; white-space: normal; overflow-wrap: anywhere; }
+.incident-list-item small { font-weight: normal; }
+#incidentFeedback { line-height: 1.6; }
+.view.active { grid-template-columns: minmax(0, 1fr); }
+[data-view-panel="incident"] .panel { min-width: 0; }
+.incident-hero h3, .incident-room p { overflow-wrap: anywhere; }

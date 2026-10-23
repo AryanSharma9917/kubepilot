@@ -14,8 +14,8 @@ Then open <http://127.0.0.1:3000>.
 Start on **Overview**, then select **Investigate** next to an unhealthy workload.
 The three primary navigation items are **Overview**, **Workloads**, and **Incidents**.
 Workloads currently supports manual namespace/deployment entry; selecting a workload
-on Overview fills these automatically. Diagnosis also generates the current incident
-report, available under Incidents for copying or Markdown export.
+on Overview fills these automatically. Choose **Create incident report** after diagnosis to save a snapshot,
+available under Incidents for copying or Markdown export.
 
 The data-source notice distinguishes native fixtures from an inspection service
 or cluster connection. The default Compose service uses fixtures. A service connection
@@ -44,7 +44,7 @@ The selected deployment remains in the form when switching views during the sess
 Investigations show the observed problem, suggested cause, pod/event/log evidence,
 next checks, and verification guidance. Review suggested causes against the evidence;
 KubePilot does not execute the displayed commands. **Refresh investigation** collects
-another snapshot, and **View incident report** opens the generated handoff.
+another diagnosis snapshot, and **Create incident report** saves a handoff snapshot.
 Demo fixtures remain unhealthy by design. Selection is not persisted across page reloads.
 
 Run dependency-free investigation rendering and request-order checks with
@@ -75,3 +75,26 @@ Run `node web/checks/chat.cjs` for context payload, duplicate-request, failure-r
 source-label, and command-explanation checks. The integrated browser workflow was
 also checked against the local API for contextual diagnosis and cited runbook answers,
 with Overview checked at desktop and mobile widths.
+
+### Incident handoffs
+
+Diagnosis does not save an incident report automatically. Choose **Create incident
+report** in the investigation to save a report from the current backend evidence.
+**Incidents** lists up to 100 recent saved reports with severity, time, and ID.
+Choose a report to review its details, copy a stakeholder update, copy Markdown,
+or download a `.md` file. Copy and download controls stay disabled until their
+content is loaded. Clipboard errors offer manual-copy and download alternatives.
+
+Markdown export uses the selected saved report ID; exporting does not regenerate
+evidence or create a second report. Reports are snapshots, not live incident state.
+The default native development store is in memory and resets with the API process;
+the Compose configuration uses Postgres. Refresh reports after another user creates
+one. Empty lists and failed requests include instructions for the next step.
+
+Saved Markdown is available at
+`GET /api/v1/cluster/incident-reports/{report_id}/markdown`.
+
+Run `node web/checks/incidents.cjs` to verify artifact selection, stale-response
+protection, export controls, and error recovery. Browser validation also exercised
+explicit creation, reopening a saved report after reload, clipboard copying, and
+a Markdown download containing the same report ID at desktop and mobile widths.

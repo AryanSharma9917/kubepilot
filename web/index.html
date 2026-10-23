@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KubePilot</title>
-    <link rel="stylesheet" href="./styles.css?v=20261022-contextual-guidance" />
+    <link rel="stylesheet" href="./styles.css?v=20261022-incident-handoff" />
   </head>
   <body data-theme="dark">
     <svg class="icon-defs" aria-hidden="true">
@@ -296,6 +296,12 @@
 
         <section class="view" data-view-panel="incident">
           <article class="panel">
+            <h2>Saved incident reports</h2>
+            <p>Reports are snapshots, not live incident tracking. Without a database, they last only for the API process.</p>
+            <button type="button" class="secondary-button" id="refreshIncidents">Refresh reports</button>
+            <div id="incidentList" class="incident-list" aria-label="Saved reports"><p>No reports loaded yet.</p></div>
+          </article>
+          <article class="panel">
             <div class="panel-heading">
               <div>
                 <p class="eyebrow">Incident</p>
@@ -304,6 +310,7 @@
               <button
                 class="secondary-button icon-button"
                 id="copyMarkdownButton"
+                disabled
                 type="button"
                 aria-label="Copy markdown report"
                 title="Copy markdown report"
@@ -311,17 +318,20 @@
                 <span class="icon"><svg><use href="#i-copy"></use></svg></span>
               </button>
             </div>
-            <div class="incident-room" id="incidentRoom">
+            <p id="incidentFeedback" role="status">Choose a saved report, or create one from a workload investigation.</p>
+            <button type="button" class="secondary-button" id="downloadIncident" disabled>Download Markdown</button>
+            <div class="incident-room" id="incidentRoom" hidden>
               <div class="incident-hero">
                 <div>
                   <span class="severity-badge muted" id="incidentSeverity">Waiting</span>
-                  <h3 id="incidentTitle">Run a diagnosis to open the incident room.</h3>
+                  <h3 id="incidentTitle">Choose an incident report.</h3>
                   <p id="incidentSummary">KubePilot will turn deployment health, pod state, events, logs, and runbook context into an operator-ready incident view.</p>
                   <p class="artifact-meta" id="incidentArtifact">No backend artifact generated yet.</p>
                 </div>
                 <button
                   class="secondary-button icon-text-button"
                   id="copyStatusButton"
+                  disabled
                   type="button"
                   aria-label="Copy status update"
                   title="Copy status update"
@@ -362,7 +372,7 @@
                 </section>
               </div>
             </div>
-            <details class="markdown-export" open>
+            <details class="markdown-export">
               <summary>Markdown Export</summary>
               <pre class="markdown-preview" id="incidentMarkdown">Generate a report from the diagnosis view.</pre>
             </details>
@@ -650,7 +660,7 @@
         </section>
       </main>
     </div>
-    <script type="module" src="./app.js?v=20261022-contextual-guidance"></script>
+    <script type="module" src="./app.js?v=20261022-incident-handoff"></script>
   </body>
 </html>
 

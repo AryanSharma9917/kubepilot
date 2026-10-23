@@ -1,77 +1,114 @@
 # KubePilot Web
 
-Static demo UI for KubePilot. It is served by Nginx in Docker Compose and calls
-the FastAPI API through the same origin.
+A static console for investigating Kubernetes failures and sharing evidence snapshots.
+The main journey is **Overview → Workloads → Incidents**. General chat, the guided
+walkthrough, and developer activity are under **Help & tools**.
 
-Run the full demo from the repository root:
+## Run locally
+
+For the full fixture demo, from the repository root:
 
 ```bash
 docker compose up --build
 ```
 
-Then open <http://127.0.0.1:3000>.
+For native development, use Python 3.11+ and Node.js 20+. From the repository root:
 
-Start on **Overview**, then select **Investigate** next to an unhealthy workload.
-The three primary navigation items are **Overview**, **Workloads**, and **Incidents**.
-Workloads currently supports manual namespace/deployment entry; selecting a workload
-on Overview fills these automatically. Diagnosis also generates the current incident
-report, available under Incidents for copying or Markdown export.
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/uvicorn kubepilot_api.main:app --host 127.0.0.1 --port 8000
+```
 
-The data-source notice distinguishes native fixtures from an inspection service
-or cluster connection. The default Compose service uses fixtures. A service connection
-is not proof of live cluster data. Failed connections show a retry instruction.
+In a second terminal:
 
-General chat, developer activity, and the guide are in **Help & tools**. Runtime
-status and the capability map are collapsed under **Developer details** on Overview.
-Existing hash routes remain supported.
+```bash
+node web/dev-server.cjs
+```
 
-The UI includes:
+The UI listens on port 3000 and forwards API requests to port 8000. Set
+`KUBEPILOT_WEB_PORT` or `KUBEPILOT_API_URL` to use different ports. The server binds
+only to loopback and is intended for local development. It serves the static UI;
+source changes appear on browser refresh. It needs no npm dependencies. Compose
+serves the same assets with Nginx and includes Postgres and the Go inspection service.
 
-- Runtime status cards
-- Live platform capability map
-- Unhealthy workload shortcuts
-- Copilot chat with suggested prompts
-- Retrieved source cards and visible agent workflow steps
-- Deployment diagnosis for pods, events, logs, recommendations, remediation plans, and copyable kubectl checks
-- Incident room with severity, cause, impact, timeline, next actions, status copy, and markdown export
-- Observability workspace with trace bars, audit filters, route groups, and agent activity
+## Walk through the demo
 
-### Guided workload investigations
+1. On **Overview**, choose **Investigate** for `payments/checkout`.
+2. Review the observed problem, failure signals, pod/event/log evidence, explained
+   read-only checks, and verification guidance. Recommendations are not executed.
+3. Choose **Ask about this workload**, then **Explain this failure**. The attached
+   namespace and deployment are visible. **Clear workload context** before asking
+   about a different workload; the picker returns to Workloads.
+4. Return to **Workloads**, then select **Create incident report**. Creation collects
+   a fresh backend snapshot; it does not reuse the earlier diagnosis as live evidence.
+5. In **Incidents**, select a saved report, copy its status update, or download
+   Markdown. Export uses the saved report ID; it does not create another artifact.
 
-Open **Workloads** to choose from workloads needing attention, or enter a namespace
-and deployment manually. Selecting **Investigate** on Overview opens the same workflow.
-The selected deployment remains in the form when switching views during the session.
-Investigations show the observed problem, suggested cause, pod/event/log evidence,
-next checks, and verification guidance. Review suggested causes against the evidence;
-KubePilot does not execute the displayed commands. **Refresh investigation** collects
-another snapshot, and **View incident report** opens the generated handoff.
-Demo fixtures remain unhealthy by design. Selection is not persisted across page reloads.
+Repeat with `platform/metrics-scraper` for readiness failures and
+`notifications/email-worker` for pending pods. Fixtures remain unhealthy by design.
+The data-source notice distinguishes fixtures from a configured inspection service
+or cluster connection. An inspection service can itself use fixtures.
 
-Run dependency-free investigation rendering and request-order checks with
-`node web/checks/investigation.cjs` from the repository root. These complement
-the Python suite; they do not replace browser interaction or layout checks.
+Selections persist while switching views, not across reloads. Reports are stored by
+the API: native in-memory reports disappear on API restart; Compose uses Postgres.
+The report list shows up to 100 recent snapshots and can be refreshed. Copy/download
+controls remain disabled until content is available. Clipboard errors offer manual
+copy or download. Sources without excerpts are labelled accordingly; runbook matches
+do not establish the cause of a failure. Chat has no conversation memory.
 
-### Ask about the selected workload
+Keyboard users can skip to the main content, activate navigation with Enter, and
+follow focus to the destination heading. Browser Back/Forward navigates views.
+Reduced-motion preferences disable animation. Optional developer activity failures
+do not prevent the workload list from loading. Failed workload requests offer Refresh;
+a missing deployment offers a retry after checking the names.
 
-After starting an investigation, choose **Ask about this workload**. Chat shows the
-attached namespace and deployment, and offers questions about its failure or status.
-Use **Clear workload context** for general questions or before asking about another
-workload. The workload picker icon returns to Workloads to change the selection.
-Each submitted message records its workload label, so changing the selection does
-not change the meaning of earlier messages. Only one chat request runs at a time.
+## Run checks
 
-Chat separates observed evidence from suggested checks where the response provides
-those sections. Runbook excerpts appear alongside the answer; source titles without
-excerpts are labelled accordingly. Runbooks are guidance, not proof of the cause.
-Read-only command cards explain their purpose and limitations. Commands are copied
-for operator review, never executed by the browser.
+The dependency-free rendering and request-state checks need Node.js only:
 
-The chat API accepts an optional `workload` object containing `namespace` and
-`deployment` on both `/api/v1/chat` and `/api/v1/chat/stream`. Existing message-only
-requests continue to work. Workload context scopes reference extraction; it does not
-add conversation memory or guarantee that every question invokes Kubernetes tools.
+```bash
+node web/checks/investigation.cjs
+node web/checks/chat.cjs
+node web/checks/incidents.cjs
+```
 
-Run `node web/checks/chat.cjs` for context payload, duplicate-request, failure-recovery,
-source-label, and command-explanation checks. The integrated browser workflow was
-also checked against the local API for contextual diagnosis and cited runbook answers,
-with Overview checked at desktop and mobile widths.
+For browser coverage, install the pinned browser tooling:
+
+```bash
+cd web
+npm ci
+npx playwright install chromium
+npm run check
+npm run check:browser
+```
+
+On a Linux machine missing browser system libraries, use
+`npx playwright install --with-deps chromium`. To use an existing compatible Chromium,
+set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable path.
+
+The browser suite starts and stops its own fixture FastAPI process and development
+server on ephemeral ports. Install the root Python dev dependencies first. It uses
+`.venv/bin/python` when present, otherwise `python3`; override with `KUBEPILOT_PYTHON`.
+No external cluster, LLM, database, or pre-running UI process is needed. The suite
+uses an isolated in-memory report store. Set `KUBEPILOT_SCREENSHOT_DIR` to capture
+screenshots outside the checkout or in an ignored output directory.
+
+Coverage includes all three fixture investigations, contextual chat, citations,
+explicit report creation, reopening saved reports, clipboard and same-ID Markdown
+downloads, keyboard entry, navigation history, malformed hashes, reduced motion,
+optional activity failures, retry, and missing deployments. Layout checks cover
+Overview, Workloads, chat, and Incidents at desktop/mobile widths in light/dark themes.
+The Web workflow in GitHub Actions runs the same checks. This validates the fixture
+workflow; real-cluster permissions, production security, and deployments need separate
+validation.
+
+## API additions
+
+Both `/api/v1/chat` and `/api/v1/chat/stream` accept optional
+`workload: {namespace, deployment}` context alongside `message`. Message-only requests
+remain supported. Context scopes reference extraction; not every question invokes
+Kubernetes tools.
+
+Saved Markdown is available from
+`GET /api/v1/cluster/incident-reports/{report_id}/markdown`.

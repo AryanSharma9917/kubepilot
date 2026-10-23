@@ -40,6 +40,10 @@ const copyButtons = document.querySelectorAll("[data-copy]");
 const heroTyped = document.querySelector("#heroTyped");
 const copilotTyped = document.querySelector("#copilotTyped");
 
+let selectedIncident = null;
+let incidentSequence = 0;
+let incidentListSequence = 0;
+let incidentCreating = false;
 let chatWorkload = null;
 let investigationWorkload = null;
 let chatBusy = false;
@@ -47,15 +51,6 @@ let investigationSequence = 0;
 let knownWorkloads = [];
 let latestSpans = [];
 let latestAuditEvents = [];
-let typedPhraseIndex = 0;
-
-const TYPED_PHRASES = [
-  "scanning cluster signals",
-  "retrieving runbook context",
-  "building incident evidence",
-  "planning safe remediation",
-];
-
 const ICONS = {
   copy: '<svg><use href="#i-copy"></use></svg>',
   check: '<svg><use href="#i-check"></use></svg>',
@@ -79,6 +74,7 @@ function setConnectionStatus(message, state = "") {
 }
 
 function openView(viewName) {
+  const previous = document.querySelector("[data-view-panel].active")?.dataset.viewPanel;
   document.querySelectorAll("[data-view-panel]").forEach((panel) => {
     panel.classList.toggle("active", panel.dataset.viewPanel === viewName);
   });
@@ -93,23 +89,37 @@ function openView(viewName) {
       button.removeAttribute("aria-current");
     }
   });
+  if (previous !== viewName) {
+    const panel = [...document.querySelectorAll("[data-view-panel]")].find(item => item.dataset.viewPanel === viewName);
+    const heading = panel?.querySelector("h2, h1");
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.focus();
+    }
+  }
 }
 
 function getKnownView(viewName) {
-  const view = document.querySelector(`[data-view-panel="${viewName}"]`);
-  return view ? viewName : "dashboard";
+  return [...document.querySelectorAll("[data-view-panel]")].some(panel => panel.dataset.viewPanel === viewName)
+    ? viewName : "dashboard";
 }
 
 function openViewFromHash() {
   const viewName = getKnownView(window.location.hash.replace("#", ""));
   openView(viewName);
   document.body.dataset.activeView = viewName;
+  if (viewName === "incident") loadIncidentReports();
+  if (viewName === "copilot") {
+    const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
+    document.querySelector("#geminiGreeting").style.display = hasMessages ? "none" : "flex";
+    document.querySelector("#geminiChatArea").style.display = hasMessages ? "flex" : "none";
+  }
 }
 
 function setViewHash(viewName) {
   const nextHash = `#${getKnownView(viewName)}`;
   if (window.location.hash !== nextHash) {
-    window.history.replaceState(null, "", nextHash);
+    window.history.pushState(null, "", nextHash);
   }
   openViewFromHash();
 }
@@ -128,21 +138,6 @@ function bootTheme() {
   const savedTheme = localStorage.getItem("kubepilot-theme");
   const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
   setTheme(savedTheme || (prefersLight ? "light" : "dark"));
-}
-
-function startTypeReadout() {
-  const renderPhrase = () => {
-    const phrase = TYPED_PHRASES[typedPhraseIndex % TYPED_PHRASES.length];
-    if (heroTyped) {
-      heroTyped.textContent = phrase;
-    }
-    if (copilotTyped) {
-      copilotTyped.textContent = phrase.replaceAll(" ", "_");
-    }
-    typedPhraseIndex += 1;
-  };
-  renderPhrase();
-  setInterval(renderPhrase, 2400);
 }
 
 async function apiFetch(path, options = {}) {
@@ -174,29 +169,31 @@ async function safeErrorDetail(response) {
 }
 
 async function loadOverview() {
-  setConnectionStatus("Connecting", "");
+  setConnectionStatus("Refreshing", "");
   refreshButton.disabled = true;
   try {
-    const [status, capabilities, health, traces, audit] = await Promise.all([
-      apiFetch("/api/v1/status"),
-      apiFetch("/api/v1/capabilities"),
-      apiFetch("/api/v1/cluster/health"),
-      apiFetch("/api/v1/traces?limit=6"),
+    const [status, health, capabilities, traces, audit] = await Promise.allSettled([
+      apiFetch("/api/v1/status"), apiFetch("/api/v1/cluster/health"),
+      apiFetch("/api/v1/capabilities"), apiFetch("/api/v1/traces?limit=6"),
       apiFetch("/api/v1/audit/events?limit=8"),
     ]);
-    renderStatus(status);
-    renderCapabilities(capabilities.capabilities || []);
-    renderWorkloads(health);
-    latestSpans = traces.spans || [];
-    latestAuditEvents = audit.events || [];
+    if (status.status === "fulfilled") renderStatus(status.value);
+    else document.querySelector("#dataMode").textContent = "Data source unavailable. Check the API connection, then select Refresh.";
+    if (health.status === "fulfilled") renderWorkloads(health.value);
+    else {
+      knownWorkloads = [];
+      workloadList.innerHTML = `<div class="empty-state" role="alert">Could not load workloads: ${escapeHtml(health.reason.message)}. Check the connection, then select Refresh.</div>`;
+      document.querySelector("#workloadSelect").innerHTML = '<option value="">Workload list unavailable — enter a deployment below</option>';
+    }
+    if (capabilities.status === "fulfilled") renderCapabilities(capabilities.value.capabilities || []);
+    else capabilityGrid.innerHTML = '<p>Capabilities unavailable. Select Refresh to retry.</p>';
+    latestSpans = traces.status === "fulfilled" ? traces.value.spans || [] : [];
+    latestAuditEvents = audit.status === "fulfilled" ? audit.value.events || [] : [];
     renderObservability();
-    setConnectionStatus("API connected", "ok");
-  } catch (error) {
-    setConnectionStatus("API unavailable", "error");
-    document.querySelector("#dataMode").textContent = "Data source unavailable. Check that the API is running, then select Refresh.";
-    capabilityGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
-    workloadList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
-    document.querySelector("#workloadSelect").innerHTML = '<option value="">Workload list unavailable — enter a deployment below</option>';
+    if (traces.status === "rejected") traceList.textContent = "Trace activity unavailable. Select Refresh to retry.";
+    if (audit.status === "rejected") auditList.textContent = "Audit activity unavailable. Select Refresh to retry.";
+    const connected = status.status === "fulfilled" && health.status === "fulfilled";
+    setConnectionStatus(connected ? "API connected" : "Some data unavailable", connected ? "ok" : "error");
   } finally {
     refreshButton.disabled = false;
   }
@@ -308,6 +305,7 @@ function renderWorkloads(health) {
           </div>
           <button
             class="workload-action"
+            aria-label="Investigate ${escapeHtml(workload.namespace)}/${escapeHtml(workload.name)}"
             type="button"
             data-namespace="${escapeHtml(workload.namespace)}"
             data-deployment="${escapeHtml(workload.name)}"
@@ -652,38 +650,121 @@ async function diagnoseDeployment(namespace, deployment) {
   setViewHash("diagnosis");
   const submitButton = diagnosisForm.querySelector("button[type='submit']");
   submitButton.disabled = true;
-  diagnosisOutput.innerHTML = `<div class="empty-state">Collecting pods, events, and logs...</div>`;
-  incidentMarkdown.textContent = "Generating markdown report...";
+  diagnosisOutput.innerHTML = `<div class="empty-state" role="status">Collecting pods, events, and logs…</div>`;
+
   try {
     const encodedNamespace = encodeURIComponent(namespace);
     const encodedDeployment = encodeURIComponent(deployment);
-    const [diagnosis, report, remediation, markdown] = await Promise.all([
+    const [diagnosis, remediation] = await Promise.all([
       apiFetch(
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/diagnose`,
       ),
       apiFetch(
-        `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report`,
-      ),
-      apiFetch(
         `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/remediation-plan`,
-      ),
-      apiFetch(
-        `/api/v1/cluster/namespaces/${encodedNamespace}/deployments/${encodedDeployment}/incident-report.md`,
       ),
     ]);
     if (sequence !== investigationSequence) return;
-    renderDiagnosis(diagnosis, remediation, report);
-    renderIncidentReport(report);
-    incidentMarkdown.textContent = markdown;
+    renderDiagnosis(diagnosis, remediation);
     await loadOverview();
   } catch (error) {
     if (sequence !== investigationSequence) return;
     diagnosisOutput.innerHTML = `<div class="empty-state" role="alert">Could not investigate ${escapeHtml(namespace)}/${escapeHtml(deployment)}: ${escapeHtml(error.message)}. Check the workload names and connection, then select Investigate workload to retry.</div>`;
-    renderIncidentError(error.message);
-    incidentMarkdown.textContent = "Incident report unavailable.";
+
   } finally {
     if (sequence === investigationSequence) submitButton.disabled = false;
   }
+}
+
+function setIncidentControls(markdownReady = false) {
+  copyStatusButton.disabled = !selectedIncident;
+  copyMarkdownButton.disabled = !markdownReady;
+  document.querySelector("#downloadIncident").disabled = !markdownReady;
+}
+
+function beginIncidentLoad() {
+  selectedIncident = null;
+  setIncidentControls();
+  document.querySelector("#incidentRoom").hidden = true;
+  incidentMarkdown.textContent = "No Markdown loaded.";
+  document.querySelector("#incidentFeedback").textContent = "Loading incident report…";
+  return ++incidentSequence;
+}
+
+async function loadIncidentReports() {
+  const sequence = ++incidentListSequence;
+  const list = document.querySelector("#incidentList");
+  list.innerHTML = '<p role="status">Loading saved reports…</p>';
+  try {
+    const response = await apiFetch("/api/v1/cluster/incident-reports?limit=100");
+    if (sequence !== incidentListSequence) return;
+    list.innerHTML = response.reports.length ? response.reports.map(report => `
+      <button type="button" class="incident-list-item secondary-button" data-incident-id="${escapeHtml(report.report_id)}">
+        <strong>${escapeHtml(report.title)}</strong>
+        <span>${escapeHtml(report.severity)} · ${escapeHtml(new Date(report.generated_at).toLocaleString())}</span>
+        <small>${escapeHtml(report.report_id)}</small>
+      </button>`).join("") : '<p>No saved reports yet. Investigate a workload, then choose Create incident report.</p>';
+  } catch (error) {
+    if (sequence !== incidentListSequence) return;
+    list.innerHTML = `<p role="alert">Could not load reports: ${escapeHtml(error.message)}. Select Refresh reports to retry.</p>`;
+  }
+}
+
+async function showIncidentArtifact(report, sequence) {
+  if (sequence !== incidentSequence) return;
+  selectedIncident = report;
+  renderIncidentReport(report);
+  document.querySelector("#incidentRoom").hidden = false;
+  setIncidentControls();
+  try {
+    const markdown = await apiFetch(`/api/v1/cluster/incident-reports/${encodeURIComponent(report.report_id)}/markdown`);
+    if (sequence !== incidentSequence) return;
+    incidentMarkdown.textContent = markdown;
+    setIncidentControls(true);
+    document.querySelector("#incidentFeedback").textContent = `Report ${report.report_id} loaded. Ready to copy or download.`;
+  } catch (error) {
+    if (sequence !== incidentSequence) return;
+    document.querySelector("#incidentFeedback").textContent = `Report loaded, but Markdown is unavailable: ${error.message}. Select this report again to retry the export.`;
+  }
+}
+
+async function openIncidentReport(reportId) {
+  const sequence = beginIncidentLoad();
+  try {
+    const report = await apiFetch(`/api/v1/cluster/incident-reports/${encodeURIComponent(reportId)}`);
+    await showIncidentArtifact(report, sequence);
+  } catch (error) {
+    if (sequence !== incidentSequence) return;
+    document.querySelector("#incidentFeedback").textContent = `Could not load report: ${error.message}. Select a saved report to retry.`;
+  }
+}
+
+async function createIncidentReport(namespace, deployment) {
+  if (incidentCreating) return;
+  incidentCreating = true;
+  setViewHash("incident");
+  const sequence = beginIncidentLoad();
+  document.querySelector("#incidentFeedback").textContent = `Creating a report for ${namespace}/${deployment}…`;
+  try {
+    const report = await apiFetch(`/api/v1/cluster/namespaces/${encodeURIComponent(namespace)}/deployments/${encodeURIComponent(deployment)}/incident-report`);
+    await showIncidentArtifact(report, sequence);
+    await loadIncidentReports();
+  } catch (error) {
+    if (sequence !== incidentSequence) return;
+    document.querySelector("#incidentFeedback").textContent = `Could not create report: ${error.message}. Return to the investigation and select Create incident report to retry.`;
+  } finally {
+    incidentCreating = false;
+  }
+}
+
+function downloadIncidentReport() {
+  if (!selectedIncident || document.querySelector("#downloadIncident").disabled) return;
+  const url = URL.createObjectURL(new Blob([incidentMarkdown.textContent], {type: "text/markdown;charset=utf-8"}));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `kubepilot-incident-${selectedIncident.report_id.replace(/[^a-zA-Z0-9-]/g, "_")}.md`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  document.querySelector("#incidentFeedback").textContent = "Markdown download requested.";
 }
 
 function renderIncidentReport(report) {
@@ -743,7 +824,7 @@ function renderIncidentError(message) {
   incidentActions.innerHTML = `<div class="empty-state compact">Retry the diagnosis after the API recovers.</div>`;
 }
 
-function renderDiagnosis(diagnosis, remediation, report) {
+function renderDiagnosis(diagnosis, remediation) {
   const commands = buildDiagnosisCommands(diagnosis);
   const podRows = diagnosis.pods
     .map(
@@ -782,8 +863,8 @@ function renderDiagnosis(diagnosis, remediation, report) {
     </div>
     <section class="investigation-cause">
       <h3>2. Likely cause</h3>
-      <p>${escapeHtml(report?.probable_cause || "Not enough evidence to suggest a cause.")}</p>
-      <p class="muted">This is a suggested explanation. Confirm it against the evidence below.</p>
+      <p>${escapeHtml(diagnosis.pods.map(pod => pod.reason).filter(Boolean).join(", ") || diagnosis.health.reason)}</p>
+      <p class="muted">These are observed failure signals, not a confirmed root cause. Use the evidence and next checks below to investigate possible causes.</p>
     </section>
     <h3>3. Evidence</h3>
     <div class="table-wrap">
@@ -857,7 +938,7 @@ function renderDiagnosis(diagnosis, remediation, report) {
         increasing, and recent events and logs no longer show the failure.</p>
       <p>Demo fixtures stay unhealthy by design; investigating again will not repair them.</p>
       <button type="button" data-diagnose-namespace="${escapeHtml(diagnosis.namespace)}" data-diagnose-deployment="${escapeHtml(diagnosis.name)}">Refresh investigation</button>
-      <button type="button" class="secondary-button" data-show-incident>View incident report</button>
+      <button type="button" class="secondary-button" data-create-incident-namespace="${escapeHtml(diagnosis.namespace)}" data-create-incident-deployment="${escapeHtml(diagnosis.name)}">Create incident report</button>
     </section>
   `;
 }
@@ -984,7 +1065,7 @@ function boot() {
     button.addEventListener("click", () => sendChat(button.dataset.contextQuestion));
   });
   bootTheme();
-  startTypeReadout();
+  if (copilotTyped) copilotTyped.textContent = "Read-only guidance";
   if (themeToggle) {
     themeToggle.addEventListener("click", () => {
       setTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
@@ -999,67 +1080,13 @@ function boot() {
   refreshButton.addEventListener("click", () => {
     loadOverview();
   });
-  document.querySelectorAll("[data-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-    setViewHash(button.dataset.view);
-
-      // If going to copilot, manage visibility of greeting / chat area
-      if (button.dataset.view === "copilot") {
-        const geminiGreeting = document.querySelector("#geminiGreeting");
-        const geminiChatArea = document.querySelector("#geminiChatArea");
-
-        // Show greeting only if there are no user messages in chat log
-        const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
-        if (geminiGreeting && geminiChatArea) {
-          if (hasMessages) {
-            geminiGreeting.style.display = "none";
-            geminiChatArea.style.display = "flex";
-          } else {
-            geminiGreeting.style.display = "flex";
-            geminiChatArea.style.display = "none";
-          }
-        }
-      }
-    });
+  document.querySelectorAll("[data-view]").forEach(button => {
+    button.addEventListener("click", () => setViewHash(button.dataset.view));
   });
-  document.querySelectorAll("[data-open-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      setViewHash(button.dataset.openView);
-
-      if (button.dataset.openView === "copilot") {
-        const geminiGreeting = document.querySelector("#geminiGreeting");
-        const geminiChatArea = document.querySelector("#geminiChatArea");
-        const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
-        if (geminiGreeting && geminiChatArea) {
-          if (hasMessages) {
-            geminiGreeting.style.display = "none";
-            geminiChatArea.style.display = "flex";
-          } else {
-            geminiGreeting.style.display = "flex";
-            geminiChatArea.style.display = "none";
-          }
-        }
-      }
-    });
+  document.querySelectorAll("[data-open-view]").forEach(button => {
+    button.addEventListener("click", () => setViewHash(button.dataset.openView));
   });
-  window.addEventListener("hashchange", () => {
-  openViewFromHash();
-    const currentHash = window.location.hash.replace("#", "");
-    if (currentHash === "copilot") {
-      const geminiGreeting = document.querySelector("#geminiGreeting");
-      const geminiChatArea = document.querySelector("#geminiChatArea");
-      const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
-      if (geminiGreeting && geminiChatArea) {
-        if (hasMessages) {
-          geminiGreeting.style.display = "none";
-          geminiChatArea.style.display = "flex";
-         } else {
-          geminiGreeting.style.display = "flex";
-          geminiChatArea.style.display = "none";
-    }
-      }
-    }
-  });
+  window.addEventListener("hashchange", openViewFromHash);
   openViewFromHash();
   document.querySelector("#workloadSelect").addEventListener("change", (event) => {
     if (event.target.value === "") return;
@@ -1081,26 +1108,32 @@ function boot() {
       sendChat(button.dataset.prompt);
     });
   });
+  document.querySelector("#refreshIncidents").addEventListener("click", loadIncidentReports);
+  document.querySelector("#downloadIncident").addEventListener("click", downloadIncidentReport);
   copyMarkdownButton.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(incidentMarkdown.textContent);
       setIconButtonIcon(copyMarkdownButton, "check", "Copied markdown report");
+      document.querySelector("#incidentFeedback").textContent = "Markdown report copied.";
       setTimeout(() => {
         setIconButtonIcon(copyMarkdownButton, "copy", "Copy markdown report");
       }, 1600);
     } catch {
       setIconButtonIcon(copyMarkdownButton, "!", "Copy failed");
+      document.querySelector("#incidentFeedback").textContent = "Clipboard unavailable. Select and copy the Markdown preview, or use Download Markdown.";
     }
   });
   copyStatusButton.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(incidentStatusUpdate.textContent);
       setIconButtonIcon(copyStatusButton, "check", "Copied status update");
+      document.querySelector("#incidentFeedback").textContent = "Status update copied.";
       setTimeout(() => {
         setIconButtonIcon(copyStatusButton, "copy", "Copy status update");
       }, 1600);
     } catch {
       setIconButtonIcon(copyStatusButton, "!", "Copy failed");
+      document.querySelector("#incidentFeedback").textContent = "Clipboard unavailable. Select and copy the status update below.";
     }
   });
   copyButtons.forEach((button) => {
@@ -1117,8 +1150,14 @@ function boot() {
   });
   });
   document.addEventListener("click", async (event) => {
-    if (event.target.closest("[data-show-incident]")) {
-      setViewHash("incident");
+    const createIncident = event.target.closest("[data-create-incident-namespace]");
+    if (createIncident) {
+      createIncidentReport(createIncident.dataset.createIncidentNamespace, createIncident.dataset.createIncidentDeployment);
+      return;
+    }
+    const savedIncident = event.target.closest("[data-incident-id]");
+    if (savedIncident) {
+      openIncidentReport(savedIncident.dataset.incidentId);
       return;
     }
     const diagnosisAction = event.target.closest("[data-diagnose-namespace][data-diagnose-deployment]");

@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KubePilot</title>
-    <link rel="stylesheet" href="./styles.css?v=20261022-contextual-guidance" />
+    <link rel="stylesheet" href="./styles.css?v=20261023-guided-demo" />
   </head>
   <body data-theme="dark">
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
     <svg class="icon-defs" aria-hidden="true">
       <symbol id="i-command" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"></rect><rect x="14" y="4" width="6" height="6" rx="1.5"></rect><rect x="4" y="14" width="6" height="6" rx="1.5"></rect><rect x="14" y="14" width="6" height="6" rx="1.5"></rect></symbol>
       <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.65 5.35L19 10l-5.35 1.65L12 17l-1.65-5.35L5 10l5.35-1.65L12 3Z"></path><path d="m18.5 15.5.65 1.85L21 18l-1.85.65L18.5 21l-.65-2.35L16 18l1.85-.65.65-1.85Z"></path></symbol>
@@ -75,7 +76,7 @@
         </button>
       </aside>
 
-      <main class="workspace">
+      <main class="workspace" id="mainContent" tabindex="-1">
         <header class="topbar">
           <div>
             <p class="eyebrow">Understand failing deployments</p>
@@ -103,7 +104,7 @@
               <span class="icon"><svg><use href="#i-refresh"></use></svg></span>
               <span>Refresh</span>
             </button>
-            <div class="connection-pill" id="connectionStatus">Booting UI</div>
+            <div class="connection-pill" id="connectionStatus" role="status">Booting UI</div>
           </div>
         </header>
 
@@ -212,7 +213,7 @@
                   <code class="type-readout-gemini" id="copilotTyped">ready_for_operator_input</code>
                 </div>
               </div>
-              <div class="chat-log" id="chatLog">
+              <div class="chat-log" id="chatLog" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text">
                 <div class="assistant-message">
                   <strong>Ready when you are.</strong>
                   <span>Ask what broke, why it broke, and what evidence supports the diagnosis.</span>
@@ -296,6 +297,12 @@
 
         <section class="view" data-view-panel="incident">
           <article class="panel">
+            <h2>Saved incident reports</h2>
+            <p>Reports are snapshots, not live incident tracking. Without a database, they last only for the API process.</p>
+            <button type="button" class="secondary-button" id="refreshIncidents">Refresh reports</button>
+            <div id="incidentList" class="incident-list" aria-label="Saved reports"><p>No reports loaded yet.</p></div>
+          </article>
+          <article class="panel">
             <div class="panel-heading">
               <div>
                 <p class="eyebrow">Incident</p>
@@ -304,6 +311,7 @@
               <button
                 class="secondary-button icon-button"
                 id="copyMarkdownButton"
+                disabled
                 type="button"
                 aria-label="Copy markdown report"
                 title="Copy markdown report"
@@ -311,17 +319,20 @@
                 <span class="icon"><svg><use href="#i-copy"></use></svg></span>
               </button>
             </div>
-            <div class="incident-room" id="incidentRoom">
+            <p id="incidentFeedback" role="status">Choose a saved report, or create one from a workload investigation.</p>
+            <button type="button" class="secondary-button" id="downloadIncident" disabled>Download Markdown</button>
+            <div class="incident-room" id="incidentRoom" hidden>
               <div class="incident-hero">
                 <div>
                   <span class="severity-badge muted" id="incidentSeverity">Waiting</span>
-                  <h3 id="incidentTitle">Run a diagnosis to open the incident room.</h3>
+                  <h3 id="incidentTitle">Choose an incident report.</h3>
                   <p id="incidentSummary">KubePilot will turn deployment health, pod state, events, logs, and runbook context into an operator-ready incident view.</p>
                   <p class="artifact-meta" id="incidentArtifact">No backend artifact generated yet.</p>
                 </div>
                 <button
                   class="secondary-button icon-text-button"
                   id="copyStatusButton"
+                  disabled
                   type="button"
                   aria-label="Copy status update"
                   title="Copy status update"
@@ -362,7 +373,7 @@
                 </section>
               </div>
             </div>
-            <details class="markdown-export" open>
+            <details class="markdown-export">
               <summary>Markdown Export</summary>
               <pre class="markdown-preview" id="incidentMarkdown">Generate a report from the diagnosis view.</pre>
             </details>
@@ -416,241 +427,43 @@
         </section>
 
         <section class="view" data-view-panel="documentation">
-          <article class="docs-shell">
-            <div class="docs-hero">
-              <div>
-                <p class="eyebrow">Documentation</p>
-                <h2>KubePilot demo guide</h2>
-                <p>
-                  KubePilot is an agentic Kubernetes operations copilot. It combines
-                  FastAPI, RAG over runbooks, Kubernetes tool-calling, incident reports,
-                  metrics, audit events, and tracing into a local-first demo platform.
-                </p>
-              </div>
-            </div>
-
-            <div class="docs-grid">
-              <section class="docs-card wide about-card">
-                <p class="eyebrow">About the project</p>
-                <h3>What KubePilot Actually Is</h3>
-                <p>
-                  KubePilot is an agentic AI Kubernetes operations workspace built to
-                  make production troubleshooting faster, clearer, and more explainable.
-                  Instead of jumping between dashboards, terminals, runbooks, and incident
-                  notes, an engineer can ask one operational question and get a guided
-                  answer backed by cluster evidence.
-                </p>
-                <p>
-                  The project was built to demonstrate how AI can support real DevOps and
-                  SRE workflows without hiding the underlying facts. KubePilot keeps the
-                  Kubernetes tool boundary explicit, retrieves runbook context, shows
-                  diagnosis details, and produces incident-ready reports that a human can
-                  review before taking action.
-                </p>
-              </section>
-
-              <section class="docs-card">
-                <h3>Why It Was Built</h3>
-                <ul>
-                  <li>To reduce the time spent manually stitching together pods, events, logs, and runbooks.</li>
-                  <li>To show how an AI agent can explain Kubernetes failures with evidence.</li>
-                  <li>To create a portfolio-grade DevOps project that combines backend, AI, Kubernetes, and UI work.</li>
-                  <li>To keep troubleshooting local-first and demo-friendly while still supporting a real cluster boundary.</li>
-                </ul>
-              </section>
-
-              <section class="docs-card">
-                <h3>Built By</h3>
-                <div class="creator-card">
-                  <strong>Platform Team</strong>
-                  <span>Operations engineering team building AI-assisted troubleshooting for Kubernetes workloads.</span>
-                </div>
-                <p class="docs-note">
-                  KubePilot is designed as a practical showcase of Kubernetes automation,
-                  observability, retrieval, incident reporting, and AI-assisted operations.
-                </p>
-              </section>
-
-              <section class="docs-card wide">
-                <h3>Languages And Stack</h3>
-                <div class="stack-grid">
-                  <span>Python</span>
-                  <span>FastAPI</span>
-                  <span>JavaScript</span>
-                  <span>HTML</span>
-                  <span>CSS</span>
-                  <span>Go</span>
-                  <span>Docker</span>
-                  <span>Kubernetes</span>
-                  <span>Helm</span>
-                  <span>RAG</span>
-                  <span>FAISS-ready retrieval</span>
-                  <span>LangGraph-ready orchestration</span>
-                </div>
-              </section>
-
-              <details class="docs-card" open>
-                <summary>
-                  <span>
-                    <span class="docs-icon"><svg><use href="#i-spark"></use></svg></span>
-                    What It Does
-                  </span>
-                  <span class="chevron"><svg><use href="#i-chevron"></use></svg></span>
-                </summary>
-                <div class="docs-body">
-                  <ul>
-                    <li>Answers operational questions with runbook-backed context.</li>
-                    <li>Inspects cluster health through Kubernetes tool boundaries.</li>
-                    <li>Diagnoses deployments with pods, events, logs, and recommendations.</li>
-                    <li>Generates incident reports as JSON and markdown.</li>
-                  </ul>
-                </div>
-              </details>
-
-              <details class="docs-card" open>
-                <summary>
-                  <span>
-                    <span class="docs-icon"><svg><use href="#i-command"></use></svg></span>
-                    How The Agent Works
-                  </span>
-                  <span class="chevron"><svg><use href="#i-chevron"></use></svg></span>
-                </summary>
-                <div class="docs-body">
-                  <ol>
-                    <li>Classifies the user intent.</li>
-                    <li>Retrieves matching runbook context.</li>
-                    <li>Calls Kubernetes health or diagnosis tools when needed.</li>
-                    <li>Synthesizes an answer with evidence and next actions.</li>
-                    <li>Records audit events, metrics, and trace spans.</li>
-                  </ol>
-                </div>
-              </details>
-
-              <section class="docs-card">
-                <h3>Demo Prompts</h3>
-                <div class="docs-prompts">
-                  <button type="button" data-prompt="Show unhealthy workloads">
-                    <span class="button-icon"><svg><use href="#i-pulse"></use></svg></span>
-                    <span>Show unhealthy workloads</span>
-                  </button>
-                  <button type="button" data-prompt="Show unhealthy workloads">
-                    <span class="button-icon"><svg><use href="#i-pulse"></use></svg></span>
-                    <span>Show unhealthy workloads</span>
-                  </button>
-                  <button type="button" data-prompt="Why is my deployment failing?">
-                    <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
-                    <span>Why is my deployment failing?</span>
-                  </button>
-                  <button type="button" data-prompt="Create an incident report for the affected workload">
-                    <span class="button-icon"><svg><use href="#i-report"></use></svg></span>
-                    <span>Create incident report</span>
-                  </button>
-                  <button type="button" data-prompt="How do I troubleshoot ImagePullBackOff?">
-                    <span class="button-icon"><svg><use href="#i-book"></use></svg></span>
-                    <span>Troubleshoot ImagePullBackOff</span>
-                  </button>
-                  <button type="button" data-prompt="Why is this pod pending?">
-                    <span class="button-icon"><svg><use href="#i-search"></use></svg></span>
-                    <span>Why is this pod pending?</span>
-                  </button>
-                </div>
-              </section>
-
-              <section class="docs-card">
-                <h3>Run The Demo</h3>
-                <div class="command-list">
-                  <div class="command-row">
-                    <code>docker compose up --build</code>
-                    <button class="copy-button icon-button" type="button" data-copy="docker compose up --build" aria-label="Copy command" title="Copy command">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>./scripts/web-smoke.sh</code>
-                    <button class="copy-button icon-button" type="button" data-copy="./scripts/web-smoke.sh" aria-label="Copy command" title="Copy command">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>./scripts/kind-demo.sh</code>
-                    <button class="copy-button icon-button" type="button" data-copy="./scripts/kind-demo.sh" aria-label="Copy command" title="Copy command">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                </div>
-              </section>
-
-              <details class="docs-card wide" open>
-                <summary>
-                  <span>
-                    <span class="docs-icon"><svg><use href="#i-pulse"></use></svg></span>
-                    Key Endpoints
-                  </span>
-                  <span class="chevron"><svg><use href="#i-chevron"></use></svg></span>
-                </summary>
-                <div class="endpoint-list docs-body">
-                  <div class="command-row">
-                    <code>POST /api/v1/chat</code>
-                    <button class="copy-button icon-button" type="button" data-copy="POST /api/v1/chat" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>GET /api/v1/status</code>
-                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/status" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>GET /api/v1/cluster/health</code>
-                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/health" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>GET /api/v1/cluster/namespaces/{namespace}/deployments/{deployment}/diagnose</code>
-                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/namespaces/{namespace}/deployments/{deployment}/diagnose" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>GET /api/v1/cluster/namespaces/{namespace}/deployments/{deployment}/incident-report.md</code>
-                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/namespaces/{namespace}/deployments/{deployment}/incident-report.md" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>GET /api/v1/cluster/incident-reports</code>
-                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/incident-reports" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>GET /api/v1/cluster/incident-reports/{report_id}</code>
-                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/cluster/incident-reports/{report_id}" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>GET /api/v1/traces</code>
-                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/traces" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                  <div class="command-row">
-                    <code>GET /api/v1/audit/events</code>
-                    <button class="copy-button icon-button" type="button" data-copy="GET /api/v1/audit/events" aria-label="Copy endpoint" title="Copy endpoint">
-                      <span class="icon"><svg><use href="#i-copy"></use></svg></span>
-                    </button>
-                  </div>
-                </div>
-              </details>
-            </div>
+          <article class="panel">
+            <p class="eyebrow">Getting started</p>
+            <h2>Investigate a failure in five steps</h2>
+            <p>KubePilot gathers Kubernetes evidence and troubleshooting guidance. You review and run any checks yourself.</p>
+            <ol class="demo-walkthrough">
+              <li><strong>Choose a workload.</strong> Open Overview and select Investigate beside a workload needing attention.</li>
+              <li><strong>Review its signals.</strong> Read the observed problem, failure signals, pods, events, and logs.</li>
+              <li><strong>Choose your next check.</strong> Review explained commands and suggested checks. Commands are not executed by KubePilot.</li>
+              <li><strong>Ask with context.</strong> Select Ask about this workload, then Explain this failure. Clear context before asking about another workload.</li>
+              <li><strong>Share a snapshot.</strong> Return to Workloads and select Create incident report. Under Incidents, copy the status or download Markdown.</li>
+            </ol>
+            <button type="button" data-open-view="dashboard">Start on Overview</button>
+          </article>
+          <article class="panel">
+            <h2>Three demo investigations</h2>
+            <p>Use these scenarios when running the fixture demo. They are sample failures; refreshing does not repair them.</p>
+            <ul class="demo-walkthrough">
+              <li><strong>payments/checkout:</strong> inspect crashing containers, image pull failures, and missing configuration in logs.</li>
+              <li><strong>platform/metrics-scraper:</strong> inspect readiness probe failures and deployment events.</li>
+              <li><strong>notifications/email-worker:</strong> inspect pending pods and scheduling or resource constraints.</li>
+            </ul>
+            <p>The Overview notice identifies the configured data source. An inspection service can also use fixtures; service mode does not prove a live cluster connection.</p>
+          </article>
+          <article class="panel">
+            <h2>If something is unavailable</h2>
+            <ul class="demo-walkthrough">
+              <li><strong>Workloads did not load:</strong> confirm the API is running and select Refresh. Developer activity is optional.</li>
+              <li><strong>Deployment not found:</strong> check its namespace and name, or select an available workload.</li>
+              <li><strong>No saved reports:</strong> create a report from an investigation first. Native in-memory reports reset when the API restarts.</li>
+              <li><strong>Clipboard blocked:</strong> select and copy the text manually, or download the Markdown file.</li>
+            </ul>
+            <p>Reports are snapshots and explanations are guidance. Verify the evidence before making a change.</p>
           </article>
         </section>
       </main>
     </div>
-    <script type="module" src="./app.js?v=20261022-contextual-guidance"></script>
+    <script type="module" src="./app.js?v=20261023-guided-demo"></script>
   </body>
 </html>
 

@@ -9,3 +9,6 @@ __pycache__/
 dist/
 build/
 .codex
+node_modules/
+playwright-report/
+test-results/

@@ -51,15 +51,6 @@ let investigationSequence = 0;
 let knownWorkloads = [];
 let latestSpans = [];
 let latestAuditEvents = [];
-let typedPhraseIndex = 0;
-
-const TYPED_PHRASES = [
-  "scanning cluster signals",
-  "retrieving runbook context",
-  "building incident evidence",
-  "planning safe remediation",
-];
-
 const ICONS = {
   copy: '<svg><use href="#i-copy"></use></svg>',
   check: '<svg><use href="#i-check"></use></svg>',
@@ -83,6 +74,7 @@ function setConnectionStatus(message, state = "") {
 }
 
 function openView(viewName) {
+  const previous = document.querySelector("[data-view-panel].active")?.dataset.viewPanel;
   document.querySelectorAll("[data-view-panel]").forEach((panel) => {
     panel.classList.toggle("active", panel.dataset.viewPanel === viewName);
   });
@@ -97,11 +89,19 @@ function openView(viewName) {
       button.removeAttribute("aria-current");
     }
   });
+  if (previous !== viewName) {
+    const panel = [...document.querySelectorAll("[data-view-panel]")].find(item => item.dataset.viewPanel === viewName);
+    const heading = panel?.querySelector("h2, h1");
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.focus();
+    }
+  }
 }
 
 function getKnownView(viewName) {
-  const view = document.querySelector(`[data-view-panel="${viewName}"]`);
-  return view ? viewName : "dashboard";
+  return [...document.querySelectorAll("[data-view-panel]")].some(panel => panel.dataset.viewPanel === viewName)
+    ? viewName : "dashboard";
 }
 
 function openViewFromHash() {
@@ -109,12 +109,17 @@ function openViewFromHash() {
   openView(viewName);
   document.body.dataset.activeView = viewName;
   if (viewName === "incident") loadIncidentReports();
+  if (viewName === "copilot") {
+    const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
+    document.querySelector("#geminiGreeting").style.display = hasMessages ? "none" : "flex";
+    document.querySelector("#geminiChatArea").style.display = hasMessages ? "flex" : "none";
+  }
 }
 
 function setViewHash(viewName) {
   const nextHash = `#${getKnownView(viewName)}`;
   if (window.location.hash !== nextHash) {
-    window.history.replaceState(null, "", nextHash);
+    window.history.pushState(null, "", nextHash);
   }
   openViewFromHash();
 }
@@ -133,21 +138,6 @@ function bootTheme() {
   const savedTheme = localStorage.getItem("kubepilot-theme");
   const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
   setTheme(savedTheme || (prefersLight ? "light" : "dark"));
-}
-
-function startTypeReadout() {
-  const renderPhrase = () => {
-    const phrase = TYPED_PHRASES[typedPhraseIndex % TYPED_PHRASES.length];
-    if (heroTyped) {
-      heroTyped.textContent = phrase;
-    }
-    if (copilotTyped) {
-      copilotTyped.textContent = phrase.replaceAll(" ", "_");
-    }
-    typedPhraseIndex += 1;
-  };
-  renderPhrase();
-  setInterval(renderPhrase, 2400);
 }
 
 async function apiFetch(path, options = {}) {
@@ -179,29 +169,31 @@ async function safeErrorDetail(response) {
 }
 
 async function loadOverview() {
-  setConnectionStatus("Connecting", "");
+  setConnectionStatus("Refreshing", "");
   refreshButton.disabled = true;
   try {
-    const [status, capabilities, health, traces, audit] = await Promise.all([
-      apiFetch("/api/v1/status"),
-      apiFetch("/api/v1/capabilities"),
-      apiFetch("/api/v1/cluster/health"),
-      apiFetch("/api/v1/traces?limit=6"),
+    const [status, health, capabilities, traces, audit] = await Promise.allSettled([
+      apiFetch("/api/v1/status"), apiFetch("/api/v1/cluster/health"),
+      apiFetch("/api/v1/capabilities"), apiFetch("/api/v1/traces?limit=6"),
       apiFetch("/api/v1/audit/events?limit=8"),
     ]);
-    renderStatus(status);
-    renderCapabilities(capabilities.capabilities || []);
-    renderWorkloads(health);
-    latestSpans = traces.spans || [];
-    latestAuditEvents = audit.events || [];
+    if (status.status === "fulfilled") renderStatus(status.value);
+    else document.querySelector("#dataMode").textContent = "Data source unavailable. Check the API connection, then select Refresh.";
+    if (health.status === "fulfilled") renderWorkloads(health.value);
+    else {
+      knownWorkloads = [];
+      workloadList.innerHTML = `<div class="empty-state" role="alert">Could not load workloads: ${escapeHtml(health.reason.message)}. Check the connection, then select Refresh.</div>`;
+      document.querySelector("#workloadSelect").innerHTML = '<option value="">Workload list unavailable — enter a deployment below</option>';
+    }
+    if (capabilities.status === "fulfilled") renderCapabilities(capabilities.value.capabilities || []);
+    else capabilityGrid.innerHTML = '<p>Capabilities unavailable. Select Refresh to retry.</p>';
+    latestSpans = traces.status === "fulfilled" ? traces.value.spans || [] : [];
+    latestAuditEvents = audit.status === "fulfilled" ? audit.value.events || [] : [];
     renderObservability();
-    setConnectionStatus("API connected", "ok");
-  } catch (error) {
-    setConnectionStatus("API unavailable", "error");
-    document.querySelector("#dataMode").textContent = "Data source unavailable. Check that the API is running, then select Refresh.";
-    capabilityGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
-    workloadList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
-    document.querySelector("#workloadSelect").innerHTML = '<option value="">Workload list unavailable — enter a deployment below</option>';
+    if (traces.status === "rejected") traceList.textContent = "Trace activity unavailable. Select Refresh to retry.";
+    if (audit.status === "rejected") auditList.textContent = "Audit activity unavailable. Select Refresh to retry.";
+    const connected = status.status === "fulfilled" && health.status === "fulfilled";
+    setConnectionStatus(connected ? "API connected" : "Some data unavailable", connected ? "ok" : "error");
   } finally {
     refreshButton.disabled = false;
   }
@@ -313,6 +305,7 @@ function renderWorkloads(health) {
           </div>
           <button
             class="workload-action"
+            aria-label="Investigate ${escapeHtml(workload.namespace)}/${escapeHtml(workload.name)}"
             type="button"
             data-namespace="${escapeHtml(workload.namespace)}"
             data-deployment="${escapeHtml(workload.name)}"
@@ -657,7 +650,7 @@ async function diagnoseDeployment(namespace, deployment) {
   setViewHash("diagnosis");
   const submitButton = diagnosisForm.querySelector("button[type='submit']");
   submitButton.disabled = true;
-  diagnosisOutput.innerHTML = `<div class="empty-state">Collecting pods, events, and logs...</div>`;
+  diagnosisOutput.innerHTML = `<div class="empty-state" role="status">Collecting pods, events, and logs…</div>`;
 
   try {
     const encodedNamespace = encodeURIComponent(namespace);
@@ -1072,7 +1065,7 @@ function boot() {
     button.addEventListener("click", () => sendChat(button.dataset.contextQuestion));
   });
   bootTheme();
-  startTypeReadout();
+  if (copilotTyped) copilotTyped.textContent = "Read-only guidance";
   if (themeToggle) {
     themeToggle.addEventListener("click", () => {
       setTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
@@ -1087,67 +1080,13 @@ function boot() {
   refreshButton.addEventListener("click", () => {
     loadOverview();
   });
-  document.querySelectorAll("[data-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-    setViewHash(button.dataset.view);
-
-      // If going to copilot, manage visibility of greeting / chat area
-      if (button.dataset.view === "copilot") {
-        const geminiGreeting = document.querySelector("#geminiGreeting");
-        const geminiChatArea = document.querySelector("#geminiChatArea");
-
-        // Show greeting only if there are no user messages in chat log
-        const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
-        if (geminiGreeting && geminiChatArea) {
-          if (hasMessages) {
-            geminiGreeting.style.display = "none";
-            geminiChatArea.style.display = "flex";
-          } else {
-            geminiGreeting.style.display = "flex";
-            geminiChatArea.style.display = "none";
-          }
-        }
-      }
-    });
+  document.querySelectorAll("[data-view]").forEach(button => {
+    button.addEventListener("click", () => setViewHash(button.dataset.view));
   });
-  document.querySelectorAll("[data-open-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      setViewHash(button.dataset.openView);
-
-      if (button.dataset.openView === "copilot") {
-        const geminiGreeting = document.querySelector("#geminiGreeting");
-        const geminiChatArea = document.querySelector("#geminiChatArea");
-        const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
-        if (geminiGreeting && geminiChatArea) {
-          if (hasMessages) {
-            geminiGreeting.style.display = "none";
-            geminiChatArea.style.display = "flex";
-          } else {
-            geminiGreeting.style.display = "flex";
-            geminiChatArea.style.display = "none";
-          }
-        }
-      }
-    });
+  document.querySelectorAll("[data-open-view]").forEach(button => {
+    button.addEventListener("click", () => setViewHash(button.dataset.openView));
   });
-  window.addEventListener("hashchange", () => {
-  openViewFromHash();
-    const currentHash = window.location.hash.replace("#", "");
-    if (currentHash === "copilot") {
-      const geminiGreeting = document.querySelector("#geminiGreeting");
-      const geminiChatArea = document.querySelector("#geminiChatArea");
-      const hasMessages = chatLog.querySelectorAll(".user-message").length > 0;
-      if (geminiGreeting && geminiChatArea) {
-        if (hasMessages) {
-          geminiGreeting.style.display = "none";
-          geminiChatArea.style.display = "flex";
-         } else {
-          geminiGreeting.style.display = "flex";
-          geminiChatArea.style.display = "none";
-    }
-      }
-    }
-  });
+  window.addEventListener("hashchange", openViewFromHash);
   openViewFromHash();
   document.querySelector("#workloadSelect").addEventListener("change", (event) => {
     if (event.target.value === "") return;

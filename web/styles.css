@@ -2753,3 +2753,19 @@ body[data-theme="light"] :is(.gemini-util-btn, .gemini-submit-btn) { color: var(
 .view.active { grid-template-columns: minmax(0, 1fr); }
 [data-view-panel="incident"] .panel { min-width: 0; }
 .incident-hero h3, .incident-room p { overflow-wrap: anywhere; }
+
+.skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 12px 18px; background: var(--bg-soft); color: var(--ink); transform: translateY(-160%); border: 2px solid var(--accent); }
+.skip-link:focus { transform: translateY(0); }
+a:focus-visible, input:focus-visible, select:focus-visible, [tabindex="-1"]:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.gemini-capsule input:focus-visible { outline: 2px solid var(--accent) !important; outline-offset: 2px; }
+.demo-walkthrough { display: grid; gap: 16px; line-height: 1.65; padding-left: 24px; }
+body[data-theme="light"] { --warn: #825300; --bad: #b42525; --good: #315900; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (max-width: 620px) {
+  .gemini-chat-area .chat-log { max-height: none; min-height: 200px; overflow: visible; }
+  .gemini-chat-area .assistant-message, .gemini-chat-area .user-message { max-width: 100%; }
+  .topbar { position: static; }
+}

@@ -47,16 +47,6 @@ async def generated_incident_report(report_id: str) -> IncidentReportResponse:
     return report
 
 
-@router.get("/incident-reports/{report_id}/markdown")
-async def saved_incident_report_markdown(report_id: str) -> Response:
-    """Export the selected saved artifact without generating another report."""
-
-    report = get_incident_report_store().get(report_id)
-    if report is None:
-        raise HTTPException(status_code=404, detail="Incident report not found")
-    return Response(_incident_report_markdown(report), media_type="text/markdown; charset=utf-8")
-
-
 @router.get(
     "/namespaces/{namespace}/deployments/{name}/diagnose",
     response_model=DeploymentDiagnosisResponse,
@@ -141,8 +131,6 @@ def _incident_report_markdown(report: IncidentReportResponse) -> str:
     lines = [
         f"# {report.title}",
         "",
-        f"- Report ID: {report.report_id}",
-        f"- Generated at: {report.generated_at.isoformat()}",
         f"- Severity: {report.severity}",
         f"- Impacted resource: {report.impacted_resource}",
         "",

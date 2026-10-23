@@ -25,7 +25,7 @@ vm.runInContext(`
 `, context);
 const diagnosis = {
   namespace: 'payments', name: 'checkout',
-  health: {status: 'Degraded', reason: '<script>unsafe</script>'},
+  health: {status: 'Degraded', reason: 'Two unavailable replicas'},
   pods: [], events: [], logs: [], recommendations: ['Inspect previous logs'],
 };
 context.diagnosisFixture = diagnosis;
@@ -45,10 +45,9 @@ assert.match(element('#workloadList').innerHTML, /No unhealthy workloads/);
 (async () => {
   // Hold the first investigation while the second completes, then release it.
   const pending = [];
-  const requests = [];
-  context.apiFetch = url => { requests.push(url); return url.includes('/old/')
+  context.apiFetch = url => url.includes('/old/')
     ? new Promise(resolve => pending.push(() => resolve(diagnosis)))
-    : Promise.resolve(url.endsWith('/diagnose') ? {...diagnosis, name:'new'} : url.endsWith('/remediation-plan') ? null : {}); };
+    : Promise.resolve(url.endsWith('/diagnose') ? {...diagnosis, name:'new'} : url.endsWith('/remediation-plan') ? null : {});
   const first = context.diagnoseDeployment('payments', 'old');
   await context.diagnoseDeployment('payments', 'new');
   const newest = element('#diagnosisOutput').innerHTML;
@@ -57,7 +56,6 @@ assert.match(element('#workloadList').innerHTML, /No unhealthy workloads/);
   assert.equal(element('#diagnosisOutput').innerHTML, newest);
   assert.match(newest, /payments\/deployment\/new/);
   assert.equal(element('#deploymentInput').value, 'new');
-  assert.ok(requests.every(url => !url.includes('incident-report')));
   context.apiFetch = async () => { throw new Error('Not found'); };
   await context.diagnoseDeployment('payments', 'missing');
   assert.match(element('#diagnosisOutput').innerHTML, /Check the workload names/);

@@ -83,32 +83,3 @@ async def test_deployment_incident_report_returns_404_for_unknown_deployment(
     )
 
     assert response.status_code == 404
-
-
-@pytest.mark.anyio
-async def test_saved_markdown_exports_same_artifact_without_creating_another(
-    client: httpx.AsyncClient,
-) -> None:
-    created = await client.get(
-        "/api/v1/cluster/namespaces/payments/deployments/checkout/incident-report"
-    )
-    report = created.json()
-    before = (await client.get("/api/v1/cluster/incident-reports")).json()
-    for _ in range(2):
-        exported = await client.get(
-            f"/api/v1/cluster/incident-reports/{report['report_id']}/markdown"
-        )
-        assert exported.status_code == 200
-        assert "text/markdown" in exported.headers["content-type"]
-        assert report["report_id"] in exported.text
-        assert report["status_update"] in exported.text
-        assert report["probable_cause"] in exported.text
-    after = (await client.get("/api/v1/cluster/incident-reports")).json()
-    assert before == after
-
-
-@pytest.mark.anyio
-async def test_saved_markdown_returns_404_for_missing_artifact(client: httpx.AsyncClient) -> None:
-    response = await client.get("/api/v1/cluster/incident-reports/missing/markdown")
-
-    assert response.status_code == 404

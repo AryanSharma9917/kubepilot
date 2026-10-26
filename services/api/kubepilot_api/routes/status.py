@@ -20,6 +20,8 @@ async def runtime_status() -> RuntimeStatusResponse:
     return RuntimeStatusResponse(
         environment=settings.environment,
         kubernetes_mode=settings.kubernetes_mode,
+        cluster_display_name=settings.cluster_display_name,
+        allowed_namespaces=list(settings.allowed_namespaces),
         rag_mode=settings.rag_mode,
         llm_provider=settings.llm_provider,
         agent_mode=settings.agent_mode,

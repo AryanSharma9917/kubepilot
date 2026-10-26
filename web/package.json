@@ -5,7 +5,7 @@
   "engines": {"node": ">=20"},
   "scripts": {
     "dev": "node dev-server.cjs",
-    "check": "node --check app.js && node checks/investigation.cjs && node checks/chat.cjs && node checks/incidents.cjs",
+    "check": "node --check app.js && node checks/investigation.cjs && node checks/chat.cjs && node checks/incidents.cjs && node checks/connection.cjs",
     "check:browser": "node --test checks/browser.cjs"
   },
   "devDependencies": {"playwright": "1.62.1"}

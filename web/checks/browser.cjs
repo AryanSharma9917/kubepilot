@@ -106,6 +106,24 @@ test('guided fixture demo in a real browser', {timeout:120000}, async t => {
         assert.deepEqual(errors,[]);
       } finally {await context.close();}
     });
+    await t.test('guided namespace check never labels fixtures as a live cluster', async () => {
+      const context=await browser.newContext();
+      try {
+        const page=await context.newPage();await page.goto(base);
+        await page.locator('.sidebar-tools').evaluate(e=>{e.open=true;});
+        await page.getByRole('button',{name:'Cluster connection',exact:true}).click();
+        await page.locator('#connectionNamespace').fill('payments');
+        await page.getByRole('button',{name:'Check namespace access',exact:true}).click();
+        await page.getByText(/No live cluster was checked/).waitFor();
+        assert.match(await page.locator('#connectionResult').textContent(),/Namespace: payments/);
+        await page.route('**/api/v1/cluster/health?namespace=*',r=>r.fulfill({status:403,contentType:'application/json',body:JSON.stringify({detail:'Namespace is not allowed'})}));
+        await page.getByRole('button',{name:'Check namespace access',exact:true}).click();
+        await page.getByText(/Namespace check failed/).waitFor();
+        assert.ok(!(await page.locator('#connectionResult').textContent()).includes('Checked:'));
+        await page.setViewportSize({width:390,height:900});
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+      } finally {await context.close();}
+    });
     await t.test('keyboard entry, history, invalid hashes, and reduced motion', async () => {
       const context=await browser.newContext({reducedMotion:'reduce'});
       try {

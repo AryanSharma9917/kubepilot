@@ -96,3 +96,25 @@ async def test_platform_capabilities_reflect_runtime_modes(
     assert capabilities["Agentic orchestration"] == "langgraph"
     assert capabilities["Runbook RAG"] == "faiss"
     assert capabilities["Kubernetes diagnosis"] == "in_cluster"
+
+
+@pytest.mark.anyio
+async def test_status_exposes_label_and_namespace_scope_without_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KUBEPILOT_CLUSTER_DISPLAY_NAME", "Development east")
+    monkeypatch.setenv("KUBEPILOT_ALLOWED_NAMESPACES", "payments,platform")
+    monkeypatch.setenv("KUBEPILOT_KUBECONFIG", "/private/credentials/config")
+    monkeypatch.setenv("KUBEPILOT_K8S_SERVICE_URL", "http://private-inspector:8081")
+    get_settings.cache_clear()
+    try:
+        transport = httpx.ASGITransport(app=create_app())
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get("/api/v1/status")
+        assert response.status_code == 200
+        assert response.json()["cluster_display_name"] == "Development east"
+        assert response.json()["allowed_namespaces"] == ["payments", "platform"]
+        assert "/private/credentials" not in response.text
+        assert "private-inspector" not in response.text
+    finally:
+        get_settings.cache_clear()

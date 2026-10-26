@@ -2,7 +2,9 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
+from kubepilot_api.config import get_settings
 from kubepilot_api.incident_store import get_incident_report_store
+from kubepilot_api.policy import NamespaceAccessPolicy
 from kubepilot_api.schemas import (
     ClusterHealthResponse,
     DeploymentDiagnosisResponse,
@@ -34,16 +36,22 @@ async def generated_incident_reports(
 ) -> IncidentReportsResponse:
     """Return recently generated incident report artifacts."""
 
-    return IncidentReportsResponse(reports=get_incident_report_store().list(limit=limit))
+    settings = get_settings()
+    _ensure_report_access()
+    return IncidentReportsResponse(reports=get_incident_report_store().list(
+        limit=limit, allowed_namespaces=settings.allowed_namespaces
+    ))
 
 
 @router.get("/incident-reports/{report_id}", response_model=IncidentReportResponse)
 async def generated_incident_report(report_id: str) -> IncidentReportResponse:
     """Return one generated incident report artifact by ID."""
 
+    _ensure_report_access()
     report = get_incident_report_store().get(report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Incident report not found")
+    _ensure_report_access(report.impacted_resource)
     return report
 
 
@@ -51,9 +59,11 @@ async def generated_incident_report(report_id: str) -> IncidentReportResponse:
 async def saved_incident_report_markdown(report_id: str) -> Response:
     """Export the selected saved artifact without generating another report."""
 
+    _ensure_report_access()
     report = get_incident_report_store().get(report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Incident report not found")
+    _ensure_report_access(report.impacted_resource)
     return Response(_incident_report_markdown(report), media_type="text/markdown; charset=utf-8")
 
 
@@ -135,6 +145,18 @@ async def deployment_remediation_plan(
     if plan is None:
         raise HTTPException(status_code=404, detail="Deployment not found")
     return plan
+
+
+def _ensure_report_access(resource: str | None = None) -> None:
+    settings = get_settings()
+    policy = NamespaceAccessPolicy(settings.allowed_namespaces, settings.allowed_actions)
+    try:
+        policy.ensure_operation_allowed(
+            namespace=resource.split("/", 1)[0] if resource else None,
+            action="deployment:incident-report",
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
 
 
 def _incident_report_markdown(report: IncidentReportResponse) -> str:

@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 from collections.abc import Callable
 from typing import Any, Protocol
 from urllib.error import HTTPError
@@ -320,13 +321,21 @@ def create_kubernetes_client(
 ) -> KubernetesClient:
     """Create a Kubernetes client for the requested runtime mode."""
 
+    from agent.tools.kubernetes.scope import NamespaceScopedClient
+
     if mode == "fixture":
-        return create_fixture_kubernetes_client()
-    if mode == "service":
-        return KubernetesServiceClient(service_url)
-    if mode in {"kubeconfig", "in_cluster"}:
-        return KubernetesPythonClient(mode=mode, kubeconfig_path=kubeconfig_path)
-    raise ValueError(f"Unsupported Kubernetes mode: {mode}")
+        client = create_fixture_kubernetes_client()
+    elif mode == "service":
+        client = KubernetesServiceClient(service_url)
+    elif mode in {"kubeconfig", "in_cluster"}:
+        client = KubernetesPythonClient(mode=mode, kubeconfig_path=kubeconfig_path)
+    else:
+        raise ValueError(f"Unsupported Kubernetes mode: {mode}")
+    namespaces = tuple(dict.fromkeys(
+        item.strip() for item in os.getenv("KUBEPILOT_ALLOWED_NAMESPACES", "").split(",")
+        if item.strip()
+    ))
+    return NamespaceScopedClient(client, namespaces) if namespaces else client
 
 
 def create_fixture_kubernetes_client() -> KubernetesClient:

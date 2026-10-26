@@ -63,7 +63,7 @@ class KubePilotAgent:
         if intent.name == "cluster_health":
             return await self.answer_cluster_health(agent_input.message, matches)
 
-        deployment_ref = _deployment_reference(agent_input.message)
+        deployment_ref = deployment_reference(agent_input.message)
         should_use_deployment_tool = intent.name in {
             "deployment_diagnosis",
             "incident_report",
@@ -94,7 +94,7 @@ class KubePilotAgent:
     def deployment_reference(self, message: str) -> tuple[str, str] | None:
         """Extract a deployment reference from a user message."""
 
-        return _deployment_reference(message)
+        return deployment_reference(message)
 
     async def inspect_cluster_health(self) -> ClusterHealth:
         """Collect cluster health from the configured Kubernetes tool."""
@@ -194,15 +194,30 @@ class KubePilotAgent:
             workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
         )
 
-def create_agent() -> Agent:
+def create_operation_agent() -> KubePilotAgent:
     """Create the default KubePilot agent runtime."""
+
+    options = {
+        "mode": os.getenv("KUBEPILOT_K8S_MODE", "fixture"),
+        "kubeconfig_path": os.getenv("KUBEPILOT_KUBECONFIG"),
+        "service_url": os.getenv("KUBEPILOT_K8S_SERVICE_URL", "http://k8s-tool:8081"),
+    }
+    return KubePilotAgent(
+        retriever=create_configured_retriever(),
+        cluster_inspector=create_cluster_health_inspector(**options),
+        deployment_diagnoser=create_deployment_diagnoser(**options),
+    )
+
+
+def create_agent() -> Agent:
+    """Create the configured agent runtime with the same tools in both modes."""
 
     if os.getenv("KUBEPILOT_AGENT_MODE", "deterministic") == "langgraph":
         from agent.graph.workflow import create_graph_agent
 
         return create_graph_agent()
 
-    return KubePilotAgent(retriever=create_configured_retriever())
+    return create_operation_agent()
 
 
 def create_configured_retriever() -> Retriever:
@@ -259,7 +274,7 @@ def _workflow_steps_for_intent(intent: Intent) -> tuple[WorkflowStep, ...]:
     )
 
 
-def _deployment_reference(message: str) -> tuple[str, str] | None:
+def deployment_reference(message: str) -> tuple[str, str] | None:
     normalized = message.lower()
     known_workloads = {
         "checkout": ("payments", "checkout"),

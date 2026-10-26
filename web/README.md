@@ -121,9 +121,12 @@ shows when the check completed. It does not verify all RBAC permissions or disco
 cluster identity. Set `KUBEPILOT_CLUSTER_DISPLAY_NAME` on the API host for a display
 label; never paste kubeconfigs or tokens into the UI.
 
-Use a namespace-scoped read-only credential for the pilot. Overview and general
-cluster-health chat can still request cluster-wide deployment lists; they may fail
-with namespace-only permissions. Use the namespace check and manual Workloads entry.
+Use a namespace-scoped read-only credential for the pilot and configure
+`KUBEPILOT_ALLOWED_NAMESPACES`. Overview and cluster-health chat list only those
+namespaces, without a cluster-wide deployment request. Diagnosis, contextual chat,
+saved report lists, detail reads, and Markdown exports use the same scope. Denied
+namespace or action requests return 403, including streaming chat before it starts.
+With no namespace allowlist, the original unrestricted behavior remains.
 The application allowlist is not a replacement for Kubernetes RBAC. See
 [Real-cluster readiness](../docs/real-cluster-readiness.md) for permission examples,
 current limitations, and the remaining live-cluster validation steps.

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from agent.graph.intents import Intent, classify_intent
-from agent.kubepilot_agent import KubePilotAgent
+from agent.kubepilot_agent import KubePilotAgent, create_operation_agent
 from agent.state.chat import AgentInput, AgentOutput, WorkflowStep
 from agent.tools.kubernetes import ClusterHealth, DeploymentDiagnosis
 from rag import RetrievedDocument
@@ -30,7 +30,7 @@ class GraphAgent:
     """Agent runtime that can use LangGraph when the dependency is available."""
 
     def __init__(self, fallback_agent: KubePilotAgent | None = None) -> None:
-        self._fallback_agent = fallback_agent or KubePilotAgent()
+        self._fallback_agent = fallback_agent or create_operation_agent()
         self._operation_agent = (
             self._fallback_agent
             if isinstance(self._fallback_agent, KubePilotAgent)

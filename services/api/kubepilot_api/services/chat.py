@@ -5,7 +5,11 @@ from collections.abc import AsyncIterator
 from uuid import uuid4
 
 from agent import Agent, AgentInput, create_agent
+from agent.graph.intents import classify_intent
+from agent.kubepilot_agent import deployment_reference
+from kubepilot_api.config import get_settings
 from kubepilot_api.metrics import record_chat_response
+from kubepilot_api.policy import NamespaceAccessPolicy
 from kubepilot_api.schemas import (
     ChatRequest,
     ChatResponse,
@@ -24,13 +28,7 @@ class ChatService:
     async def respond(self, request: ChatRequest) -> ChatResponse:
         """Pass the user request through the KubePilot agent boundary."""
 
-        message = request.message
-        if request.workload is not None:
-            # Put the explicit selection first so reference extraction is deterministic.
-            message = (
-                f"For deployment {request.workload.deployment} "
-                f"in namespace {request.workload.namespace}:\n{message}"
-            )
+        message = self.ensure_allowed(request)
         with trace_span("agent.respond", message_length=str(len(request.message))):
             agent_output = await self._agent.run(AgentInput(message=message))
 
@@ -60,6 +58,31 @@ class ChatService:
             citation_count=len(response.citations),
         )
         return response
+
+    def ensure_allowed(self, request: ChatRequest) -> str:
+        """Validate scope and actions before any response or stream starts."""
+
+        settings = get_settings()
+        policy = NamespaceAccessPolicy(settings.allowed_namespaces, settings.allowed_actions)
+        message = request.message
+        if request.workload is not None:
+            policy.ensure_allowed(request.workload.namespace)
+            message = (
+                f"For deployment {request.workload.deployment} "
+                f"in namespace {request.workload.namespace}:\n{message}"
+            )
+        intent = classify_intent(message).name
+        actions = {
+            "cluster_health": "cluster:health",
+            "deployment_diagnosis": "deployment:diagnose",
+            "incident_report": "deployment:incident-report",
+        }
+        if intent in actions:
+            reference = deployment_reference(message) if intent != "cluster_health" else None
+            policy.ensure_operation_allowed(
+                namespace=reference[0] if reference else None, action=actions[intent]
+            )
+        return message
 
     async def stream(self, request: ChatRequest) -> AsyncIterator[str]:
         """Stream an agent response as server-sent events."""

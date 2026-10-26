@@ -13,6 +13,7 @@ class Settings:
     environment: str = "development"
     version: str = "0.1.0"
     kubernetes_mode: str = "fixture"
+    cluster_display_name: str = "Not labelled"
     kubeconfig_path: str | None = None
     kubernetes_service_url: str = "http://k8s-tool:8081"
     allowed_namespaces: tuple[str, ...] = ()
@@ -46,6 +47,7 @@ def get_settings() -> Settings:
         environment=os.getenv("KUBEPILOT_ENVIRONMENT", "development"),
         version=os.getenv("KUBEPILOT_VERSION", "0.1.0"),
         kubernetes_mode=os.getenv("KUBEPILOT_K8S_MODE", "fixture"),
+        cluster_display_name=os.getenv("KUBEPILOT_CLUSTER_DISPLAY_NAME", "Not labelled"),
         kubeconfig_path=os.getenv("KUBEPILOT_KUBECONFIG"),
         kubernetes_service_url=os.getenv(
             "KUBEPILOT_K8S_SERVICE_URL",

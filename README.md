@@ -283,3 +283,18 @@ configuration and review.
 ## License
 
 See the repository for current licensing information.
+
+## Development-cluster connection guide
+
+Open **Help & tools → Cluster connection** for configuration steps and a named
+namespace check. The result distinguishes fixture data from deployment reads and
+shows when the check completed. It does not verify all RBAC permissions or discover
+cluster identity. Set `KUBEPILOT_CLUSTER_DISPLAY_NAME` on the API host for a display
+label; never paste kubeconfigs or tokens into the UI.
+
+Use a namespace-scoped read-only credential for the pilot. Overview and general
+cluster-health chat can still request cluster-wide deployment lists; they may fail
+with namespace-only permissions. Use the namespace check and manual Workloads entry.
+The application allowlist is not a replacement for Kubernetes RBAC. See
+[Real-cluster readiness](docs/real-cluster-readiness.md) for permission examples,
+current limitations, and the remaining live-cluster validation steps.

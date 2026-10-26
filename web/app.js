@@ -251,6 +251,28 @@ function renderObservabilitySummary(spans, events) {
     .join("");
 }
 
+async function checkNamespaceConnection(namespace) {
+  const button = document.querySelector("#connectionForm button");
+  const output = document.querySelector("#connectionResult");
+  if (button.disabled) return;
+  button.disabled = true;
+  output.textContent = `Checking deployment access in ${namespace}…`;
+  try {
+    const status = await apiFetch("/api/v1/status");
+    const health = await apiFetch(`/api/v1/cluster/health?namespace=${encodeURIComponent(namespace)}`);
+    const source = status.kubernetes_mode === "fixture"
+      ? "Demo fixture data returned. No live cluster was checked."
+      : status.kubernetes_mode === "service"
+        ? "Inspection service returned deployment data. Its upstream cluster identity and fixture/live mode were not verified."
+        : "The configured Kubernetes connection returned deployment data for this namespace.";
+    output.textContent = `${source} Configured label: ${status.cluster_display_name || "Not labelled"} (not independently verified). Mode: ${status.kubernetes_mode}. Namespace: ${namespace}. Unhealthy deployments: ${health.unhealthy_count}. Checked: ${new Date().toLocaleString()}. This is a snapshot; pod, log, and event permissions remain unchecked.`;
+  } catch (error) {
+    output.textContent = `Namespace check failed: ${error.message}. Confirm the API connection, namespace policy, local credential configuration, and deployments get/list RBAC. Correct the configuration and retry. No successful check is recorded by this attempt.`;
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function renderStatus(status) {
   const mode = document.querySelector("#dataMode");
   if (status.kubernetes_mode === "fixture") {
@@ -1063,6 +1085,11 @@ function boot() {
   document.querySelector("#geminiAttachBtn").addEventListener("click", () => setViewHash("diagnosis"));
   document.querySelectorAll("[data-context-question]").forEach(button => {
     button.addEventListener("click", () => sendChat(button.dataset.contextQuestion));
+  });
+  document.querySelector("#connectionForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const namespace = document.querySelector("#connectionNamespace").value.trim();
+    if (namespace) checkNamespaceConnection(namespace);
   });
   bootTheme();
   if (copilotTyped) copilotTyped.textContent = "Read-only guidance";

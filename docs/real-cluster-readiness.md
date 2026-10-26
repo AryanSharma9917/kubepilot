@@ -19,11 +19,70 @@ The Go tool service has its own mode:
 | `fixture` | deterministic local service output | `KUBEPILOT_K8S_TOOL_MODE=fixture` |
 | `cluster` | live cluster reads through the tool service | `KUBEPILOT_K8S_TOOL_MODE=cluster` |
 
+## Guided development-cluster pilot
+
+Open **Help & tools → Cluster connection** for setup steps and a namespace-specific
+check. Configure credentials only on the API host, never in the browser. The page
+does not upload credentials or change runtime configuration.
+
+Set `KUBEPILOT_CLUSTER_DISPLAY_NAME` to a recognizable label. This is an operator
+label, not independently discovered cluster identity. `/api/v1/status` returns that
+label and the application namespace allowlist, but not kubeconfig paths, credentials,
+or inspection service addresses.
+
+The check reads deployment health for the namespace you enter. It reports when the
+check completed and replaces an earlier successful result on failure. A successful
+read does not verify pod logs, all resource permissions, or a complete diagnosis.
+Fixture mode is always labelled as demo data. Service mode is explicitly unverified
+because the upstream service can use fixtures. No live-cluster readiness claim should
+be based only on a configured mode or the API's `/readyz` endpoint.
+
+For a pilot, use a namespace-scoped read-only identity supplied by a cluster
+administrator. The following Role is an example for the chosen namespace; it does
+not create credentials or a binding. An administrator must bind it to the intended
+user or service account in that namespace.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubepilot-pilot-reader
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods, events]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+```
+
+Confirm permissions with the pilot identity using `kubectl auth can-i` for those
+resources in the pilot namespace. It should not have write access. Never reuse a
+cluster-admin identity to make a pilot work.
+
+**Current boundary:** Overview and general cluster-health chat can request a
+cluster-wide deployment list. Namespace-only RBAC can reject that request; use the
+namespace check and manual Workloads entry instead. The application namespace
+allowlist is not a Kubernetes authorization boundary, and chat does not uniformly
+enforce it. Restrict the credential itself with Kubernetes RBAC. Do not grant broader
+access just to make Overview work. Namespace-aware Overview and consistent chat
+policy enforcement remain separate follow-up work before a wider deployment.
+
+A pilot must still verify real workload diagnoses, event access, log access, and
+missing-resource/error behavior. The fixture and mocked-failure checks validate the
+UI workflow, not live cluster permissions. Use a development cluster with an approved
+read-only identity; this change does not connect to or modify one automatically.
+
 ## Kubeconfig Mode
 
 Use this mode when running the API locally against a real cluster.
 
 ```bash
+python -m pip install -e ".[dev,kubernetes]"
+export KUBEPILOT_CLUSTER_DISPLAY_NAME=development-pilot
 export KUBEPILOT_K8S_MODE=kubeconfig
 export KUBEPILOT_KUBECONFIG="$HOME/.kube/config"
 export KUBEPILOT_ALLOWED_NAMESPACES=payments,platform,notifications

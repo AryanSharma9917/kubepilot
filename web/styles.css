@@ -2769,3 +2769,7 @@ body[data-theme="light"] { --warn: #825300; --bad: #b42525; --good: #315900; }
   .gemini-chat-area .assistant-message, .gemini-chat-area .user-message { max-width: 100%; }
   .topbar { position: static; }
 }
+
+.connection-result { margin-top: 18px; padding: 16px; line-height: 1.7; overflow-wrap: anywhere; border: 1px solid var(--line); border-radius: 8px; }
+#connectionForm label { display: grid; gap: 8px; }
+@media (max-width: 620px) { #connectionForm { display: grid; } }

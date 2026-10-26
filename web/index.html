@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KubePilot</title>
-    <link rel="stylesheet" href="./styles.css?v=20261023-guided-demo" />
+    <link rel="stylesheet" href="./styles.css?v=20261026-cluster-connection" />
   </head>
   <body data-theme="dark">
     <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -60,6 +60,10 @@
             <button class="nav-item" type="button" data-view="documentation" title="Getting started">
               <span class="nav-icon"><svg><use href="#i-book"></use></svg></span>
               <span class="nav-label">Getting started</span>
+            </button>
+            <button class="nav-item" type="button" data-view="connection" title="Cluster connection">
+              <span class="nav-icon"><svg><use href="#i-command"></use></svg></span>
+              <span class="nav-label">Cluster connection</span>
             </button>
           </nav>
         </details>
@@ -426,6 +430,30 @@
           </article>
         </section>
 
+        <section class="view" data-view-panel="connection">
+          <article class="panel">
+            <h2>Connect a development cluster</h2>
+            <p>Start with a read-only identity for one namespace. Configure the API on the machine where it runs; never paste kubeconfigs, tokens, or credentials into this page.</p>
+            <ol class="demo-walkthrough">
+              <li>Ask your cluster administrator for get/list access to deployments, pods, events, and pod logs in your pilot namespace. Do not use a cluster-admin identity.</li>
+              <li>Install the Python Kubernetes dependency: <code>python -m pip install -e '.[dev,kubernetes]'</code>.</li>
+              <li>Set <code>KUBEPILOT_K8S_MODE=kubeconfig</code> and <code>KUBEPILOT_KUBECONFIG</code> to the local credential file. Set <code>KUBEPILOT_ALLOWED_NAMESPACES</code> to your pilot namespace.</li>
+              <li>Optionally set <code>KUBEPILOT_CLUSTER_DISPLAY_NAME</code> to a recognizable label, then restart the API. Use <code>in_cluster</code> instead when deploying with a service account.</li>
+              <li>Check a namespace below, then use Workloads to investigate an existing deployment by name.</li>
+            </ol>
+            <p>Namespace-only credentials may not support Overview's cluster-wide list. A namespace allowlist is an application setting, not a replacement for Kubernetes RBAC. Use namespace-scoped Kubernetes credentials to enforce the boundary.</p>
+          </article>
+          <article class="panel">
+            <h2>Check namespace access</h2>
+            <p>This only reads deployment health. It does not change the cluster or verify access to every pod, log, or event.</p>
+            <form class="inline-form" id="connectionForm">
+              <label>Namespace to check <input id="connectionNamespace" required placeholder="e.g. payments" /></label>
+              <button type="submit">Check namespace access</button>
+            </form>
+            <div id="connectionResult" role="status" class="connection-result">No namespace check has run. Configured modes alone do not establish connectivity.</div>
+          </article>
+        </section>
+
         <section class="view" data-view-panel="documentation">
           <article class="panel">
             <p class="eyebrow">Getting started</p>
@@ -463,7 +491,7 @@
         </section>
       </main>
     </div>
-    <script type="module" src="./app.js?v=20261023-guided-demo"></script>
+    <script type="module" src="./app.js?v=20261026-cluster-connection"></script>
   </body>
 </html>
 

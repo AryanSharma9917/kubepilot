@@ -26,6 +26,8 @@ class RuntimeStatusResponse(BaseModel):
 
     environment: str
     kubernetes_mode: str
+    cluster_display_name: str = "Not labelled"
+    allowed_namespaces: list[str] = Field(default_factory=list)
     rag_mode: str
     llm_provider: str
     agent_mode: str

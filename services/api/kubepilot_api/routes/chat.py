@@ -1,6 +1,6 @@
 """Chat API routes."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
 from kubepilot_api.schemas import ChatRequest, ChatResponse
@@ -16,7 +16,10 @@ async def chat(
 ) -> ChatResponse:
     """Accept a user message and return the current agent response."""
 
-    return await service.respond(request)
+    try:
+        return await service.respond(request)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
 
 
 @router.post("/chat/stream")
@@ -26,6 +29,10 @@ async def stream_chat(
 ) -> StreamingResponse:
     """Accept a user message and stream the agent response as SSE."""
 
+    try:
+        service.ensure_allowed(request)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     return StreamingResponse(
         service.stream(request),
         media_type="text/event-stream",

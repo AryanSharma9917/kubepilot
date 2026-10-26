@@ -441,7 +441,7 @@
               <li>Optionally set <code>KUBEPILOT_CLUSTER_DISPLAY_NAME</code> to a recognizable label, then restart the API. Use <code>in_cluster</code> instead when deploying with a service account.</li>
               <li>Check a namespace below, then use Workloads to investigate an existing deployment by name.</li>
             </ol>
-            <p>Namespace-only credentials may not support Overview's cluster-wide list. A namespace allowlist is an application setting, not a replacement for Kubernetes RBAC. Use namespace-scoped Kubernetes credentials to enforce the boundary.</p>
+            <p>With KUBEPILOT_ALLOWED_NAMESPACES configured, Overview and chat read only those namespaces. An empty allowlist permits unrestricted scope. Always restrict the credential itself with Kubernetes RBAC as well.</p>
           </article>
           <article class="panel">
             <h2>Check namespace access</h2>

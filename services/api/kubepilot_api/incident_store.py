@@ -21,7 +21,9 @@ class IncidentReportStore(Protocol):
     def get(self, report_id: str) -> IncidentReportResponse | None:
         """Return one generated report artifact by ID."""
 
-    def list(self, *, limit: int = 20) -> list[IncidentReportSummaryResponse]:
+    def list(
+        self, *, limit: int = 20, allowed_namespaces: tuple[str, ...] = ()
+    ) -> list[IncidentReportSummaryResponse]:
         """Return newest generated report artifacts first."""
 
 
@@ -49,11 +51,17 @@ class InMemoryIncidentReportStore:
         with self._lock:
             return self._reports.get(report_id)
 
-    def list(self, *, limit: int = 20) -> list[IncidentReportSummaryResponse]:
+    def list(
+        self, *, limit: int = 20, allowed_namespaces: tuple[str, ...] = ()
+    ) -> list[IncidentReportSummaryResponse]:
         """Return newest generated report artifacts first."""
 
         with self._lock:
-            reports = list(reversed(self._reports.values()))[:limit]
+            reports = [
+                report for report in reversed(self._reports.values())
+                if not allowed_namespaces
+                or report.impacted_resource.split("/", 1)[0] in allowed_namespaces
+            ][:limit]
         return [
             IncidentReportSummaryResponse(
                 report_id=report.report_id,
@@ -123,7 +131,9 @@ class PostgresIncidentReportStore:
             return None
         return IncidentReportResponse.model_validate(row["payload"])
 
-    def list(self, *, limit: int = 20) -> list[IncidentReportSummaryResponse]:
+    def list(
+        self, *, limit: int = 20, allowed_namespaces: tuple[str, ...] = ()
+    ) -> list[IncidentReportSummaryResponse]:
         """Return newest generated report artifacts first."""
 
         with self._connect() as connection:
@@ -137,10 +147,11 @@ class PostgresIncidentReportStore:
                     impacted_resource,
                     summary
                 FROM incident_reports
+                WHERE (%s OR split_part(impacted_resource, '/', 1) = ANY(%s))
                 ORDER BY generated_at DESC
                 LIMIT %s
                 """,
-                (limit,),
+                (not allowed_namespaces, list(allowed_namespaces), limit),
             ).fetchall()
         return [
             IncidentReportSummaryResponse(

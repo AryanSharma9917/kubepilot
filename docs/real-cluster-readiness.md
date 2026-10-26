@@ -63,13 +63,16 @@ Confirm permissions with the pilot identity using `kubectl auth can-i` for those
 resources in the pilot namespace. It should not have write access. Never reuse a
 cluster-admin identity to make a pilot work.
 
-**Current boundary:** Overview and general cluster-health chat can request a
-cluster-wide deployment list. Namespace-only RBAC can reject that request; use the
-namespace check and manual Workloads entry instead. The application namespace
-allowlist is not a Kubernetes authorization boundary, and chat does not uniformly
-enforce it. Restrict the credential itself with Kubernetes RBAC. Do not grant broader
-access just to make Overview work. Namespace-aware Overview and consistent chat
-policy enforcement remain separate follow-up work before a wider deployment.
+**Namespace enforcement:** Set `KUBEPILOT_ALLOWED_NAMESPACES` before restarting
+the API. Overview and cluster-health chat aggregate namespace-scoped deployment
+lists rather than requesting a cluster-wide list. Both deterministic and graph chat
+use the configured Kubernetes connection and shared namespace boundary. Out-of-scope
+chat, diagnosis, report creation, and saved report reads/exports are rejected; saved
+report lists are filtered before their result limit. Action allowlists also apply to
+chat tool intents and report reads. Denied streaming chat requests return 403 before
+the event stream begins. Without a namespace allowlist, unrestricted behavior is
+preserved. Kubernetes RBAC must still restrict the credential itself; this setting
+is defense in depth, not a replacement for cluster authorization.
 
 A pilot must still verify real workload diagnoses, event access, log access, and
 missing-resource/error behavior. The fixture and mocked-failure checks validate the
